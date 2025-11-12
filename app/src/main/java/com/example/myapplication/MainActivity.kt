@@ -1,49 +1,34 @@
 package com.example.myapplication
-import AlarmCard
+
 import SplashScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.*
+import androidx.navigation.navArgument
+import com.example.myapplication.Data.AlarmData
 import com.example.myapplication.ui.theme.MyApplicationTheme
+
+object Screen {
+    const val ALARM_TAB = "alarm"
+    const val TOPIC_TAB = "topic"
+    const val STATS_TAB = "stats"
+    const val ALARM_SETTINGS = "alarm_settings/{alarmId}"
+    fun alarmSettingsRoute(alarmId: Int) = "alarm_settings/$alarmId"
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +48,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppNavigation() {
-
     var showSplashScreen by remember { mutableStateOf(true) }
     if (showSplashScreen) {
         SplashScreen(onTimeout = { showSplashScreen = false })
@@ -74,48 +58,55 @@ fun AppNavigation() {
 
 @Composable
 fun MainScreen() {
-    val alarms = remember {
+    val navController = rememberNavController()
+    val alarmData = remember {
         mutableStateListOf(
-            Alarm(1, "Hàng ngày", "06:30", "Thức dậy", true),
-            Alarm(2, "Cuối tuần", "08:00", "Đi chơi", false),
-            Alarm(3, "Thứ 2, 4, 6", "14:00", "Học Flutter", true),
-            Alarm(4, "Chủ nhật", "22:00", null, true)
+            AlarmData(1, "Hàng ngày", "06:30", "Thức dậy", true),
+            AlarmData(2, "Cuối tuần", "08:00", "Đi chơi", false),
+            AlarmData(3, "Thứ 2, 4, 6", "14:00", "Học Flutter", true),
+            AlarmData(4, "Chủ nhật", "22:00", null, true)
         )
     }
+
     Scaffold(
-        topBar = { TopBarContent() },
-        bottomBar = { BottomNavBar() },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {},
-                containerColor = Color(0xFFE50043),
-                shape = RoundedCornerShape(28.dp),
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Add,
-                    "Thêm báo thức",
-                    tint = Color.White,
-                        modifier = Modifier.size(32.dp))
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
+        bottomBar = { BottomNavBar(navController = navController) },
         containerColor = Color.Black
-    ){ paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.ALARM_TAB,
+            modifier = Modifier.padding(paddingValues)
         ) {
-            itemsIndexed(
-                items = alarms,
-                key = { index, alarm -> alarm.id })
-            { index, alarm ->
-                AlarmCard(
-                    alarm = alarm,
-                    onToggle = { newCheckedState ->
-                        alarms[index] = alarms[index].copy(isEnabled = newCheckedState)
+            composable(Screen.ALARM_TAB) {
+                AlarmScreen(
+                    alarmData = alarmData,
+                    onToggle = { index, newState ->
+                        alarmData[index] = alarmData[index].copy(isEnabled = newState)
+                    },
+                    onAlarmCardClick = { alarm ->
+                        navController.navigate(Screen.alarmSettingsRoute(alarm.id))
+                    }
+                )
+            }
+            composable(Screen.TOPIC_TAB) {
+                Topic(
+                    // onTopicClicked = { ... },
+                    // onMenuClicked = { ... },
+                    // onAddNewTopic = { ... }
+                )
+            }
+            composable(Screen.STATS_TAB) {
+                Text("Màn hình Thống kê", color = Color.White)
+            }
+            composable(
+                route = Screen.ALARM_SETTINGS,
+                arguments = listOf(navArgument("alarmId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
+                AlarmSettingsScreen(
+                    alarmId = alarmId,
+                    onBackClick = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -124,38 +115,36 @@ fun MainScreen() {
 }
 
 @Composable
-fun BottomNavBar() {
-    val items = listOf("Báo thức", "Chủ đề", "Thống kê", "Cài đặt")
-    val icons = listOf(
-        Icons.Filled.Alarm,
-        Icons.Filled.Style,
-        Icons.Filled.Assessment,
-        Icons.Filled.Settings
-    )
-    val selectedItem = remember { mutableStateOf(items[0]) }
+fun BottomNavBar(navController: NavHostController) {
+    val items = listOf("Báo thức", "Chủ đề", "Thống kê")
+    val icons = listOf(Icons.Filled.Alarm, Icons.Filled.Style, Icons.Filled.Assessment)
+    val routes = listOf(Screen.ALARM_TAB, Screen.TOPIC_TAB, Screen.STATS_TAB)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     NavigationBar(
         containerColor = Color(0xFF1C1C1E),
-        modifier = Modifier.height(70.dp)
+        modifier = Modifier.height(90.dp)
     ) {
         items.forEachIndexed { index, item ->
-            val isSelected = selectedItem.value == item
+            val route = routes[index]
+            val isSelected = currentRoute == route
+
             NavigationBarItem(
-                icon = {
-                    Icon(
-                        icons[index],
-                        contentDescription = item,
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                label = {
-                    Text(
-                        text = item,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                    )
-                },
+                icon = { Icon(icons[index], contentDescription = item, modifier = Modifier.size(24.dp)) },
+                label = { Text(text = item, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                 selected = isSelected,
-                onClick = { selectedItem.value = item },
+                onClick = {
+                    if (currentRoute != route) {
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.White,
                     selectedTextColor = Color.White,
@@ -168,30 +157,8 @@ fun BottomNavBar() {
     }
 }
 
-@Composable
-fun TopBarContent() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 40.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = "Đổ chuông sau 9 giờ 4 phút.",
-            fontSize = 25.sp,
-            color = Color.White,
-            fontWeight = FontWeight.Bold
-
-        )
-        Icon(
-            Icons.Default.MoreVert,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
-
-@Preview(showBackground = true)
+@Preview(showBackground = true,
+    showSystemUi = true)
 @Composable
 fun MainScreenPreview() {
     MainScreen()

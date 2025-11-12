@@ -1,6 +1,6 @@
-package com.example.myapplication
+package com.example.myapplication.Data
 
-data class Alarm(
+data class AlarmData(
     val id: Int,
     val time: String,
     val days: String,

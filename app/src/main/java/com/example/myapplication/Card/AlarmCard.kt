@@ -1,4 +1,5 @@
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,15 +25,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.Alarm
+import com.example.myapplication.Data.AlarmData
 import com.example.myapplication.R
 
 @Composable
-fun AlarmCard(alarm: Alarm, onToggle: (Boolean) -> Unit){
+fun AlarmCard(
+    alarmData: AlarmData,
+    onToggle: (Boolean) -> Unit,
+    onCardClick: () -> Unit){
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 12.dp)
+            .clickable { onCardClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E))
     ){
@@ -47,7 +52,7 @@ fun AlarmCard(alarm: Alarm, onToggle: (Boolean) -> Unit){
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = alarm.time,
+                    text = alarmData.time,
                     color = Color(0xFF8E8E93),
                     fontSize = 12.sp
                 )
@@ -64,13 +69,13 @@ fun AlarmCard(alarm: Alarm, onToggle: (Boolean) -> Unit){
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = alarm.days,
+                    text = alarmData.days,
                     color = Color.White,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Switch(
-                    checked = alarm.isEnabled,
+                    checked = alarmData.isEnabled,
                     onCheckedChange = { onToggle(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
@@ -89,7 +94,7 @@ fun AlarmCard(alarm: Alarm, onToggle: (Boolean) -> Unit){
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(4.dp))
-                alarm.label?.let {
+                alarmData.label?.let {
                     Text(
                         text = it,
                         color = Color(0xFF8E8E93),
