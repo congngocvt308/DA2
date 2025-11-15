@@ -4,15 +4,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -86,30 +89,30 @@ fun AlarmScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarContent() {
     TopAppBar(
-        backgroundColor = DarkBackground,
-        elevation = 0.dp
-    ){
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Thiết lập báo thức",
+        title = {
+            Text(
+                text = "Thiết lập báo thức",
                 fontSize = 25.sp,
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp).weight(1f)
+                fontWeight = FontWeight.Bold
             )
-            Icon(
-                Icons.Default.MoreVert,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-
+        },
+        actions = {
+            IconButton(onClick = { /* Xử lý bấm menu */ }) {
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = "Tùy chọn",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = DarkBackground
+        )
+    )
 }

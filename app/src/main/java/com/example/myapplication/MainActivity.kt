@@ -103,12 +103,12 @@ fun MainScreen() {
                 arguments = listOf(navArgument("alarmId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
-                AlarmSettingsScreen(
-                    alarmId = alarmId,
-                    onBackClick = {
-                        navController.popBackStack()
-                    }
-                )
+//                AlarmSettingsScreen(
+//                    alarmId = alarmId,
+//                    onBackClick = {
+//                        navController.popBackStack()
+//                    }
+//                )
             }
         }
     }

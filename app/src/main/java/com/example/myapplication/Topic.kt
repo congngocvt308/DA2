@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.Data.TopicData
 import com.example.myapplication.Data.TopicViewModel
 import com.example.myapplication.Card.TopicCard
+import androidx.compose.material3.Surface
 
 val DarkBackground = Color(0xFF1C1C1E)
 @Composable
@@ -89,13 +90,18 @@ fun TopicAppBar(
     onQueryChange: (String) -> Unit,
     onMenuClicked: () -> Unit
 ) {
-    TopAppBar(
-        backgroundColor = DarkBackground,
-        elevation = 0.dp
+    Surface(
+        color = DarkBackground,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
     ) {
         Crossfade(targetState = isSearching, modifier = Modifier.fillMaxWidth()) { searching ->
             if (searching) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = onQueryChange,
@@ -128,7 +134,7 @@ fun TopicAppBar(
                 }
             } else {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
