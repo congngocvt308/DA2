@@ -1,4 +1,4 @@
-package com.example.myapplication.Data
+package com.example.myapplication.ui.theme.alarm
 
 data class AlarmData(
     val id: Int,

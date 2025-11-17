@@ -1,6 +1,7 @@
-package com.example.myapplication
+package com.example.myapplication.ui.theme.alarm
 import AlarmCard
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.Data.AlarmData
+import com.example.myapplication.ui.theme.topic.DarkBackground
+import com.example.myapplication.ui.theme.alarm.AlarmData
 
 @Composable
 fun AlarmScreen(
@@ -96,7 +98,7 @@ fun TopBarContent() {
         title = {
             Text(
                 text = "Thiết lập báo thức",
-                fontSize = 25.sp,
+                fontSize = 20.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )

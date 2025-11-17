@@ -19,8 +19,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.example.myapplication.Data.AlarmData
+import com.example.myapplication.ui.theme.alarm.AlarmData
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.theme.alarm.AlarmScreen
+import com.example.myapplication.ui.theme.alarm.AlarmSettingScreen
+import com.example.myapplication.ui.theme.topic.Topic
 
 object Screen {
     const val ALARM_TAB = "alarm"

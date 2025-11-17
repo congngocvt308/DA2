@@ -1,11 +1,10 @@
-package com.example.myapplication
+package com.example.myapplication.ui.theme.topic
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.FloatingActionButton
@@ -26,9 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.Data.TopicData
-import com.example.myapplication.Data.TopicViewModel
-import com.example.myapplication.Card.TopicCard
 import androidx.compose.material3.Surface
 
 val DarkBackground = Color(0xFF1C1C1E)
@@ -141,7 +137,7 @@ fun TopicAppBar(
                         text = "Thư viện Chủ đề",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
+                        fontSize = 20.sp,
                         modifier = Modifier.padding(start = 16.dp).weight(1f)
                     )
                     IconButton(onClick = onSearchToggle) {
@@ -183,7 +179,8 @@ fun TopicList(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true,
+    showSystemUi = true)
 @Composable
 fun TopicTabScreenPreview() {
     Topic(
