@@ -160,7 +160,7 @@ fun TopicList(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 26.dp),
+        contentPadding = PaddingValues(vertical = 26.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (topics.isEmpty()) {

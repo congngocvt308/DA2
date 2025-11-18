@@ -37,7 +37,7 @@ fun AlarmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
-            .clickable { onCardClick() },
+            .clickable { onCardClick},
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E))
     ){
