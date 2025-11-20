@@ -26,10 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.Surface
+import com.example.myapplication.data.TopicData
+import com.example.myapplication.data.TopicViewModel
 
 val DarkBackground = Color(0xFF1C1C1E)
 @Composable
-fun Topic(
+fun TopicScreen(
     viewModel: TopicViewModel = viewModel(),
     onTopicClicked: (TopicData) -> Unit = {},
     onMenuClicked: () -> Unit = {},
@@ -183,7 +185,7 @@ fun TopicList(
     showSystemUi = true)
 @Composable
 fun TopicTabScreenPreview() {
-    Topic(
+    TopicScreen(
         onTopicClicked = {},
         onMenuClicked = {},
         onAddNewTopic = {}

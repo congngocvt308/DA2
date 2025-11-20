@@ -1,9 +1,9 @@
-package com.example.myapplication.ui.theme.alarm
+package com.example.myapplication.data
 
 data class AlarmData(
     val id: Int,
-    val time: String,
     val days: String,
+    val time: String,
     val label: String?,
     var isEnabled: Boolean
 )

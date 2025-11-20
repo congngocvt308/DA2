@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -25,7 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.ui.theme.alarm.AlarmData
+import com.example.myapplication.data.AlarmData
 import com.example.myapplication.R
 
 @Composable
@@ -39,7 +40,7 @@ fun AlarmCard(
             .padding(horizontal = 12.dp)
             .clickable { onCardClick},
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ){
         Column(
             modifier = Modifier
@@ -52,14 +53,14 @@ fun AlarmCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = alarmData.time,
-                    color = Color(0xFF8E8E93),
+                    text = alarmData.days,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp
                 )
                 Icon(
                     Icons.Default.Clear,
                     contentDescription = "Tùy chọn báo thức",
-                    tint = Color(0xFF8E8E93),
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -69,8 +70,8 @@ fun AlarmCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = alarmData.days,
-                    color = Color.White,
+                    text = alarmData.time,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -78,10 +79,10 @@ fun AlarmCard(
                     checked = alarmData.isEnabled,
                     onCheckedChange = { onToggle(it) },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF42A5F5),
-                        uncheckedThumbColor = Color(0xFF8E8E93),
-                        uncheckedTrackColor = Color(0xFF636366)
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 )
             }
@@ -97,7 +98,7 @@ fun AlarmCard(
                 alarmData.label?.let {
                     Text(
                         text = it,
-                        color = Color(0xFF8E8E93),
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 14.sp
                     )
                 }
