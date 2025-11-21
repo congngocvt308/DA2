@@ -15,7 +15,8 @@ private val AppDarkColorScheme = darkColorScheme(
     surface = Color(0xFF1C1C1E),
     surfaceVariant = Color(0xFF2C2C2E),
     onSurface = Color.White,
-    secondary = Color(0xFF42A5F5)
+    secondary = Color(0xFF42A5F5),
+    tertiary = Color.LightGray
 )
 
 private val AppLightColorScheme = lightColorScheme(
@@ -26,7 +27,8 @@ private val AppLightColorScheme = lightColorScheme(
     surface = Color(0xFFFFFFFF),
     surfaceVariant = Color(0xFFE5E5E5),
     onSurface = Color.Black,
-    secondary = Color(0xFF42A5F5)
+    secondary = Color(0xFF42A5F5),
+    tertiary = Color.LightGray
 )
 
 @Composable

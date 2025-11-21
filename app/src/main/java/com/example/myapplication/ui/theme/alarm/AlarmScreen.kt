@@ -2,12 +2,14 @@ package com.example.myapplication.ui.theme.alarm
 
 import AlarmCard
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -25,7 +28,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.AlarmData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +81,18 @@ fun AlarmScreen(
                     )
                 }
             }
+        }
+
+        if (isFabMenuOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { isFabMenuOpen = false }
+            )
         }
 
         FabSpeedDial(
@@ -182,8 +196,12 @@ private fun FabSpeedDial(
     onAddNewAlarm: () -> Unit,
     onQuickAlarmClick: () -> Unit,
     modifier: Modifier = Modifier
-
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isMenuOpen) 45f else 0f,
+        label = "FabRotation"
+    )
+
     Box(
         modifier = modifier.padding(16.dp)
     ) {
@@ -239,14 +257,14 @@ private fun FabSpeedDial(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .size(32.dp)
-                    .rotate(if (isMenuOpen) 45f else 0f)
+                    .rotate(rotation)
             )
         }
     }
 }
 
 @Composable
-private fun FabMenuItem(
+fun FabMenuItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String,
     onClick: () -> Unit

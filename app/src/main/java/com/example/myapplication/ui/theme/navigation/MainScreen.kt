@@ -54,7 +54,11 @@ fun MainScreen() {
             }
 
             composable(Screen.TOPIC_TAB) {
-                TopicScreen()
+                TopicScreen(
+                    onNavigateToSettings = { alarmId ->
+                        navController.navigate(Screen.alarmSettingsRoute(alarmId))
+                    }
+                )
             }
 
             composable(Screen.STATS_TAB) {
@@ -116,8 +120,8 @@ fun BottomNavBar(navController: NavHostController) {
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.onSurface,
                     selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedIconColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unselectedTextColor =MaterialTheme.colorScheme.surfaceVariant,
+                    unselectedIconColor = MaterialTheme.colorScheme.tertiary,
+                    unselectedTextColor =MaterialTheme.colorScheme.tertiary,
                     indicatorColor = MaterialTheme.colorScheme.background
                 )
             )
