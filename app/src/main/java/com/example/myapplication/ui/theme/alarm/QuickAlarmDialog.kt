@@ -36,15 +36,15 @@ fun QuickAlarmDialog(
             .fillMaxSize()
             .clickable { onDismissRequest() },
         contentAlignment = Alignment.BottomCenter
-    ) {
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(enabled = false) {}
-        ) {
+            ) {
             QuickAlarmContent(onDismissRequest, onSave)
+            }
         }
-    }
     }
 }
 

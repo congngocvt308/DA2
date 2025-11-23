@@ -9,12 +9,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Divider
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,12 +32,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.unit.DpOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myapplication.ui.theme.alarm.FabMenuItem
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
+import com.example.myapplication.ui.theme.alarm.QuickAlarmDialog
 
 @Composable
 fun TopicScreen(
@@ -48,10 +48,17 @@ fun TopicScreen(
 ) {
     var isSearching by remember { mutableStateOf(false) }
     var isFabMenuOpen by remember { mutableStateOf(false) }
-    var isMoreMenuOpen by remember { mutableStateOf(false) }
+    var showQuickDialog by remember { mutableStateOf(false) }
 
     val topicList by viewModel.filteredTopics.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isSearching) {
+        if (isSearching) {
+            focusRequester.requestFocus()
+        }
+    }
 
     BackHandler(enabled = isSearching || isFabMenuOpen) {
         if (isFabMenuOpen) isFabMenuOpen = false
@@ -70,7 +77,6 @@ fun TopicScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             TopicAppBar(
                 isSearching = isSearching,
-                isMenuOpen = isMoreMenuOpen,
                 onSearchToggle = {
                     isSearching = !isSearching
                     if (!isSearching) {
@@ -80,8 +86,7 @@ fun TopicScreen(
                 },
                 searchQuery = viewModel.searchQuery.value,
                 onQueryChange = { viewModel.searchQuery.value = it },
-                onMenuClick = { isMoreMenuOpen = true },
-                onDismissMenu = { isMoreMenuOpen = false }
+                focusRequester = focusRequester
             )
 
             LazyColumn(
@@ -123,25 +128,35 @@ fun TopicScreen(
             onToggleMenu = { isFabMenuOpen = !isFabMenuOpen },
             onAddNewTopic = {
                 isFabMenuOpen = false
+                showQuickDialog = true
+            },
+            onQuickTopicClick = {
+                isFabMenuOpen = false
                 onNavigateToSettings(-1)
             },
-            onQuickTopicClick = { isFabMenuOpen = false},
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
         )
+
+        if (showQuickDialog) {
+            QuickTopicDialog(
+                onDismissRequest = { showQuickDialog = false },
+                onSave = { topicId ->
+                    showQuickDialog = false
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun TopicAppBar(
     isSearching: Boolean,
-    isMenuOpen: Boolean,
     onSearchToggle: () -> Unit,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
-    onMenuClick: () -> Unit,
-    onDismissMenu: () -> Unit
+    focusRequester: FocusRequester
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -149,7 +164,8 @@ fun TopicAppBar(
         color = MaterialTheme.colorScheme.surface,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(106.dp)
+            .padding(top = 50.dp)
     ) {
         Crossfade(targetState = isSearching, modifier = Modifier.fillMaxWidth()) { searching ->
             if (searching) {
@@ -162,6 +178,7 @@ fun TopicAppBar(
                     }
 
                     OutlinedTextField(
+                        shape = CircleShape,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(
                             onSearch = {
@@ -173,7 +190,8 @@ fun TopicAppBar(
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 16.dp)
-                            .height(50.dp),
+                            .height(50.dp)
+                            .focusRequester(focusRequester),
                         placeholder = { Text("Tìm chủ đề...", color = MaterialTheme.colorScheme.surfaceVariant) },
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
@@ -210,49 +228,6 @@ fun TopicAppBar(
 
                     IconButton(onClick = onSearchToggle) {
                         Icon(Icons.Filled.Search, contentDescription = "Tìm kiếm", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-
-                    Box {
-                        IconButton(onClick = onMenuClick) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Tùy chọn",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        DropdownMenu(
-                            expanded = isMenuOpen,
-                            onDismissRequest = onDismissMenu,
-                            offset = DpOffset(x = 0.dp, y = 0.dp),
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Sắp xếp", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp) },
-                                onClick = {},
-                                trailingIcon = { Icon(Icons.Default.Sort, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(15.dp)) }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text("Mặc định", color = MaterialTheme.colorScheme.onSurface) },
-                                onClick = {  }
-                            )
-
-                            DropdownMenuItem(
-                                text = { Text("Đang hoạt động trước", color = MaterialTheme.colorScheme.onSurface) },
-                                onClick = {  },
-                                trailingIcon = { Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary) }
-                            )
-
-                            Divider(color = MaterialTheme.colorScheme.surface, thickness = 0.5.dp)
-
-                            DropdownMenuItem(
-                                text = { Text("Xóa báo thức không hoạt động", color = MaterialTheme.colorScheme.primary) },
-                                onClick = { },
-                                trailingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.primary )}
-                            )
-                        }
                     }
                 }
             }
@@ -296,7 +271,7 @@ private fun FabSpeedDial(
                     FabMenuItem(
                         Icons.Default.FlashOn,
                         "Chủ đề có sẵn",
-                        onClick =onQuickTopicClick
+                        onClick = onQuickTopicClick
                     )
 
                     FabMenuItem(

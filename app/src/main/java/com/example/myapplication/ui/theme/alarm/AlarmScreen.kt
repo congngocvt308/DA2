@@ -45,6 +45,7 @@ fun AlarmScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .clickable(enabled = isFabMenuOpen) { isFabMenuOpen = false }
+            .padding(top = 50.dp)
     ) {
         Column(
             modifier = Modifier
@@ -76,7 +77,7 @@ fun AlarmScreen(
                 ) { index, alarm ->
                     AlarmCard(
                         alarmData = alarm,
-                        onToggle = { newCheckedState -> viewModel.toggleAlarm(index, newCheckedState) },
+                        onToggle = { newCheckedState -> viewModel.toggleAlarm(alarm.id, newCheckedState) },
                         onCardClick = { onNavigateToSettings(alarm.id) }
                     )
                 }

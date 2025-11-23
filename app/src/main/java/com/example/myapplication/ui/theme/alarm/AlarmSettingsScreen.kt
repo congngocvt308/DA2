@@ -36,46 +36,82 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.text.TextStyle
 import kotlin.math.abs
 import androidx.compose.material3.Slider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
+val AlarmSettingViewModelFactory = viewModelFactory {
+    initializer {
+        AlarmSettingViewModel(alarmId = -1) // -1 là mặc định, báo thức mới
+    }
+}
 /**
  * Màn hình cài đặt báo thức chính (Phiên bản dùng Box)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlarmSettingScreen() {
+fun AlarmSettingScreen(
+    alarmId: Int, // ✅ THÊM THAM SỐ alarmId
+    onBackClick: () -> Unit, // ✅ THÊM HÀM QUAY LẠI
+    viewModel: AlarmSettingViewModel = viewModel(
+        // Factory cho phép truyền alarmId khi tạo ViewModel
+        factory = viewModelFactory {
+            initializer {
+                AlarmSettingViewModel(alarmId = alarmId)
+            }
+        }
+    )
+){
+    val state by viewModel.state.collectAsState()
     // --- State cho các thành phần ---
-    var selectedHour by remember { mutableIntStateOf(8) }
-    var selectedMinute by remember { mutableIntStateOf(10) }
-    var text by remember { mutableStateOf("") }
-    val daysOfWeek = remember {
-        mutableStateMapOf(
-            "CN" to false, "T2" to true, "T3" to true, "T4" to true, "T5" to true, "T6" to true, "T7" to false
-        )
-    }
-    var repeatDaily by remember { mutableStateOf(true) }
-    var volume by remember { mutableFloatStateOf(0.7f) }
+//    var selectedHour by remember { mutableIntStateOf(8) }
+//    var selectedMinute by remember { mutableIntStateOf(10) }
+//    var text by remember { mutableStateOf("") }
+//    val daysOfWeek = remember {
+//        mutableStateMapOf(
+//            "CN" to false, "T2" to true, "T3" to true, "T4" to true, "T5" to true, "T6" to true, "T7" to false
+//        )
+//    }
+//    var repeatDaily by remember { mutableStateOf(true) }
+//    var volume by remember { mutableFloatStateOf(0.7f) }
 
     // --- State cho 2 LazyColumn (theo yêu cầu của bạn) ---
     // 🚨 SỬA LỖI 3: FOCUS BAN ĐẦU (Ở GIỮA)
     // (Để item 8 ở giữa, item 7 phải ở trên cùng)
-    val hourListState = rememberLazyListState(initialFirstVisibleItemIndex = max(0, selectedHour - 1))
-    val minuteListState = rememberLazyListState(initialFirstVisibleItemIndex = max(0, selectedMinute - 1))
+    val hourListState = rememberLazyListState()
+    val minuteListState = rememberLazyListState()
 
+    LaunchedEffect(state.selectedHour, state.selectedMinute) {
+        // Cuộn đến vị trí gần đúng khi dữ liệu được load lần đầu
+        hourListState.scrollToItem(max(0, state.selectedHour - 1))
+        minuteListState.scrollToItem(max(0, state.selectedMinute - 1))
+    }
 
-    // --- 🚨 LOGIC SNAPPING CHO GIỜ (MỚI) ---
-    rememberSnapLogic(
+    RememberSnapLogic(
         lazyListState = hourListState,
-        onItemSelected = { newHour -> selectedHour = newHour }
+        onItemSelected = viewModel::updateHour
     )
 
-    // --- 🚨 LOGIC SNAPPING CHO PHÚT (MỚI) ---
-    rememberSnapLogic(
+    RememberSnapLogic(
         lazyListState = minuteListState,
-        onItemSelected = { newMinute -> selectedMinute = newMinute }
+        onItemSelected = viewModel::updateMinute
     )
+
+
+//    // --- 🚨 LOGIC SNAPPING CHO GIỜ (MỚI) ---
+//    rememberSnapLogic(
+//        lazyListState = hourListState,
+//        onItemSelected = { newHour -> selectedHour = newHour }
+//    )
+//
+//    // --- 🚨 LOGIC SNAPPING CHO PHÚT (MỚI) ---
+//    rememberSnapLogic(
+//        lazyListState = minuteListState,
+//        onItemSelected = { newMinute -> selectedMinute = newMinute }
+//    )
 
     // --- Sử dụng Box làm gốc để nút "Lưu" nổi lên ---
     Box(
@@ -90,12 +126,12 @@ fun AlarmSettingScreen() {
             // 1. TopAppBar (thêm thủ công vì không dùng Scaffold)
             CenterAlignedTopAppBar(
                 title = { Text(
-                    text = "Chuông báo thức",
+                    text = if (alarmId == -1) "Thêm báo thức" else "Sửa báo thức",
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 ) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Xử lý back */ }) {
+                    IconButton(onClick = onBackClick) { // ✅ GẮN onBackClick
                         Icon(Icons.Default.Close,
                             tint = Color.White,
                             contentDescription = "Đóng")
@@ -121,11 +157,11 @@ fun AlarmSettingScreen() {
             ) {
                 item {
                     TextField(
-                        value = text,
-                        onValueChange = {text = it},
+                        value = state.alarmName,
+                        onValueChange = viewModel::updateAlarmName,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp,20.dp,0.dp,0.dp),
+                            .padding(top = 20.dp),
                         placeholder = {
                             Text(
                                 text = "Vui lòng điền tên báo thức",
@@ -175,30 +211,31 @@ fun AlarmSettingScreen() {
                     TimePickerSection(
                         hourListState = hourListState,
                         minuteListState = minuteListState,
-                        selectedHour = selectedHour,
-                        selectedMinute = selectedMinute,
-                        onHourChange = { newHour -> selectedHour = newHour },
-                        onMinuteChange = { newMinute -> selectedMinute = newMinute }
+                        selectedHour = state.selectedHour,
+                        selectedMinute = state.selectedMinute,
+                        onHourChange = viewModel::updateHour,
+                        onMinuteChange = viewModel::updateMinute
                     )
                 }
 
                 //--- 2. ĐỔ CHUÔNG SAU ---
                 item {
                     Text(
-                        text = "Đổ chuông sau 17 giờ 51 phút.",
+                        text = state.timeUntilAlarm,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,
                         fontSize = 18.sp,
-                        modifier = Modifier.padding(0.dp,20.dp,0.dp,0.dp),
+                        modifier = Modifier.padding(top = 20.dp),
                     )
                 }
 
                 //--- 3. CHỌN NGÀY ---
                 item {
                     DaySelectorSection(
-                        daysOfWeek = daysOfWeek,
-                        repeatDaily = repeatDaily,
-                        onRepeatDailyChange = { repeatDaily = it }
+                        daysOfWeek = state.daysOfWeek,
+                        repeatDaily = state.repeatDaily,
+                        onRepeatDailyChange = viewModel::toggleRepeatDaily,
+                        onDayToggle = viewModel::toggleDay
                     )
                 }
 
@@ -207,7 +244,7 @@ fun AlarmSettingScreen() {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp,20.dp,0.dp,0.dp),
+                            .padding(top = 20.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
                     ) {
@@ -227,7 +264,7 @@ fun AlarmSettingScreen() {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp,20.dp,0.dp,0.dp),
+                            .padding(top = 20.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
                     ) {
@@ -238,7 +275,10 @@ fun AlarmSettingScreen() {
                         ){
                             SettingsSectionHeader(title = "Âm thanh báo thức")
                             SoundSelectionRow()
-                            VolumeSliderRow(volume = volume, onVolumeChange = { volume = it })
+                            VolumeSliderRow(
+                                volume = state.volume,
+                                onVolumeChange = viewModel::updateVolume
+                            )
                         }
                     }
                 }
@@ -248,7 +288,7 @@ fun AlarmSettingScreen() {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp,20.dp,0.dp,0.dp),
+                            .padding(top = 20.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
                     ) {
@@ -271,7 +311,10 @@ fun AlarmSettingScreen() {
 
         // --- Nút "Lưu" nổi ở dưới cùng ---
         Button(
-            onClick = { /* Xử lý lưu */ },
+            onClick = {
+                viewModel.saveAlarm()
+                onBackClick()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp) // Padding xung quanh nút
@@ -291,7 +334,7 @@ fun AlarmSettingScreen() {
  * Hàm Helper để lắng nghe trạng thái cuộn và "bắt dính" (snap)
  */
 @Composable
-private fun rememberSnapLogic(
+private fun RememberSnapLogic(
     lazyListState: LazyListState,
     onItemSelected: (Int) -> Unit
 ) {
@@ -335,10 +378,6 @@ fun TimePickerSection(
     onHourChange: (Int) -> Unit,
     onMinuteChange: (Int) -> Unit
 ) {
-    // Áp dụng logic snapping
-    rememberSnapLogic(lazyListState = hourListState, onItemSelected = onHourChange)
-    rememberSnapLogic(lazyListState = minuteListState, onItemSelected = onMinuteChange)
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -371,8 +410,7 @@ fun TimePickerSection(
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(horizontal = 12.dp) // Tinh chỉnh chiều dọc
+            modifier = Modifier.padding(horizontal = 12.dp) // Tinh chỉnh chiều dọc
         )
 
         // --- Cột Phút ---
@@ -419,13 +457,15 @@ private fun TimePickerItem(
 fun DaySelectorSection(
     daysOfWeek: SnapshotStateMap<String, Boolean>,
     repeatDaily: Boolean,
-    onRepeatDailyChange: (Boolean) -> Unit
+    onRepeatDailyChange: (Boolean) -> Unit,
+    onDayToggle: (String) -> Unit
 ) {
     // --- Lấy màu sắc từ theme M3 ---
     val selectedColor = MaterialTheme.colorScheme.primary
     val onSelectedColor = MaterialTheme.colorScheme.onPrimary
     val unselectedColor = MaterialTheme.colorScheme.surfaceVariant
     val onUnselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val dayOrder = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // --- Phần Checkbox "Hàng ngày" (giữ nguyên) ---
@@ -433,21 +473,13 @@ fun DaySelectorSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onRepeatDailyChange(!repeatDaily) }
-                .padding(0.dp,20.dp,0.dp,0.dp),
+                .padding(top = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "Hàng ngày",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
-            )
+            Text("Hàng ngày", style = MaterialTheme.typography.bodyLarge, color = Color.White,)
             Checkbox(checked = repeatDaily, onCheckedChange = onRepeatDailyChange)
         }
-
-        // --- SỬA ĐỔI CHÍNH: Tạo một List có thứ tự mong muốn ---
-        val dayOrder = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
-
         // --- Đã đổi sang Row ---
         Row(
             modifier = Modifier
@@ -470,7 +502,7 @@ fun DaySelectorSection(
                     onSelectedColor = onSelectedColor,
                     unselectedColor = unselectedColor,
                     onUnselectedColor = onUnselectedColor,
-                    onClick = { daysOfWeek[day] = !isSelected }
+                    onClick = { onDayToggle(day) }
                 )
             }
         }
@@ -709,6 +741,6 @@ fun SettingsNavigationItem(
 @Composable
 fun DefaultPreview() {
     MaterialTheme {
-        AlarmSettingScreen()
+        AlarmSettingScreen(alarmId = -1, onBackClick = {})
     }
 }

@@ -37,4 +37,14 @@ class TopicViewModel(): ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
     )
+    fun addNewTopic(nameAdd: String) {
+        val newTopic = TopicData(
+            id = (System.currentTimeMillis() % 10000).toInt(),
+            name = nameAdd,
+            questionCount = 0
+        )
+        val currentList = _topics.value.toMutableList()
+        currentList.add(newTopic)
+        _topics.value = currentList
+    }
 }

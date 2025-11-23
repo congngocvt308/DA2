@@ -5,6 +5,7 @@ import com.example.myapplication.data.AlarmData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -35,12 +36,17 @@ class AlarmViewModel : ViewModel() {
         _alarms.value = currentList
     }
 
-    fun toggleAlarm(id: Int, newState: Boolean) {
-        val currentList = _alarms.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == id }
-        if (index != -1) {
-            currentList[index] = currentList[index].copy(isEnabled = newState)
-            _alarms.value = currentList
+    // Giả định trong AlarmViewModel:
+    fun toggleAlarm(alarmId: Int, isEnabled: Boolean) {
+        // Dùng ID để tìm và cập nhật
+        _alarms.update { list ->
+            list.map { alarm ->
+                if (alarm.id == alarmId) {
+                    alarm.copy(isEnabled = isEnabled)
+                } else {
+                    alarm
+                }
+            }
         }
     }
 }

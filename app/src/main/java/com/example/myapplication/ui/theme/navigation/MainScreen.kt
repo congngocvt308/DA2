@@ -29,21 +29,30 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myapplication.ui.theme.alarm.AlarmScreen
+import com.example.myapplication.ui.theme.alarm.AlarmSettingScreen
+import com.example.myapplication.ui.theme.topic.TopicDetailScreen
 import com.example.myapplication.ui.theme.topic.TopicScreen
 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val showBottomBar = currentRoute in listOf(
+        Screen.ALARM_TAB,
+        Screen.TOPIC_TAB,
+        Screen.STATS_TAB
+    )
 
     Scaffold(
-    bottomBar = { BottomNavBar(navController) },
+    bottomBar = { if (showBottomBar) BottomNavBar(navController = navController)},
     containerColor = Color.Black
     ) { paddingValues ->
 
         NavHost(
             navController = navController,
             startDestination = Screen.ALARM_TAB,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(bottom = if (showBottomBar) paddingValues.calculateBottomPadding() else 0.dp)
         ) {
             composable(Screen.ALARM_TAB) {
                 AlarmScreen(
@@ -55,8 +64,8 @@ fun MainScreen() {
 
             composable(Screen.TOPIC_TAB) {
                 TopicScreen(
-                    onNavigateToSettings = { alarmId ->
-                        navController.navigate(Screen.alarmSettingsRoute(alarmId))
+                    onNavigateToSettings = { topicId ->
+                        navController.navigate(Screen.topicDetailRoute(topicId))
                     }
                 )
             }
@@ -66,14 +75,30 @@ fun MainScreen() {
             }
 
             composable(
-                route = "alarm_settings/{alarmId}",
+                route = Screen.ALARM_SETTINGS,
                 arguments = listOf(navArgument("alarmId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("alarmId") ?: -1
-//                AlarmSettingScreen(
-//                    alarmId = id,
-//                    onBack = { navController.popBackStack() }
-//                )
+                AlarmSettingScreen(
+                    alarmId = id,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Screen.TOPIC_DETAIL,
+                // Khai báo rằng route này cần một tham số kiểu Int tên là "topicId"
+                arguments = listOf(navArgument("topicId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                // 1. Lấy topicId từ đường dẫn
+                val topicId = backStackEntry.arguments?.getInt("topicId") ?: -1
+
+                // 2. Hiển thị màn hình chi tiết
+                TopicDetailScreen(
+                    topicId = topicId,
+                    // Xử lý khi bấm nút Back: Quay lại màn hình trước
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }
