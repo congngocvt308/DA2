@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,8 +29,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
 import com.example.myapplication.ui.theme.alarm.AlarmScreen
 import com.example.myapplication.ui.theme.alarm.AlarmSettingScreen
+import com.example.myapplication.ui.theme.alarm.QuizScreen
 import com.example.myapplication.ui.theme.topic.TopicDetailScreen
 import com.example.myapplication.ui.theme.topic.TopicScreen
 
@@ -58,7 +61,8 @@ fun MainScreen() {
                 AlarmScreen(
                     onNavigateToSettings = { alarmId ->
                         navController.navigate(Screen.alarmSettingsRoute(alarmId))
-                    }
+                    },
+                    navController = navController
                 )
             }
 
@@ -72,6 +76,61 @@ fun MainScreen() {
 
             composable(Screen.STATS_TAB) {
 //                StatsScreen()
+            }
+
+            composable(Screen.ALARM_RINGING) {
+
+                AlarmRingingScreen(
+                    alarmLabel = "Thức dậy đi học", // Dữ liệu cố định
+
+                    // 🚨 onSnooze/onFinish: Xử lý Báo lại hoặc Đóng màn hình Reo
+                    onSnooze = { /* TODO: Gọi VM để lên lịch lại (Snooze Logic) */ },
+                    onFinish = {
+                        navController.popBackStack() // Quay về màn hình trước (thường là sau khi Snooze)
+                    },
+
+                    // 🚨 onNavigateToQuiz: Chuyển sang màn làm nhiệm vụ khi bấm "Tắt báo thức"
+                    onNavigateToQuiz = {
+                        navController.navigate(Screen.QUIZ_SCREEN)
+                    }
+                )
+            }
+
+            // --- 2. MÀN HÌNH TRẢ LỜI CÂU HỎI (QuizScreen) ---
+            composable(Screen.QUIZ_SCREEN) {
+
+                QuizScreen(
+                    viewModel = viewModel(), // Khởi tạo ViewModel
+
+                    // 🚨 onBack: Xử lý khi bấm mũi tên quay lại
+                    onBack = {
+                        navController.popBackStack()
+                    },
+
+                    // 🚨 onTaskCompleted: Xử lý logic dọn dẹp khi làm nhiệm vụ xong
+                    onQuizCompleted = {
+                        // Tắt nhạc chuông và dọn dẹp Stack
+                        navController.navigate(Screen.ALARM_TAB) {
+                            // Xóa cả QuizScreen và AlarmRingingScreen khỏi stack
+                            popUpTo(Screen.ALARM_RINGING) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.ALARM_RINGING) {
+                AlarmRingingScreen(
+                    alarmLabel = "Thức dậy đi học", // Có thể lấy từ tham số nav
+                    onSnooze = { /* Logic Snooze */ },
+                    onNavigateToQuiz = {
+                        // Chuyển sang màn hình trả lời câu hỏi
+                        navController.navigate(Screen.QUIZ_SCREEN)
+                    },
+                    onFinish = {
+                        // Đóng Activity hoặc quay về màn hình chính
+                        // (Tùy logic app của bạn)
+                    }
+                )
             }
 
             composable(

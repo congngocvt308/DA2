@@ -28,12 +28,15 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.myapplication.ui.theme.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmScreen(
     viewModel: AlarmViewModel = viewModel(),
-    onNavigateToSettings: (Int) -> Unit
+    onNavigateToSettings: (Int) -> Unit,
+    navController: NavHostController
 ) {
     val alarmList by viewModel.alarms.collectAsState()
     var isFabMenuOpen by remember { mutableStateOf(false) }
@@ -66,6 +69,8 @@ fun AlarmScreen(
                     .fillMaxWidth()
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
             )
+
+            TestStartButton(navController = navController)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -284,3 +289,19 @@ fun FabMenuItem(
         Text(text, color = MaterialTheme.colorScheme.background, fontSize = 20.sp)
     }
 }
+
+// Trong AlarmScreen.kt, thêm Composable này:
+
+@Composable
+fun TestStartButton(navController: NavHostController) {
+    Button(
+        onClick = {
+            // Dùng ID giả lập 1 để chuyển sang màn hình reo
+            navController.navigate(Screen.ALARM_RINGING)
+        },
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Text("TEST: REO CHUÔNG")
+    }
+}
+// Sau đó gọi nó trong AlarmScreen của bạn (nhớ truyền NavController nếu cần).

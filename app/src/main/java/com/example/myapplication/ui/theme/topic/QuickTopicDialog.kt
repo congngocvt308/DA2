@@ -83,7 +83,7 @@ fun QuickTopicContent(
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it},
-                label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.tertiary) },
+                label = { Text("Tên chur đề", color = MaterialTheme.colorScheme.tertiary) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.tertiary,
