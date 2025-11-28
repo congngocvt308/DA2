@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,157 +20,93 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.R
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.text.TextStyle
-import kotlin.math.abs
-import androidx.compose.material3.Slider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
-val AlarmSettingViewModelFactory = viewModelFactory {
-    initializer {
-        AlarmSettingViewModel(alarmId = -1) // -1 là mặc định, báo thức mới
-    }
-}
-/**
- * Màn hình cài đặt báo thức chính (Phiên bản dùng Box)
- */
+// Màu sắc
+val DarkBg = Color.Black
+val CardSurface = Color(0xFF2C2C2E)
+val RedPrimary = Color(0xFFE50043)
+val BlueAccent = Color(0xFF00ACC1)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlarmSettingScreen(
-    alarmId: Int, // ✅ THÊM THAM SỐ alarmId
-    onBackClick: () -> Unit, // ✅ THÊM HÀM QUAY LẠI
-    viewModel: AlarmSettingViewModel = viewModel(
-        // Factory cho phép truyền alarmId khi tạo ViewModel
-        factory = viewModelFactory {
-            initializer {
-                AlarmSettingViewModel(alarmId = alarmId)
-            }
+fun AlarmSettingsScreen(
+    viewModel: AlarmSettingsViewModel = viewModel(),
+    onBackClick: () -> Unit,
+    onMissionSettingClick: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSaved) {
+        if (uiState.isSaved) {
+            onBackClick()
         }
-    )
-){
-    val state by viewModel.state.collectAsState()
-    // --- State cho các thành phần ---
-//    var selectedHour by remember { mutableIntStateOf(8) }
-//    var selectedMinute by remember { mutableIntStateOf(10) }
-//    var text by remember { mutableStateOf("") }
-//    val daysOfWeek = remember {
-//        mutableStateMapOf(
-//            "CN" to false, "T2" to true, "T3" to true, "T4" to true, "T5" to true, "T6" to true, "T7" to false
-//        )
-//    }
-//    var repeatDaily by remember { mutableStateOf(true) }
-//    var volume by remember { mutableFloatStateOf(0.7f) }
-
-    // --- State cho 2 LazyColumn (theo yêu cầu của bạn) ---
-    // 🚨 SỬA LỖI 3: FOCUS BAN ĐẦU (Ở GIỮA)
-    // (Để item 8 ở giữa, item 7 phải ở trên cùng)
-    val hourListState = rememberLazyListState()
-    val minuteListState = rememberLazyListState()
-
-    LaunchedEffect(state.selectedHour, state.selectedMinute) {
-        // Cuộn đến vị trí gần đúng khi dữ liệu được load lần đầu
-        hourListState.scrollToItem(max(0, state.selectedHour - 1))
-        minuteListState.scrollToItem(max(0, state.selectedMinute - 1))
     }
 
-    RememberSnapLogic(
-        lazyListState = hourListState,
-        onItemSelected = viewModel::updateHour
-    )
+    val hourListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
+    val minuteListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
 
-    RememberSnapLogic(
-        lazyListState = minuteListState,
-        onItemSelected = viewModel::updateMinute
-    )
+    LaunchedEffect(uiState.hour, uiState.minute) {
+        hourListState.scrollToItem(max(0, uiState.hour - 1))
+        minuteListState.scrollToItem(max(0, uiState.minute - 1))
+    }
 
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = RedPrimary)
+        }
+        return
+    }
 
-//    // --- 🚨 LOGIC SNAPPING CHO GIỜ (MỚI) ---
-//    rememberSnapLogic(
-//        lazyListState = hourListState,
-//        onItemSelected = { newHour -> selectedHour = newHour }
-//    )
-//
-//    // --- 🚨 LOGIC SNAPPING CHO PHÚT (MỚI) ---
-//    rememberSnapLogic(
-//        lazyListState = minuteListState,
-//        onItemSelected = { newMinute -> selectedMinute = newMinute }
-//    )
-
-    // --- Sử dụng Box làm gốc để nút "Lưu" nổi lên ---
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black) // Đặt màu nền cho toàn màn hình
-    ) {
-
-        // --- NỘI DUNG (Bao gồm TopAppBar và LazyColumn) ---
+            .background(Color.Black)
+    ){
         Column(modifier = Modifier.fillMaxSize()) {
-
-            // 1. TopAppBar (thêm thủ công vì không dùng Scaffold)
             CenterAlignedTopAppBar(
-                title = { Text(
-                    text = if (alarmId == -1) "Thêm báo thức" else "Sửa báo thức",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                ) },
+                title = { Text("Chuông báo thức", color = Color.White, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) { // ✅ GẮN onBackClick
-                        Icon(Icons.Default.Close,
-                            tint = Color.White,
-                            contentDescription = "Đóng")
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.Close, "Đóng", tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Black
-                )
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg)
             )
 
-            // 2. Danh sách cuộn các cài đặt
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), // Chiếm hết không gian còn lại
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                // Thêm padding cuối để nội dung không bị nút "Lưu" che
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 100.dp // Đủ không gian cho nút và padding
-                )
-            ) {
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 100.dp)
+            ){
                 item {
-                    TextField(
-                        value = state.alarmName,
-                        onValueChange = viewModel::updateAlarmName,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp),
-                        placeholder = {
-                            Text(
-                                text = "Vui lòng điền tên báo thức",
-                                fontSize = 18.sp,
-                                color = Color.Gray
-                            )
-                        },
+                    OutlinedTextField(
+                        value = uiState.label,
+                        onValueChange = { viewModel.onLabelChanged(it) },
+                        label = { Text("Tên báo thức", color = Color.Gray) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPrimary,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
                         leadingIcon = {
                             Image(
-                                painter = painterResource(R.drawable.sun),
+                                painter = painterResource(com.example.myapplication.R.drawable.sun),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -184,25 +119,6 @@ fun AlarmSettingScreen(
                                 tint = Color.Gray
                             )
                         },
-                        // 🚨 SỬA LỖI 1: THÊM MÀU CHỮ VÀO ĐÂY
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-
-                            cursorColor = Color.White,
-
-                            focusedTextColor = Color.White,   // Chữ màu trắng khi gõ
-                            unfocusedTextColor = Color.White, // Chữ màu trắng khi không focus
-
-                            // Sửa 'placeholderColor' thành 2 dòng này
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray
-                        ),
-                        textStyle = TextStyle(fontSize = 18.sp)
                     )
                 }
 
@@ -211,20 +127,19 @@ fun AlarmSettingScreen(
                     TimePickerSection(
                         hourListState = hourListState,
                         minuteListState = minuteListState,
-                        selectedHour = state.selectedHour,
-                        selectedMinute = state.selectedMinute,
-                        onHourChange = viewModel::updateHour,
-                        onMinuteChange = viewModel::updateMinute
+                        selectedHour = uiState.hour,
+                        selectedMinute = uiState.minute,
+                        onHourChange = { newHour -> viewModel.updateHour(newHour) },
+                        onMinuteChange = { newMinute -> viewModel.updateMinute(newMinute) }
                     )
                 }
 
                 //--- 2. ĐỔ CHUÔNG SAU ---
                 item {
                     Text(
-                        text = state.timeUntilAlarm,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White,
-                        fontSize = 18.sp,
+                        text = uiState.timeUntilAlarm, // Có thể thêm logic tính toán
+                        color = Color.Gray,
+                        fontSize = 14.sp,
                         modifier = Modifier.padding(top = 20.dp),
                     )
                 }
@@ -232,10 +147,13 @@ fun AlarmSettingScreen(
                 //--- 3. CHỌN NGÀY ---
                 item {
                     DaySelectorSection(
-                        daysOfWeek = state.daysOfWeek,
-                        repeatDaily = state.repeatDaily,
-                        onRepeatDailyChange = viewModel::toggleRepeatDaily,
-                        onDayToggle = viewModel::toggleDay
+                        daysOfWeek = uiState.daysOfWeek,
+                        onRepeatDailyChange = { isChecked ->
+                            viewModel.toggleRepeatDaily(isChecked)
+                        },
+                        onDayToggle = { day ->
+                            viewModel.toggleDay(day)
+                        }
                     )
                 }
 
@@ -276,7 +194,7 @@ fun AlarmSettingScreen(
                             SettingsSectionHeader(title = "Âm thanh báo thức")
                             SoundSelectionRow()
                             VolumeSliderRow(
-                                volume = state.volume,
+                                volume = uiState.volume,
                                 onVolumeChange = viewModel::updateVolume
                             )
                         }
@@ -308,31 +226,119 @@ fun AlarmSettingScreen(
                 }
             }
         }
-
-        // --- Nút "Lưu" nổi ở dưới cùng ---
         Button(
-            onClick = {
-                viewModel.saveAlarm()
-                onBackClick()
-            },
+            onClick = { viewModel.saveAlarm() },
+            colors = ButtonDefaults.buttonColors(containerColor = RedPrimary),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp) // Padding xung quanh nút
+                .padding(25.dp)
                 .height(56.dp)
-                .align(Alignment.BottomCenter), // Căn chỉnh nút xuống đáy Box
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63)), // Màu đỏ
-            shape = RoundedCornerShape(12.dp)
+                .align(Alignment.BottomCenter),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Text("Lưu", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
-// --- CÁC COMPOSABLE CON (HELPER FUNCTIONS) ---
+@Composable
+fun SettingsNavigationItem(
+    title: String,
+    value: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color =  Color.White)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+            Icon(
+                Icons.AutoMirrored.Filled.NavigateNext,
+                contentDescription = null,
+                tint = Color.White
+            )
+        }
+    }
+}
 
-/**
- * Hàm Helper để lắng nghe trạng thái cuộn và "bắt dính" (snap)
- */
+@Composable
+fun VolumeSliderRow(volume: Float, onVolumeChange: (Float) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.VolumeUp,
+            contentDescription = "Âm lượng",
+            tint = Color.White
+        )
+        Slider(
+            value = volume,
+            onValueChange = onVolumeChange,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun SoundSelectionRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /* Mở danh sách nhạc */ }
+            .padding(top = 20.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Default.MusicNote,
+            contentDescription = null,
+            modifier = Modifier.padding(end = 16.dp),
+            tint = Color.White
+        )
+        Text(
+            text = "TOKUSOU SENTAI DEKAR...",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+            color = Color.White
+        )
+        Icon(
+            Icons.AutoMirrored.Filled.NavigateNext,
+            contentDescription = null,
+            tint = Color.White
+        )
+    }
+}
+
+@Composable
+fun DayCircleButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) BlueAccent else Color(0xFF1C1C1E))
+            .clickable { onClick() }
+    ) {
+        Text(text = text, color = if (isSelected) Color.White else BlueAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
 @Composable
 private fun RememberSnapLogic(
     lazyListState: LazyListState,
@@ -342,9 +348,7 @@ private fun RememberSnapLogic(
     LaunchedEffect(lazyListState.isScrollInProgress) {
         if (!lazyListState.isScrollInProgress) {
             coroutineScope.launch {
-                delay(100) // Đợi cuộn quán tính kết thúc
-
-                // Tính toán item gần nhất với vị trí trên cùng
+                delay(100)
                 val firstVisibleItem = lazyListState.firstVisibleItemIndex
                 val firstVisibleItemOffset = lazyListState.firstVisibleItemScrollOffset
                 val itemHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 40
@@ -354,21 +358,129 @@ private fun RememberSnapLogic(
                 } else {
                     firstVisibleItem
                 }
-
-                // 1. Cuộn đến item trên cùng (snapIndex)
                 lazyListState.animateScrollToItem(snapIndex)
-
-                // 2. Cập nhật state (item ở giữa = item trên + 1)
                 onItemSelected(snapIndex + 1)
             }
         }
     }
 }
 
-/**
- * Phần chọn thời gian sử dụng 2 LazyColumn.
- * 🚨 ĐÃ SỬA LỖI LAYOUT VÀ LOGIC
- */
+@Composable
+fun MissionSquareCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    isSelected: Boolean,
+    isLocked: Boolean = false,
+    onClick: () -> Unit
+) {
+    val bgColor = if (isSelected) Color(0xFF006064) else Color(0xFF3E3E3E)
+    val tintColor = if (isSelected) BlueAccent else Color.Gray
+
+    Card(
+        modifier = Modifier.size(80.dp).clickable(enabled = !isLocked, onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = tintColor)
+            if (label.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = label, color = Color.White, fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun AlarmTaskSection() {
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Box(modifier = Modifier){
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(Color.White),
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(top = 8.dp, end = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 8.dp, start = 20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ){
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                        }
+                        Text("5 lần", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black)
+                        .align (Alignment.TopEnd)
+                        .clickable(onClick = {}),
+                    contentAlignment = Alignment.Center
+                ){
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Đóng",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        items(3) {
+            Box(modifier = Modifier){
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(Color.Gray),
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(top = 4.dp, end = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 4.dp, start = 20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ){
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Black)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun TimePickerSection(
     hourListState: LazyListState,
@@ -378,6 +490,16 @@ fun TimePickerSection(
     onHourChange: (Int) -> Unit,
     onMinuteChange: (Int) -> Unit
 ) {
+    RememberSnapLogic(
+        lazyListState = hourListState,
+        onItemSelected = onHourChange
+    )
+
+    RememberSnapLogic(
+        lazyListState = minuteListState,
+        onItemSelected = onMinuteChange
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -429,38 +551,13 @@ fun TimePickerSection(
         }
     }
 }
-
-/**
- * Helper Composable cho một Text (Giờ/Phút) trong TimePicker
- */
-@Composable
-private fun TimePickerItem(
-    text: String,
-    isSelected: Boolean
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.headlineLarge,
-        // Thay đổi style dựa trên state
-        fontSize = if (isSelected) 36.sp else 32.sp,
-        color = if (isSelected) Color.White else Color.Gray,
-        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-        // Bỏ hoàn toàn padding ngang
-        modifier = Modifier.padding(vertical = 4.dp)
-    )
-}
-
-/**
- * Phần chọn ngày trong tuần
- */
 @Composable
 fun DaySelectorSection(
-    daysOfWeek: SnapshotStateMap<String, Boolean>,
-    repeatDaily: Boolean,
+    daysOfWeek: Set<String>,
     onRepeatDailyChange: (Boolean) -> Unit,
     onDayToggle: (String) -> Unit
 ) {
-    // --- Lấy màu sắc từ theme M3 ---
+    val isDaily = daysOfWeek.size == 7
     val selectedColor = MaterialTheme.colorScheme.primary
     val onSelectedColor = MaterialTheme.colorScheme.onPrimary
     val unselectedColor = MaterialTheme.colorScheme.surfaceVariant
@@ -468,33 +565,39 @@ fun DaySelectorSection(
     val dayOrder = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // --- Phần Checkbox "Hàng ngày" (giữ nguyên) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onRepeatDailyChange(!repeatDaily) }
-                .padding(top = 20.dp),
+                .clickable { onRepeatDailyChange(!isDaily) }
+                .padding(top = 20.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Hàng ngày", style = MaterialTheme.typography.bodyLarge, color = Color.White,)
-            Checkbox(checked = repeatDaily, onCheckedChange = onRepeatDailyChange)
+            Text(
+                text = "Hàng ngày",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+            Checkbox(
+                checked = isDaily,
+                onCheckedChange = { onRepeatDailyChange(it) },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = selectedColor,
+                    uncheckedColor = Color.Gray,
+                    checkmarkColor = onSelectedColor
+                )
+            )
         }
-        // --- Đã đổi sang Row ---
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp), // Thêm chút padding
-            // Dùng SpaceAround để 7 item tự động căn đều
-            horizontalArrangement = Arrangement.SpaceAround,
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // Dùng forEach trên 'dayOrder' thay vì 'daysOfWeek.keys'
             dayOrder.forEach { day ->
-                val isSelected = daysOfWeek[day] ?: false
-
-                // Gọi Composable "tự chế" của chúng ta
+                val isSelected = daysOfWeek.contains(day)
                 CustomDayChip(
                     text = day,
                     isSelected = isSelected,
@@ -522,173 +625,20 @@ fun CustomDayChip(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (isSelected) selectedColor else unselectedColor
-            )
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) selectedColor else unselectedColor)
             .clickable { onClick() }
-            .sizeIn(minWidth = 48.dp, minHeight = 40.dp)
-            .padding(horizontal = 12.dp)
     ) {
         Text(
             text = text,
             color = if (isSelected) onSelectedColor else onUnselectedColor,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
 
-/**
- * Phần "Nhiệm vụ báo thức"
- */
-@Composable
-fun AlarmTaskSection() {
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Task 1: (Ví dụ)
-        item {
-            Box(modifier = Modifier){
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(Color.White),
-                    modifier = Modifier
-                        .size(80.dp)
-                        .padding(top = 8.dp, end = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 8.dp, start = 20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Center
-                    ){
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-                        }
-                        Text("5 lần", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black)
-                        .align (Alignment.TopEnd)
-                        .clickable(onClick = {}),
-                    contentAlignment = Alignment.Center
-                ){
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Đóng",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-        // Các task bị khóa (Ví dụ)
-        items(3) {
-            Box(modifier = Modifier){
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(Color.Gray),
-                    modifier = Modifier
-                        .size(80.dp)
-                        .padding(top = 4.dp, end = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 4.dp, start = 20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Center
-                    ){
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Black)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Hàng chọn nhạc
- */
-@Composable
-fun SoundSelectionRow() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Mở danh sách nhạc */ }
-            .padding(top = 20.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.MusicNote,
-            contentDescription = null,
-            modifier = Modifier.padding(end = 16.dp),
-            tint = Color.White
-        )
-        Text(
-            text = "TOKUSOU SENTAI DEKAR...",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-            color = Color.White
-        )
-        Icon(
-            Icons.AutoMirrored.Filled.NavigateNext,
-            contentDescription = null,
-            tint = Color.White
-        )
-    }
-}
-
-/**
- * Hàng thanh trượt âm lượng
- */
-@Composable
-fun VolumeSliderRow(volume: Float, onVolumeChange: (Float) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Icon(
-            Icons.AutoMirrored.Filled.VolumeUp,
-            contentDescription = "Âm lượng",
-            tint = Color.White
-        )
-        Slider(
-            value = volume,
-            onValueChange = onVolumeChange,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-/**
- * Tiêu đề cho các phần (Section)
- */
 @Composable
 fun SettingsSectionHeader(title: String) {
     Text(
@@ -700,47 +650,19 @@ fun SettingsSectionHeader(title: String) {
     )
 }
 
-/**
- * Một hàng item dùng để điều hướng (ví dụ: "Báo lại")
- */
 @Composable
-fun SettingsNavigationItem(
-    title: String,
-    value: String,
-    onClick: () -> Unit
+private fun TimePickerItem(
+    text: String,
+    isSelected: Boolean
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color =  Color.White)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
-            )
-            Icon(
-                Icons.AutoMirrored.Filled.NavigateNext,
-                contentDescription = null,
-                tint = Color.White
-            )
-        }
-    }
-}
-
-// --- PREVIEW ---
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MaterialTheme {
-        AlarmSettingScreen(alarmId = -1, onBackClick = {})
-    }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.headlineLarge,
+        // Thay đổi style dựa trên state
+        fontSize = if (isSelected) 36.sp else 32.sp,
+        color = if (isSelected) Color.White else Color.Gray,
+        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        // Bỏ hoàn toàn padding ngang
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
 }

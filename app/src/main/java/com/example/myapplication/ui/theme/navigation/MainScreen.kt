@@ -31,7 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
 import com.example.myapplication.ui.theme.alarm.AlarmScreen
-import com.example.myapplication.ui.theme.alarm.AlarmSettingScreen
+import com.example.myapplication.ui.theme.alarm.AlarmSettingsScreen
 import com.example.myapplication.ui.theme.alarm.QuizScreen
 import com.example.myapplication.ui.theme.topic.TopicDetailScreen
 import com.example.myapplication.ui.theme.topic.TopicScreen
@@ -78,24 +78,6 @@ fun MainScreen() {
 //                StatsScreen()
             }
 
-            composable(Screen.ALARM_RINGING) {
-
-                AlarmRingingScreen(
-                    alarmLabel = "Thức dậy đi học", // Dữ liệu cố định
-
-                    // 🚨 onSnooze/onFinish: Xử lý Báo lại hoặc Đóng màn hình Reo
-                    onSnooze = { /* TODO: Gọi VM để lên lịch lại (Snooze Logic) */ },
-                    onFinish = {
-                        navController.popBackStack() // Quay về màn hình trước (thường là sau khi Snooze)
-                    },
-
-                    // 🚨 onNavigateToQuiz: Chuyển sang màn làm nhiệm vụ khi bấm "Tắt báo thức"
-                    onNavigateToQuiz = {
-                        navController.navigate(Screen.QUIZ_SCREEN)
-                    }
-                )
-            }
-
             // --- 2. MÀN HÌNH TRẢ LỜI CÂU HỎI (QuizScreen) ---
             composable(Screen.QUIZ_SCREEN) {
 
@@ -135,12 +117,15 @@ fun MainScreen() {
 
             composable(
                 route = Screen.ALARM_SETTINGS,
-                arguments = listOf(navArgument("alarmId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("alarmId") ?: -1
-                AlarmSettingScreen(
-                    alarmId = id,
-                    onBackClick = { navController.popBackStack() }
+                arguments = listOf(navArgument("alarmId") { type = NavType.IntType; defaultValue = -1 })
+            ) {
+                AlarmSettingsScreen(
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onMissionSettingClick = {
+                        navController.navigate(Screen.MISSION_SELECTION)
+                    }
                 )
             }
 

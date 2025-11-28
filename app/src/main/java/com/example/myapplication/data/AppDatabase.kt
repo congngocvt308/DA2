@@ -10,7 +10,8 @@ import androidx.room.TypeConverters
     entities = [
         TopicEntity::class, QuestionEntity::class, AlarmEntity::class,
         AlarmTopicLink::class, QuestionProgressEntity::class,
-        TopicStatsEntity::class, HistoryEntity::class, AlarmHistoryEntity::class
+        TopicStatsEntity::class, HistoryEntity::class, AlarmHistoryEntity::class,
+        AlarmSelectedQuestionEntity::class
     ],
     version = 1,
     exportSchema = false

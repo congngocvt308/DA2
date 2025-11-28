@@ -59,7 +59,8 @@ data class AlarmEntity(
 )
 data class AlarmTopicLink(
     val alarmId: Int,
-    val topicId: Int
+    val topicId: Int,
+    val isSelectAll: Boolean = true
 )
 
 // 5. Bảng QuestionProgress (1-1 với Question)
@@ -115,4 +116,21 @@ data class AlarmHistoryEntity(
     val firstRingTime: Date,
     val dismissalTime: Date?,
     val isDismissed: Boolean = false
+)
+
+// 9. Bảng AlarmSelectedQuestion (MỚI: Lưu các câu hỏi được chọn riêng lẻ)
+@Entity(
+    tableName = "alarm_selected_questions",
+    foreignKeys = [
+        ForeignKey(entity = AlarmEntity::class, parentColumns = ["alarmId"], childColumns = ["alarmId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = TopicEntity::class, parentColumns = ["topicId"], childColumns = ["topicId"], onDelete = ForeignKey.CASCADE)
+    ],
+    indices = [Index("alarmId"), Index("questionId"), Index("topicId")]
+)
+data class AlarmSelectedQuestionEntity(
+    @PrimaryKey(autoGenerate = true) val selectionId: Int = 0,
+    val alarmId: Int,
+    val questionId: Int,
+    val topicId: Int? = null // Cho phép null nếu DBML của bạn không bắt buộc, hoặc Int nếu bắt buộc
 )

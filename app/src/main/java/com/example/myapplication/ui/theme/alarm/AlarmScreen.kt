@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.theme.alarm
 
 import AlarmCard
+import android.R.attr.id
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -12,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -76,14 +78,15 @@ fun AlarmScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                itemsIndexed(
-                    items = alarmList,
-                    key = { index, alarm -> alarm.id }
-                ) { index, alarm ->
+                items(items = alarmList, key = { it.id }) { alarm ->
                     AlarmCard(
                         alarmData = alarm,
-                        onToggle = { newCheckedState -> viewModel.toggleAlarm(alarm.id, newCheckedState) },
-                        onCardClick = { onNavigateToSettings(alarm.id) }
+                        onToggle = { newState ->
+                            viewModel.toggleAlarm(alarm.id, newState)
+                        },
+                        onCardClick = {
+                            onNavigateToSettings(alarm.id)
+                        }
                     )
                 }
             }

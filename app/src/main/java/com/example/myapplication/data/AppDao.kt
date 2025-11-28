@@ -41,4 +41,25 @@ interface AppDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateTopicStats(stats: TopicStatsEntity)
+
+    // --- ALARM SELECTED QUESTIONS (Mới) ---
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSelectedQuestion(item: AlarmSelectedQuestionEntity)
+
+    @Query("DELETE FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    suspend fun clearSelectedQuestionsForAlarm(alarmId: Int)
+
+    @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    fun getSelectedQuestionsForAlarm(alarmId: Int): Flow<List<AlarmSelectedQuestionEntity>>
+
+    // Ví dụ truy vấn lấy tất cả câu hỏi được chọn thủ công cho 1 báo thức
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN alarm_selected_questions asq ON q.questionId = asq.questionId
+        WHERE asq.alarmId = :alarmId
+    """)
+    fun getManualQuestionsForAlarm(alarmId: Int): Flow<List<QuestionEntity>>
+
+    @Delete
+    suspend fun deleteAlarm(alarm: AlarmEntity)
 }
