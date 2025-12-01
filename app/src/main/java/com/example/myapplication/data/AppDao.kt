@@ -62,4 +62,7 @@ interface AppDao {
 
     @Delete
     suspend fun deleteAlarm(alarm: AlarmEntity)
+
+    @Query("DELETE FROM alarms WHERE isEnabled = 0")
+    suspend fun deleteInactiveAlarms()
 }

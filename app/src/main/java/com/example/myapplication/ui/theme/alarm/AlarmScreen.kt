@@ -1,7 +1,6 @@
 package com.example.myapplication.ui.theme.alarm
 
 import AlarmCard
-import android.R.attr.id
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -14,11 +13,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,6 +40,8 @@ fun AlarmScreen(
     navController: NavHostController
 ) {
     val alarmList by viewModel.alarms.collectAsState()
+    val currentSortType by viewModel.sortType.collectAsState()
+    val headerText by viewModel.timeUntilNextAlarms.collectAsState()
     var isFabMenuOpen by remember { mutableStateOf(false) }
     var isMoreMenuOpen by remember { mutableStateOf(false) }
     var showQuickDialog by remember { mutableStateOf(false) }
@@ -57,13 +58,17 @@ fun AlarmScreen(
                 .fillMaxSize()
         ) {
             AlarmTopBar(
+                currentSortType = currentSortType,
                 isMenuOpen = isMoreMenuOpen,
                 onMenuClick = { isMoreMenuOpen = true },
-                onDismissMenu = { isMoreMenuOpen = false }
+                onDismissMenu = { isMoreMenuOpen = false },
+                onSortDefault = { viewModel.setSortType(SortType.DEFAULT)},
+                onSortActive = { viewModel.setSortType(SortType.ACTIVE_FIRST)},
+                onDeleteInactive = { viewModel.deleteInactiveAlarms()}
             )
 
             Text(
-                text = "Đổ chuông sau 9 giờ 4 phút.",
+                text =headerText,
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
@@ -86,6 +91,9 @@ fun AlarmScreen(
                         },
                         onCardClick = {
                             onNavigateToSettings(alarm.id)
+                        },
+                        onDelete = {
+                            viewModel.deleteAlarm(alarm.id)
                         }
                     )
                 }
@@ -134,9 +142,13 @@ fun AlarmScreen(
 
 @Composable
 private fun AlarmTopBar(
+    currentSortType: SortType,
     isMenuOpen: Boolean,
     onMenuClick: () -> Unit,
-    onDismissMenu: () -> Unit
+    onDismissMenu: () -> Unit,
+    onSortDefault: () -> Unit,
+    onSortActive: () -> Unit,
+    onDeleteInactive: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -172,25 +184,43 @@ private fun AlarmTopBar(
                 DropdownMenuItem(
                     text = { Text("Sắp xếp", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp) },
                     onClick = {},
-                    trailingIcon = { Icon(Icons.Default.Sort, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(15.dp)) }
+                    trailingIcon = { Icon(Icons.Default.Sort, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(15.dp)) }
                 )
 
                 DropdownMenuItem(
                     text = { Text("Mặc định", color = MaterialTheme.colorScheme.onSurface) },
-                    onClick = {  }
+                    onClick = {
+                        onSortDefault()
+                        onDismissMenu()
+                    },
+                    trailingIcon = {
+                        if(currentSortType == SortType.DEFAULT)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary)
+                        else null
+                    }
                 )
 
                 DropdownMenuItem(
                     text = { Text("Đang hoạt động trước", color = MaterialTheme.colorScheme.onSurface) },
-                    onClick = {  },
-                    trailingIcon = { Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary) }
+                    onClick = {
+                        onSortActive()
+                        onDismissMenu()
+                    },
+                    trailingIcon = {
+                        if(currentSortType == SortType.ACTIVE_FIRST)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary)
+                        else null
+                    }
                 )
 
-                Divider(color = MaterialTheme.colorScheme.surface, thickness = 0.5.dp)
+                HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.surface)
 
                 DropdownMenuItem(
                     text = { Text("Xóa báo thức không hoạt động", color = MaterialTheme.colorScheme.primary) },
-                    onClick = { },
+                    onClick = {
+                        onDeleteInactive()
+                        onDismissMenu
+                    },
                     trailingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.primary )}
                 )
             }
@@ -292,14 +322,10 @@ fun FabMenuItem(
         Text(text, color = MaterialTheme.colorScheme.background, fontSize = 20.sp)
     }
 }
-
-// Trong AlarmScreen.kt, thêm Composable này:
-
 @Composable
 fun TestStartButton(navController: NavHostController) {
     Button(
         onClick = {
-            // Dùng ID giả lập 1 để chuyển sang màn hình reo
             navController.navigate(Screen.ALARM_RINGING)
         },
         modifier = Modifier.padding(16.dp)
@@ -307,4 +333,3 @@ fun TestStartButton(navController: NavHostController) {
         Text("TEST: REO CHUÔNG")
     }
 }
-// Sau đó gọi nó trong AlarmScreen của bạn (nhớ truyền NavController nếu cần).

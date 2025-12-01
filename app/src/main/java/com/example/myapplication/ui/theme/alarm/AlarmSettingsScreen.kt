@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.theme.alarm
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,10 +10,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -35,9 +41,8 @@ import kotlin.math.max
 
 // Màu sắc
 val DarkBg = Color.Black
-val CardSurface = Color(0xFF2C2C2E)
 val RedPrimary = Color(0xFFE50043)
-val BlueAccent = Color(0xFF00ACC1)
+private val CardSurface = Color(0xFF2C2C2E)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +61,8 @@ fun AlarmSettingsScreen(
 
     val hourListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
     val minuteListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    var showSnoozeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.hour, uiState.minute) {
         hourListState.scrollToItem(max(0, uiState.hour - 1))
@@ -78,7 +85,7 @@ fun AlarmSettingsScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Chuông báo thức", color = Color.White, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {showDiscardDialog = true}) {
                         Icon(Icons.Default.Close, "Đóng", tint = Color.White)
                     }
                 },
@@ -203,26 +210,12 @@ fun AlarmSettingsScreen(
 
                 // --- 7. CÀI ĐẶT TÙY CHỈNH ---
                 item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ){
-                            SettingsSectionHeader(title = "Cài đặt tùy chỉnh")
-                            SettingsNavigationItem(
-                                title = "Báo lại",
-                                value = "5 phút, Vô hạn",
-                                onClick = { /* Mở cài đặt báo lại */ }
-                            )
-                        }
-                    }
+                    SnoozeSettingsSection(
+                        isSnoozeEnabled = uiState.isSnoozeEnabled,
+                        snoozeDuration = uiState.snoozeDuration,
+                        onSnoozeToggle = { viewModel.onSnoozeToggle(it) },
+                        onDurationClick = { showSnoozeDialog = true }
+                    )
                 }
             }
         }
@@ -238,6 +231,27 @@ fun AlarmSettingsScreen(
         ) {
             Text("Lưu", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
+        if (showDiscardDialog) {
+            DiscardChangesDialog(
+                onDismissRequest = {
+                    showDiscardDialog = false
+                },
+                onConfirmDiscard = {
+                    showDiscardDialog = false
+                    onBackClick()
+                }
+            )
+        }
+    }
+    if (showSnoozeDialog) {
+        SnoozeDurationDialog(
+            currentDuration = uiState.snoozeDuration,
+            onDismiss = { showSnoozeDialog = false },
+            onDurationSelected = { newDuration ->
+                viewModel.onSnoozeDurationChanged(newDuration)
+                showSnoozeDialog = false
+            }
+        )
     }
 }
 
@@ -326,20 +340,6 @@ fun SoundSelectionRow() {
 }
 
 @Composable
-fun DayCircleButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) BlueAccent else Color(0xFF1C1C1E))
-            .clickable { onClick() }
-    ) {
-        Text(text = text, color = if (isSelected) Color.White else BlueAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
 private fun RememberSnapLogic(
     lazyListState: LazyListState,
     onItemSelected: (Int) -> Unit
@@ -352,7 +352,6 @@ private fun RememberSnapLogic(
                 val firstVisibleItem = lazyListState.firstVisibleItemIndex
                 val firstVisibleItemOffset = lazyListState.firstVisibleItemScrollOffset
                 val itemHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 40
-
                 val snapIndex = if (firstVisibleItemOffset > (itemHeight / 2)) {
                     firstVisibleItem + 1
                 } else {
@@ -360,36 +359,6 @@ private fun RememberSnapLogic(
                 }
                 lazyListState.animateScrollToItem(snapIndex)
                 onItemSelected(snapIndex + 1)
-            }
-        }
-    }
-}
-
-@Composable
-fun MissionSquareCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    isSelected: Boolean,
-    isLocked: Boolean = false,
-    onClick: () -> Unit
-) {
-    val bgColor = if (isSelected) Color(0xFF006064) else Color(0xFF3E3E3E)
-    val tintColor = if (isSelected) BlueAccent else Color.Gray
-
-    Card(
-        modifier = Modifier.size(80.dp).clickable(enabled = !isLocked, onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(imageVector = icon, contentDescription = null, tint = tintColor)
-            if (label.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = label, color = Color.White, fontSize = 12.sp)
             }
         }
     }
@@ -503,18 +472,15 @@ fun TimePickerSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp) // Cố định chiều cao (ví dụ: 3 item x 60dp)
+            .height(180.dp)
             .padding(vertical = 20.dp),
-        // Kéo 3 thành phần lại gần nhau
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // --- Cột Giờ ---
         LazyColumn(
-            modifier = Modifier.wrapContentWidth(), // Bọc nội dung
+            modifier = Modifier.wrapContentWidth(),
             state = hourListState,
-            horizontalAlignment = Alignment.End, // Căn phải
-            // Padding dọc = (Cao 180 / 2) - (Cao item ~50 / 2) ≈ 65.dp
+            horizontalAlignment = Alignment.End,
             contentPadding = PaddingValues(vertical = 0.dp)
         ) {
             items(24) { hour ->
@@ -525,21 +491,19 @@ fun TimePickerSection(
             }
         }
 
-        // --- Dấu : ---
         Text(
             text = ":",
             style = MaterialTheme.typography.headlineLarge,
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 12.dp) // Tinh chỉnh chiều dọc
+            modifier = Modifier.padding(horizontal = 12.dp)
         )
 
-        // --- Cột Phút ---
         LazyColumn(
-            modifier = Modifier.wrapContentWidth(), // Bọc nội dung
+            modifier = Modifier.wrapContentWidth(),
             state = minuteListState,
-            horizontalAlignment = Alignment.Start, // Căn trái
+            horizontalAlignment = Alignment.Start,
             contentPadding = PaddingValues(vertical = 0.dp)
         ) {
             items(60) { minute ->
@@ -665,4 +629,137 @@ private fun TimePickerItem(
         // Bỏ hoàn toàn padding ngang
         modifier = Modifier.padding(vertical = 4.dp)
     )
+}
+
+@Composable
+fun SnoozeSettingsSection(
+    isSnoozeEnabled: Boolean,
+    snoozeDuration: Int, // Phút (5, 10, 15...)
+    onSnoozeToggle: (Boolean) -> Unit,
+    onDurationClick: () -> Unit // Mở dialog chọn thời gian
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = CardSurface)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // 1. Dòng Bật/Tắt Báo lại
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Báo lại",
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+                Switch(
+                    checked = isSnoozeEnabled,
+                    onCheckedChange = onSnoozeToggle,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = RedPrimary,
+                        uncheckedThumbColor = Color.Gray,
+                        uncheckedTrackColor = Color.DarkGray
+                    )
+                )
+            }
+
+            // 2. Dòng chọn thời gian (Chỉ hiện khi Bật)
+            AnimatedVisibility(
+                visible = isSnoozeEnabled,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Divider(color = Color.Gray, thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onDurationClick),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Khoảng thời gian",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "$snoozeDuration phút",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SnoozeDurationDialog(
+    currentDuration: Int,
+    onDismiss: () -> Unit,
+    onDurationSelected: (Int) -> Unit
+) {
+    val options = listOf(5, 10, 15, 20, 25, 30)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
+            modifier = Modifier.width(300.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Thời gian báo lại",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                LazyColumn {
+                    items(options) { duration ->
+                        val isSelected = (duration == currentDuration)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onDurationSelected(duration) }
+                                .background(if (isSelected) Color(0xFF3E3E3E) else Color.Transparent)
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "$duration phút",
+                                color = if (isSelected) Color(0xFFE50043) else Color.White,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

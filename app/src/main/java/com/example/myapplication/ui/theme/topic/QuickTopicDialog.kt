@@ -1,7 +1,5 @@
 package com.example.myapplication.ui.theme.topic
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -83,7 +80,7 @@ fun QuickTopicContent(
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it},
-                label = { Text("Tên chur đề", color = MaterialTheme.colorScheme.tertiary) },
+                label = { Text("Tên chủ đề", color = MaterialTheme.colorScheme.tertiary) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.tertiary,

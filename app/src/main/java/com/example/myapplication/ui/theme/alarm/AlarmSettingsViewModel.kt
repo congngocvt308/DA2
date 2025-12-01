@@ -205,14 +205,7 @@ class AlarmSettingsViewModel(
         }
     }
 
-    fun deleteAlarm() {
-        if (alarmId == -1) return
-        viewModelScope.launch {
-            val alarm = alarmDao.getAlarmById(alarmId)
-            if (alarm != null) {
-                alarmDao.deleteAlarm(alarm)
-                _uiState.update { it.copy(isSaved = true) }
-            }
-        }
+    fun onSnoozeDurationChanged(duration: Int) {
+        _uiState.update { it.copy(snoozeDuration = duration) }
     }
 }

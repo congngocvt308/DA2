@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -33,7 +35,8 @@ import com.example.myapplication.R
 fun AlarmCard(
     alarmData: AlarmData,
     onToggle: (Boolean) -> Unit,
-    onCardClick: () -> Unit){
+    onCardClick: () -> Unit,
+    onDelete:() -> Unit){
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -57,12 +60,15 @@ fun AlarmCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp
                 )
-                Icon(
-                    Icons.Default.Clear,
-                    contentDescription = "Tùy chọn báo thức",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp)
-                )
+                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Xóa báo thức",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
