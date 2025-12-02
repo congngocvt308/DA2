@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.theme.alarm
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -37,7 +38,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.max
+import kotlin.math.abs
 
 // Màu sắc
 val DarkBg = Color.Black
@@ -52,11 +53,11 @@ fun AlarmSettingsScreen(
     onMissionSettingClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(uiState.isSaved) {
-        if (uiState.isSaved) {
-            onBackClick()
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = RedPrimary)
         }
+        return
     }
 
     val hourListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
@@ -64,16 +65,22 @@ fun AlarmSettingsScreen(
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showSnoozeDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.hour, uiState.minute) {
-        hourListState.scrollToItem(max(0, uiState.hour - 1))
-        minuteListState.scrollToItem(max(0, uiState.minute - 1))
+    LaunchedEffect(Unit) {
+        val startBase = Int.MAX_VALUE / 2
+        val startHourIndex = startBase - (startBase % 24) + uiState.hour
+        val startMinuteIndex = startBase - (startBase % 60) + uiState.minute
+        hourListState.scrollToItem(startHourIndex)
+        minuteListState.scrollToItem(startMinuteIndex)
     }
 
-    if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = RedPrimary)
+    LaunchedEffect(uiState.isSaved) {
+        if (uiState.isSaved) {
+            onBackClick()
         }
-        return
+    }
+
+    BackHandler(enabled = true) {
+        showDiscardDialog = true
     }
 
     Box(
@@ -256,39 +263,6 @@ fun AlarmSettingsScreen(
 }
 
 @Composable
-fun SettingsNavigationItem(
-    title: String,
-    value: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color =  Color.White)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
-            )
-            Icon(
-                Icons.AutoMirrored.Filled.NavigateNext,
-                contentDescription = null,
-                tint = Color.White
-            )
-        }
-    }
-}
-
-@Composable
 fun VolumeSliderRow(volume: Float, onVolumeChange: (Float) -> Unit) {
     Row(
         modifier = Modifier
@@ -336,31 +310,6 @@ fun SoundSelectionRow() {
             contentDescription = null,
             tint = Color.White
         )
-    }
-}
-
-@Composable
-private fun RememberSnapLogic(
-    lazyListState: LazyListState,
-    onItemSelected: (Int) -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(lazyListState.isScrollInProgress) {
-        if (!lazyListState.isScrollInProgress) {
-            coroutineScope.launch {
-                delay(100)
-                val firstVisibleItem = lazyListState.firstVisibleItemIndex
-                val firstVisibleItemOffset = lazyListState.firstVisibleItemScrollOffset
-                val itemHeight = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 40
-                val snapIndex = if (firstVisibleItemOffset > (itemHeight / 2)) {
-                    firstVisibleItem + 1
-                } else {
-                    firstVisibleItem
-                }
-                lazyListState.animateScrollToItem(snapIndex)
-                onItemSelected(snapIndex + 1)
-            }
-        }
     }
 }
 
@@ -458,38 +407,23 @@ fun TimePickerSection(
     selectedMinute: Int,
     onHourChange: (Int) -> Unit,
     onMinuteChange: (Int) -> Unit
-) {
-    RememberSnapLogic(
-        lazyListState = hourListState,
-        onItemSelected = onHourChange
-    )
-
-    RememberSnapLogic(
-        lazyListState = minuteListState,
-        onItemSelected = onMinuteChange
-    )
-
+){
+    RememberInfiniteSnap(hourListState, 24, onHourChange)
+    RememberInfiniteSnap(minuteListState, 60, onMinuteChange)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(190.dp)
             .padding(vertical = 20.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LazyColumn(
-            modifier = Modifier.wrapContentWidth(),
+        InfiniteWheelColumn(
             state = hourListState,
-            horizontalAlignment = Alignment.End,
-            contentPadding = PaddingValues(vertical = 0.dp)
-        ) {
-            items(24) { hour ->
-                TimePickerItem(
-                    text = "%02d".format(hour),
-                    isSelected = (hour == selectedHour)
-                )
-            }
-        }
+            itemCount = 24,
+            selectedItem = selectedHour,
+            alignment = Alignment.End
+        )
 
         Text(
             text = ":",
@@ -497,24 +431,71 @@ fun TimePickerSection(
             color = Color.White,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp).padding(top = 20.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier.wrapContentWidth(),
+        InfiniteWheelColumn(
             state = minuteListState,
-            horizontalAlignment = Alignment.Start,
-            contentPadding = PaddingValues(vertical = 0.dp)
-        ) {
-            items(60) { minute ->
-                TimePickerItem(
-                    text = "%02d".format(minute),
-                    isSelected = (minute == selectedMinute)
-                )
+            itemCount = 60,
+            selectedItem = selectedMinute,
+            alignment = Alignment.Start
+        )
+    }
+}
+
+@Composable
+private fun InfiniteWheelColumn(
+    state: LazyListState,
+    itemCount: Int,
+    selectedItem: Int,
+    alignment: Alignment.Horizontal
+) {
+    LazyColumn(
+        state = state,
+        modifier = Modifier.wrapContentWidth(),
+        horizontalAlignment = alignment,
+        contentPadding = PaddingValues(vertical = 60.dp)
+    ) {
+        items(count = Int.MAX_VALUE) { index ->
+            val value = index % itemCount
+            val isSelected = (value == selectedItem)
+
+            TimePickerItem(
+                text = "%02d".format(value),
+                isSelected = isSelected
+            )
+        }
+    }
+}
+
+@Composable
+private fun RememberInfiniteSnap(
+    lazyListState: LazyListState,
+    itemCount: Int,
+    onItemSelected: (Int) -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(lazyListState.isScrollInProgress) {
+        if (!lazyListState.isScrollInProgress) {
+            coroutineScope.launch {
+                delay(50)
+                val layoutInfo = lazyListState.layoutInfo
+                if (layoutInfo.visibleItemsInfo.isEmpty()) return@launch
+                val containerCenter = layoutInfo.viewportEndOffset / 2
+                val closestItem = layoutInfo.visibleItemsInfo.minByOrNull {
+                    abs((it.offset + it.size / 2) - containerCenter)
+                }
+                if (closestItem != null) {
+                    lazyListState.animateScrollToItem(closestItem.index)
+                    val actualValue = closestItem.index % itemCount
+                    onItemSelected(actualValue)
+                }
             }
         }
     }
 }
+
 @Composable
 fun DaySelectorSection(
     daysOfWeek: Set<String>,
@@ -622,11 +603,9 @@ private fun TimePickerItem(
     Text(
         text = text,
         style = MaterialTheme.typography.headlineLarge,
-        // Thay đổi style dựa trên state
         fontSize = if (isSelected) 36.sp else 32.sp,
         color = if (isSelected) Color.White else Color.Gray,
         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-        // Bỏ hoàn toàn padding ngang
         modifier = Modifier.padding(vertical = 4.dp)
     )
 }
@@ -634,9 +613,9 @@ private fun TimePickerItem(
 @Composable
 fun SnoozeSettingsSection(
     isSnoozeEnabled: Boolean,
-    snoozeDuration: Int, // Phút (5, 10, 15...)
+    snoozeDuration: Int,
     onSnoozeToggle: (Boolean) -> Unit,
-    onDurationClick: () -> Unit // Mở dialog chọn thời gian
+    onDurationClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
@@ -646,7 +625,6 @@ fun SnoozeSettingsSection(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // 1. Dòng Bật/Tắt Báo lại
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -669,7 +647,6 @@ fun SnoozeSettingsSection(
                 )
             }
 
-            // 2. Dòng chọn thời gian (Chỉ hiện khi Bật)
             AnimatedVisibility(
                 visible = isSnoozeEnabled,
                 enter = expandVertically(),
