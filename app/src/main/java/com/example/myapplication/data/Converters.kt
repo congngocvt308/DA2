@@ -8,7 +8,6 @@ import java.util.Date
 class Converters {
     private val gson = Gson()
 
-    // 1. Chuyển đổi Date <-> Long (Timestamp)
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {
         return value?.let { Date(it) }
@@ -19,7 +18,6 @@ class Converters {
         return date?.time
     }
 
-    // 2. Chuyển đổi List<String> <-> JSON String (Cho bảng Question)
     @TypeConverter
     fun fromStringList(value: String?): List<String> {
         val listType = object : TypeToken<List<String>>() {}.type
@@ -31,7 +29,6 @@ class Converters {
         return gson.toJson(list)
     }
 
-    // 3. Chuyển đổi Set<String> <-> JSON String (Cho bảng Alarm - ngày lặp lại)
     @TypeConverter
     fun fromStringSet(value: String?): Set<String> {
         val setType = object : TypeToken<Set<String>>() {}.type

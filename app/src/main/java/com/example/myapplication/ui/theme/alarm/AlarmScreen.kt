@@ -1,6 +1,6 @@
 package com.example.myapplication.ui.theme.alarm
 
-import AlarmCard
+import com.example.myapplication.ui.theme.alarm.AlarmCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -104,7 +104,7 @@ fun AlarmScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -229,7 +229,7 @@ private fun AlarmTopBar(
 }
 
 @Composable
-private fun FabSpeedDial(
+fun FabSpeedDial(
     isMenuOpen: Boolean,
     onToggleMenu: () -> Unit,
     onAddNewAlarm: () -> Unit,

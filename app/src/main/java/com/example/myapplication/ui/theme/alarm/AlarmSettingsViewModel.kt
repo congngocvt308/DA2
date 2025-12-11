@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.AlarmEntity
 import com.example.myapplication.data.AlarmSettingData
 import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.data.MissionQuestion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,12 +64,6 @@ class AlarmSettingsViewModel(
         }
     }
 
-    // --- Events (Logic xử lý) ---
-
-    fun onTimeChanged(hour: Int, minute: Int) {
-        _uiState.update { it.copy(hour = hour, minute = minute) }
-    }
-
     fun onLabelChanged(newLabel: String) {
         _uiState.update { it.copy(label = newLabel) }
     }
@@ -103,6 +98,10 @@ class AlarmSettingsViewModel(
 
     fun updateVolume(newVolume: Float) {
         _uiState.update { it.copy(volume = newVolume) }
+    }
+
+    fun updateRingtone(uri: String) {
+        _uiState.update { it.copy(ringtoneUri = uri) }
     }
 
     private fun updateTimeUntilAlarm() {
@@ -164,22 +163,10 @@ class AlarmSettingsViewModel(
         }
     }
 
-    fun onDayToggle(dayCode: String) {
-        _uiState.update { state ->
-            val currentDays = state.daysOfWeek.toMutableSet()
-            if (currentDays.contains(dayCode)) currentDays.remove(dayCode)
-            else currentDays.add(dayCode)
-            state.copy(daysOfWeek = currentDays)
-        }
-    }
-
     fun onSnoozeToggle(enabled: Boolean) {
         _uiState.update { it.copy(isSnoozeEnabled = enabled) }
     }
 
-    fun onQuestionCountChanged(count: Int) {
-        _uiState.update { it.copy(questionCount = count) }
-    }
 
     fun saveAlarm() {
         viewModelScope.launch {
@@ -207,5 +194,14 @@ class AlarmSettingsViewModel(
 
     fun onSnoozeDurationChanged(duration: Int) {
         _uiState.update { it.copy(snoozeDuration = duration) }
+    }
+
+    fun updateMission(count: Int, questions: List<MissionQuestion>) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                questionCount = count,
+                selectedQuestions = questions
+            )
+        }
     }
 }

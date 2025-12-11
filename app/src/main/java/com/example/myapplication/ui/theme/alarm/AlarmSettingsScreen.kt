@@ -30,20 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.theme.mission.MissionSelectionDialog
+import com.example.myapplication.utils.RingtoneUtils
+import com.example.myapplication.utils.SoundPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-
-// Màu sắc
-val DarkBg = Color.Black
-val RedPrimary = Color(0xFFE50043)
-private val CardSurface = Color(0xFF2C2C2E)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,10 +51,11 @@ fun AlarmSettingsScreen(
     onBackClick: () -> Unit,
     onMissionSettingClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize().background(DarkBg), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = RedPrimary)
+        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
         return
     }
@@ -64,6 +64,17 @@ fun AlarmSettingsScreen(
     val minuteListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showSnoozeDialog by remember { mutableStateOf(false) }
+    var showMissionDialog by remember { mutableStateOf(false) }
+    var showSoundDialog by remember { mutableStateOf(false) }
+    val previewPlayer = remember { SoundPlayer(context) }
+
+    val ringtoneTitle = remember(uiState.ringtoneUri) {
+        RingtoneUtils.getRingtoneTitle(context, uiState.ringtoneUri)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { previewPlayer.stop() }
+    }
 
     LaunchedEffect(Unit) {
         val startBase = Int.MAX_VALUE / 2
@@ -86,17 +97,17 @@ fun AlarmSettingsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
     ){
         Column(modifier = Modifier.fillMaxSize()) {
             CenterAlignedTopAppBar(
-                title = { Text("Chuông báo thức", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = { Text("Chuông báo thức", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = {showDiscardDialog = true}) {
-                        Icon(Icons.Default.Close, "Đóng", tint = Color.White)
+                        Icon(Icons.Default.Close, "Đóng", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DarkBg)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
 
             LazyColumn(
@@ -110,13 +121,13 @@ fun AlarmSettingsScreen(
                     OutlinedTextField(
                         value = uiState.label,
                         onValueChange = { viewModel.onLabelChanged(it) },
-                        label = { Text("Tên báo thức", color = Color.Gray) },
+                        label = { Text("Tên báo thức", color = MaterialTheme.colorScheme.tertiary) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = RedPrimary,
-                            unfocusedBorderColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground
                         ),
                         leadingIcon = {
                             Image(
@@ -130,7 +141,7 @@ fun AlarmSettingsScreen(
                                 imageVector =
                                     Icons.Default.Edit,
                                 contentDescription = "Sửa tên",
-                                tint = Color.Gray
+                                tint = MaterialTheme.colorScheme.tertiary
                             )
                         },
                     )
@@ -151,8 +162,8 @@ fun AlarmSettingsScreen(
                 //--- 2. ĐỔ CHUÔNG SAU ---
                 item {
                     Text(
-                        text = uiState.timeUntilAlarm, // Có thể thêm logic tính toán
-                        color = Color.Gray,
+                        text = uiState.timeUntilAlarm,
+                        color = MaterialTheme.colorScheme.tertiary,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(top = 20.dp),
                     )
@@ -178,7 +189,7 @@ fun AlarmSettingsScreen(
                             .fillMaxWidth()
                             .padding(top = 20.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         Column(
                             modifier = Modifier
@@ -186,33 +197,49 @@ fun AlarmSettingsScreen(
                                 .padding(16.dp)
                         ){
                             SettingsSectionHeader(title = "Nhiệm vụ báo thức")
-                            AlarmTaskSection()
+                            AlarmTaskSection(
+                                questionCount = uiState.questionCount,
+                                onAddClick = { showMissionDialog = true }
+                            )
                         }
                     }
                 }
 
                 // --- 5. ÂM THANH BÁO THỨC ---
                 item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ){
-                            SettingsSectionHeader(title = "Âm thanh báo thức")
-                            SoundSelectionRow()
-                            VolumeSliderRow(
-                                volume = uiState.volume,
-                                onVolumeChange = viewModel::updateVolume
-                            )
-                        }
-                    }
+                    AlarmSoundSection(
+                        currentSoundTitle = RingtoneUtils.getRingtoneTitle(context, uiState.ringtoneUri),
+                        currentVolume = uiState.volume,
+
+                        // Kéo thanh slider -> Cập nhật volume vào Data
+                        onVolumeChange = { newVolume ->
+                            viewModel.updateVolume(newVolume)
+                            previewPlayer.playOrUpdateVolume(uiState.ringtoneUri, newVolume)
+                        },
+
+                        // Click vào tên bài hát -> Mở Dialog
+                        onSoundClick = { showSoundDialog = true }
+                    )
+//                    Card(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(top = 20.dp),
+//                        shape = RoundedCornerShape(12.dp),
+//                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+//                    ) {
+//                        Column(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(16.dp)
+//                        ){
+//                            SettingsSectionHeader(title = "Âm thanh báo thức")
+//                            SoundSelectionRow()
+//                            VolumeSliderRow(
+//                                volume = uiState.volume,
+//                                onVolumeChange = viewModel::updateVolume
+//                            )
+//                        }
+//                    }
                 }
 
                 // --- 7. CÀI ĐẶT TÙY CHỈNH ---
@@ -228,7 +255,7 @@ fun AlarmSettingsScreen(
         }
         Button(
             onClick = { viewModel.saveAlarm() },
-            colors = ButtonDefaults.buttonColors(containerColor = RedPrimary),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(25.dp)
@@ -240,9 +267,7 @@ fun AlarmSettingsScreen(
         }
         if (showDiscardDialog) {
             DiscardChangesDialog(
-                onDismissRequest = {
-                    showDiscardDialog = false
-                },
+                onDismissRequest = { showDiscardDialog = false },
                 onConfirmDiscard = {
                     showDiscardDialog = false
                     onBackClick()
@@ -260,6 +285,29 @@ fun AlarmSettingsScreen(
             }
         )
     }
+
+    if (showMissionDialog) {
+        MissionSelectionDialog(
+            initialCount = uiState.questionCount,
+            initialSelection = uiState.selectedQuestions,
+            onDismiss = { showMissionDialog = false },
+            onConfirm = { count, questions ->
+                viewModel.updateMission(count, questions)
+                showMissionDialog = false
+            }
+        )
+    }
+
+    if (showSoundDialog) {
+        SoundSelectionDialog(
+            currentUri = uiState.ringtoneUri,
+            currentVolume = uiState.volume,
+            onDismiss = { showSoundDialog = false },
+            onConfirm = { newUri ->
+                viewModel.updateRingtone(newUri)
+            }
+        )
+    }
 }
 
 @Composable
@@ -274,12 +322,17 @@ fun VolumeSliderRow(volume: Float, onVolumeChange: (Float) -> Unit) {
         Icon(
             Icons.AutoMirrored.Filled.VolumeUp,
             contentDescription = "Âm lượng",
-            tint = Color.White
+            tint = MaterialTheme.colorScheme.onSurface
         )
         Slider(
             value = volume,
             onValueChange = onVolumeChange,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.onSurface,
+                activeTrackColor = MaterialTheme.colorScheme.onBackground,
+                inactiveTrackColor = MaterialTheme.colorScheme.background,
+            )
         )
     }
 }
@@ -297,24 +350,27 @@ fun SoundSelectionRow() {
             Icons.Default.MusicNote,
             contentDescription = null,
             modifier = Modifier.padding(end = 16.dp),
-            tint = Color.White
+            tint = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = "TOKUSOU SENTAI DEKAR...",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
-            color = Color.White
+            color = MaterialTheme.colorScheme.onSurface
         )
         Icon(
             Icons.AutoMirrored.Filled.NavigateNext,
             contentDescription = null,
-            tint = Color.White
+            tint = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
 @Composable
-fun AlarmTaskSection() {
+fun AlarmTaskSection(
+    questionCount: Int,
+    onAddClick: () -> Unit
+) {
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -325,7 +381,8 @@ fun AlarmTaskSection() {
             Box(modifier = Modifier){
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(Color.White),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)),
+                    onClick = onAddClick,
                     modifier = Modifier
                         .size(80.dp)
                         .padding(top = 8.dp, end = 8.dp)
@@ -341,29 +398,17 @@ fun AlarmTaskSection() {
                             modifier = Modifier
                                 .size(30.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.secondary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground)
                         }
-                        Text("5 lần", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = if (questionCount > 0) "$questionCount câu" else "Thêm",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
                     }
-                }
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black)
-                        .align (Alignment.TopEnd)
-                        .clickable(onClick = {}),
-                    contentAlignment = Alignment.Center
-                ){
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Đóng",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
         }
@@ -371,7 +416,7 @@ fun AlarmTaskSection() {
             Box(modifier = Modifier){
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(Color.Gray),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiary),
                     modifier = Modifier
                         .size(80.dp)
                         .padding(top = 4.dp, end = 8.dp)
@@ -390,7 +435,7 @@ fun AlarmTaskSection() {
                                 .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Black)
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.background)
                         }
                     }
                 }
@@ -428,7 +473,7 @@ fun TimePickerSection(
         Text(
             text = ":",
             style = MaterialTheme.typography.headlineLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 12.dp).padding(top = 20.dp)
@@ -503,7 +548,7 @@ fun DaySelectorSection(
     onDayToggle: (String) -> Unit
 ) {
     val isDaily = daysOfWeek.size == 7
-    val selectedColor = MaterialTheme.colorScheme.primary
+    val selectedColor = MaterialTheme.colorScheme.secondary
     val onSelectedColor = MaterialTheme.colorScheme.onPrimary
     val unselectedColor = MaterialTheme.colorScheme.surfaceVariant
     val onUnselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -521,14 +566,14 @@ fun DaySelectorSection(
             Text(
                 text = "Hàng ngày",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             Checkbox(
                 checked = isDaily,
                 onCheckedChange = { onRepeatDailyChange(it) },
                 colors = CheckboxDefaults.colors(
                     checkedColor = selectedColor,
-                    uncheckedColor = Color.Gray,
+                    uncheckedColor = MaterialTheme.colorScheme.tertiary,
                     checkmarkColor = onSelectedColor
                 )
             )
@@ -589,7 +634,7 @@ fun SettingsSectionHeader(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.onBackground,
         fontSize = 18.sp,
         modifier = Modifier.fillMaxWidth()
     )
@@ -604,7 +649,7 @@ private fun TimePickerItem(
         text = text,
         style = MaterialTheme.typography.headlineLarge,
         fontSize = if (isSelected) 36.sp else 32.sp,
-        color = if (isSelected) Color.White else Color.Gray,
+        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.tertiary,
         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
         modifier = Modifier.padding(vertical = 4.dp)
     )
@@ -620,7 +665,7 @@ fun SnoozeSettingsSection(
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = CardSurface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -632,17 +677,17 @@ fun SnoozeSettingsSection(
             ) {
                 Text(
                     text = "Báo lại",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp
                 )
                 Switch(
                     checked = isSnoozeEnabled,
                     onCheckedChange = onSnoozeToggle,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = RedPrimary,
-                        uncheckedThumbColor = Color.Gray,
-                        uncheckedTrackColor = Color.DarkGray
+                        checkedThumbColor = MaterialTheme.colorScheme.onSurface,
+                        checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.tertiary,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surface
                     )
                 )
             }
@@ -666,21 +711,21 @@ fun SnoozeSettingsSection(
                     ) {
                         Text(
                             text = "Khoảng thời gian",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 16.sp
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "$snoozeDuration phút",
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.tertiary,
                                 fontSize = 16.sp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                                 contentDescription = null,
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.tertiary,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -702,7 +747,7 @@ fun SnoozeDurationDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2E)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.width(300.dp)
         ) {
             Column(
@@ -711,7 +756,7 @@ fun SnoozeDurationDialog(
             ) {
                 Text(
                     text = "Thời gian báo lại",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -724,13 +769,13 @@ fun SnoozeDurationDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onDurationSelected(duration) }
-                                .background(if (isSelected) Color(0xFF3E3E3E) else Color.Transparent)
+                                .background(if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent)
                                 .padding(vertical = 12.dp, horizontal = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = "$duration phút",
-                                color = if (isSelected) Color(0xFFE50043) else Color.White,
+                                color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }

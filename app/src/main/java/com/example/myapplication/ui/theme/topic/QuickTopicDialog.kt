@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +19,7 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun QuickTopicDialog(
+    initialName: String,
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit
 ) {
@@ -36,7 +38,11 @@ fun QuickTopicDialog(
                     .fillMaxWidth()
                     .clickable(enabled = false) {}
             ) {
-                QuickTopicContent(onDismissRequest, onSave)
+                QuickTopicContent(
+                    initialName,
+                    onDismissRequest,
+                    onSave
+                )
             }
         }
     }
@@ -44,10 +50,11 @@ fun QuickTopicDialog(
 
 @Composable
 fun QuickTopicContent(
+    initialName: String,
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit
 ) {
-    var text by remember { mutableStateOf("") }
+    var topicName by remember { mutableStateOf(initialName) }
 
     Card(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 0.dp, bottomEnd = 0.dp),
@@ -63,7 +70,7 @@ fun QuickTopicContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Chủ đề mới", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text(text = if (topicName.isEmpty()) "Thêm chủ đề mới" else "Đổi tên chủ đề", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 20.sp)
 
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -78,8 +85,8 @@ fun QuickTopicContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
-                value = text,
-                onValueChange = { text = it},
+                value = topicName,
+                onValueChange = { topicName = it},
                 label = { Text("Tên chủ đề", color = MaterialTheme.colorScheme.tertiary) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -95,23 +102,16 @@ fun QuickTopicContent(
 
             Button(
                 onClick = {
-                    if (text.isNotBlank()) {
-                        onSave(text.trim()) // ✅ Gọi onSave với tên chủ đề
-                        // onDismissRequest() // Tùy chọn: có thể đóng ở đây hoặc trong onSave của TopicScreen
+                    if (topicName.isNotBlank()) {
+                        onSave(topicName.trim())
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Thêm chủ đề", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                Text(if (topicName.isEmpty()) "Tạo chủ đề" else "Lưu thay đổi", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun PreviewQuickDialog() {
-    QuickTopicContent(onDismissRequest = {}, onSave = {})
 }

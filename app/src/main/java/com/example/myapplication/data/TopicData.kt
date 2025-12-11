@@ -5,3 +5,9 @@ data class TopicData(
     val name: String,
     val questionCount: Int
 )
+
+data class TopicWithCountResult(
+    val topicId: Int,
+    val topicName: String,
+    val questionCount: Int
+)

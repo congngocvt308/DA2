@@ -1,12 +1,13 @@
 package com.example.myapplication.ui.theme.topic
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.AnswerData
+import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.QuestionData
-import com.example.myapplication.data.TopicData
+import com.example.myapplication.data.QuestionEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,56 +15,101 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class TopicDetailViewModel : ViewModel() {
+class TopicDetailViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
+    private val topicDao = AppDatabase.getDatabase(application).appDao()
+    private val topicId: Int = savedStateHandle.get<Int>("topicId") ?: -1
 
-    // --- 1. QUẢN LÝ DANH SÁCH CÂU HỎI (Màn hình chính) ---
-
-    // Dữ liệu giả lập (Sau này thay bằng lấy từ Room DB)
-    private val _questions = MutableStateFlow<List<QuestionData>>(
-        listOf(
-            QuestionData(1, "Ai là triệu phú?", listOf(AnswerData(1, "Tôi", true), AnswerData(2, "Bạn", false))),
-            QuestionData(2, "1 + 1 = ?", listOf(AnswerData(3, "2", true), AnswerData(4, "3", false)))
-        )
+    private val _dbQuestions = MutableStateFlow<List<QuestionData>>(emptyList())
+    val searchQuery = MutableStateFlow("")
+    private val _topicName = MutableStateFlow("")
+    val topicName = _topicName.asStateFlow()
+    val filteredQuestions: StateFlow<List<QuestionData>> = combine(
+        _dbQuestions,
+        searchQuery
+    ) { questions, query ->
+        if (query.isBlank()) questions
+        else questions.filter { it.questionText.contains(query, ignoreCase = true) }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
-    val questions: StateFlow<List<QuestionData>> = _questions.asStateFlow()
 
-    // Hàm load dữ liệu (gọi khi mở màn hình)
-    fun loadQuestions(topicId: Int) {
-        // TODO: Gọi Repository/DAO để lấy câu hỏi theo topicId
-        // _questions.value = repository.getQuestionsByTopic(topicId)
-        println("Loading questions for topic $topicId")
-    }
+    val questions = _dbQuestions.asStateFlow()
 
-    // Hàm xóa câu hỏi
-    fun deleteQuestion(questionId: Int) {
-        _questions.update { currentList ->
-            currentList.filter { it.id != questionId }
+    init {
+        if (topicId != -1) {
+            loadQuestions()
+            loadTopicInfo()
         }
-        // TODO: Gọi Repository để xóa trong DB
     }
 
-    // --- 2. QUẢN LÝ DIALOG "THÊM CÂU HỎI" (Logic nhập liệu) ---
+    private fun loadTopicInfo() {
+        viewModelScope.launch {
+            val name = topicDao.getTopicNameById(topicId)
+            if (name != null) {
+                _topicName.value = name
+            }
+        }
+    }
 
-    // State: Nội dung câu hỏi đang nhập
+    fun renameTopic(newName: String) {
+        viewModelScope.launch {
+            topicDao.updateTopicName(topicId, newName)
+            _topicName.value = newName
+        }
+    }
+
+    fun deleteCurrentTopic(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            topicDao.deleteTopicById(topicId)
+            onDeleted()
+        }
+    }
+
+    private fun loadQuestions() {
+        viewModelScope.launch {
+            topicDao.getQuestionsByTopic(topicId).collect { entities ->
+                val mappedList = entities.map { entity ->
+                    val correctAns = AnswerData(0, entity.correctAnswer, true)
+                    val wrongAns = entity.options.mapIndexed { index, text ->
+                        AnswerData(index + 1, text, false)
+                    }
+                    val allAnswers = (listOf(correctAns) + wrongAns).shuffled()
+                    QuestionData(id = entity.questionId, questionText = entity.prompt, answers = allAnswers)
+                }
+                _dbQuestions.value = mappedList
+            }
+        }
+    }
+
+    fun deleteQuestion(questionId: Int) {
+        viewModelScope.launch {
+            val questionEntity = topicDao.getQuestionById(questionId)
+            if (questionEntity != null) {
+                topicDao.deleteQuestion(questionEntity)
+            }
+        }
+    }
+
+    private var editingQuestionId: Int = -1
+
     private val _draftQuestionText = MutableStateFlow("")
     val draftQuestionText = _draftQuestionText.asStateFlow()
 
-    // State: Danh sách đáp án đang nhập
     private val _draftAnswers = MutableStateFlow(
-        listOf(
-            AnswerData(0, "", false),
-            AnswerData(1, "", false)
-        )
+        listOf(AnswerData(0, "", false), AnswerData(1, "", true))
     )
+
     val draftAnswers = _draftAnswers.asStateFlow()
 
-    // Action: Người dùng gõ text câu hỏi
-    fun onQuestionTextChange(text: String) {
-        _draftQuestionText.value = text
-    }
+    fun onQuestionTextChange(text: String) { _draftQuestionText.value = text }
 
-    // Action: Người dùng gõ text đáp án
     fun onAnswerTextChange(index: Int, text: String) {
         _draftAnswers.update { list ->
             val newList = list.toMutableList()
@@ -72,7 +118,6 @@ class TopicDetailViewModel : ViewModel() {
         }
     }
 
-    // Action: Chọn đáp án đúng (Radio button)
     fun onSelectCorrectAnswer(selectedIndex: Int) {
         _draftAnswers.update { list ->
             list.mapIndexed { index, answer ->
@@ -81,7 +126,6 @@ class TopicDetailViewModel : ViewModel() {
         }
     }
 
-    // Action: Thêm dòng đáp án mới
     fun onAddAnswerLine() {
         _draftAnswers.update { list ->
             val newId = (list.maxOfOrNull { it.id } ?: 0) + 1
@@ -89,40 +133,20 @@ class TopicDetailViewModel : ViewModel() {
         }
     }
 
-    // Action: Xóa dòng đáp án
     fun onRemoveAnswerLine(index: Int) {
         _draftAnswers.update { list ->
             if (list.size > 1) {
                 val newList = list.toMutableList()
                 newList.removeAt(index)
-                // Nếu xóa mất câu đúng, reset lại hoặc để trống
                 newList
             } else {
-                list // Giữ lại ít nhất 1 đáp án
+                list
             }
         }
     }
 
-    // Action: LƯU CÂU HỎI MỚI
-    fun saveNewQuestion() {
-        // Tạo đối tượng mới
-        val newQuestion = QuestionData(
-            id = (System.currentTimeMillis() % 10000).toInt(), // ID giả
-            questionText = _draftQuestionText.value,
-            answers = _draftAnswers.value
-        )
-
-        // 1. Thêm vào danh sách hiển thị
-        _questions.update { it + newQuestion }
-
-        // 2. TODO: Lưu vào DB (repository.insert(newQuestion))
-
-        // 3. Reset form để nhập câu tiếp theo
-        resetDraft()
-    }
-
-    // Action: Reset form về mặc định
     fun resetDraft() {
+        editingQuestionId = -1
         _draftQuestionText.value = ""
         _draftAnswers.value = listOf(
             AnswerData(0, "", false),
@@ -130,20 +154,34 @@ class TopicDetailViewModel : ViewModel() {
         )
     }
 
-    val searchQuery = mutableStateOf("")
-    val filteredQuestions: StateFlow<List<QuestionData>> = combine(
-        _questions,
-        snapshotFlow{ searchQuery.value }
-    ){ questions, query ->
-        if (query.isBlank()) questions
-        else {
-            questions.filter { question ->
-                question.questionText.contains(query, ignoreCase = true)
+    fun startEditing(question: QuestionData) {
+        editingQuestionId = question.id
+        _draftQuestionText.value = question.questionText
+        _draftAnswers.value = question.answers
+    }
+
+    fun saveQuestion() {
+        viewModelScope.launch {
+            if (topicId == -1) return@launch
+            val currentAnswers = _draftAnswers.value
+            val questionText = _draftQuestionText.value
+            val correctObj = currentAnswers.find { it.isCorrect }
+            val correctText = correctObj?.text ?: ""
+            val wrongOptions = currentAnswers.filter { !it.isCorrect }.map { it.text }
+            val questionEntity = QuestionEntity(
+                questionId = if (editingQuestionId == -1) 0 else editingQuestionId,
+                ownerTopicId = topicId,
+                prompt = questionText,
+                options = wrongOptions,
+                correctAnswer = correctText
+            )
+            if (editingQuestionId == -1) {
+                topicDao.insertQuestion(questionEntity)
+            } else {
+                topicDao.updateQuestion(questionEntity)
             }
+            resetDraft()
+            loadQuestions()
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    }
 }

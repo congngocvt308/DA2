@@ -6,21 +6,19 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 
-// 1. Bảng Topic
 @Entity(tableName = "topics")
 data class TopicEntity(
     @PrimaryKey(autoGenerate = true) val topicId: Int = 0,
     val topicName: String
 )
 
-// 2. Bảng Question
 @Entity(
     tableName = "questions",
     foreignKeys = [ForeignKey(
         entity = TopicEntity::class,
         parentColumns = ["topicId"],
         childColumns = ["ownerTopicId"],
-        onDelete = ForeignKey.CASCADE // Xóa chủ đề -> Xóa luôn câu hỏi
+        onDelete = ForeignKey.CASCADE
     )],
     indices = [Index("ownerTopicId")]
 )
@@ -28,18 +26,17 @@ data class QuestionEntity(
     @PrimaryKey(autoGenerate = true) val questionId: Int = 0,
     val ownerTopicId: Int,
     val prompt: String,
-    val options: List<String>, // Converter sẽ xử lý cái này
+    val options: List<String>,
     val correctAnswer: String
 )
 
-// 3. Bảng Alarm
 @Entity(tableName = "alarms")
 data class AlarmEntity(
     @PrimaryKey(autoGenerate = true) val alarmId: Int = 0,
     val hour: Int,
     val minute: Int,
     val label: String?,
-    val daysOfWeek: Set<String>, // Converter sẽ xử lý cái này
+    val daysOfWeek: Set<String>,
     val questionCount: Int = 3,
     val isEnabled: Boolean = true,
     val ringtoneUri: String? = null,
@@ -47,7 +44,6 @@ data class AlarmEntity(
     val snoozeEnabled: Boolean = false
 )
 
-// 4. Bảng AlarmTopicLink (Quan hệ N-N)
 @Entity(
     tableName = "alarm_topic_link",
     primaryKeys = ["alarmId", "topicId"],
@@ -63,7 +59,6 @@ data class AlarmTopicLink(
     val isSelectAll: Boolean = true
 )
 
-// 5. Bảng QuestionProgress (1-1 với Question)
 @Entity(
     tableName = "question_progress",
     foreignKeys = [ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE)],
@@ -77,7 +72,6 @@ data class QuestionProgressEntity(
     val difficultyScore: Double = 1000.0
 )
 
-// 6. Bảng TopicStats (1-1 với Topic)
 @Entity(
     tableName = "topic_stats",
     foreignKeys = [ForeignKey(entity = TopicEntity::class, parentColumns = ["topicId"], childColumns = ["topicId"], onDelete = ForeignKey.CASCADE)],
@@ -88,7 +82,6 @@ data class TopicStatsEntity(
     val userEloScore: Double = 1000.0
 )
 
-// 7. Bảng History (Lịch sử trả lời)
 @Entity(
     tableName = "history",
     foreignKeys = [ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE)],
@@ -102,7 +95,6 @@ data class HistoryEntity(
     val timeToAnswerMs: Int
 )
 
-// 8. Bảng AlarmHistory (Lịch sử báo thức)
 @Entity(
     tableName = "alarm_history",
     foreignKeys = [ForeignKey(entity = AlarmEntity::class, parentColumns = ["alarmId"], childColumns = ["alarmId"], onDelete = ForeignKey.CASCADE)],
@@ -118,7 +110,6 @@ data class AlarmHistoryEntity(
     val isDismissed: Boolean = false
 )
 
-// 9. Bảng AlarmSelectedQuestion (MỚI: Lưu các câu hỏi được chọn riêng lẻ)
 @Entity(
     tableName = "alarm_selected_questions",
     foreignKeys = [
@@ -132,5 +123,5 @@ data class AlarmSelectedQuestionEntity(
     @PrimaryKey(autoGenerate = true) val selectionId: Int = 0,
     val alarmId: Int,
     val questionId: Int,
-    val topicId: Int? = null // Cho phép null nếu DBML của bạn không bắt buộc, hoặc Int nếu bắt buộc
+    val topicId: Int? = null
 )

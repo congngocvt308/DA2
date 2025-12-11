@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppDao {
-    // --- ALARM ---
     @Query("SELECT * FROM alarms")
     fun getAllAlarms(): Flow<List<AlarmEntity>>
 
@@ -18,21 +17,18 @@ interface AppDao {
     @Update
     suspend fun updateAlarm(alarm: AlarmEntity)
 
-    // --- TOPIC ---
     @Query("SELECT * FROM topics")
     fun getAllTopics(): Flow<List<TopicEntity>>
 
     @Insert
     suspend fun insertTopic(topic: TopicEntity): Long
 
-    // --- QUESTION ---
     @Query("SELECT * FROM questions WHERE ownerTopicId = :topicId")
     fun getQuestionsByTopic(topicId: Int): Flow<List<QuestionEntity>>
 
     @Insert
     suspend fun insertQuestion(question: QuestionEntity): Long
 
-    // --- STATS & LINK ---
     @Insert
     suspend fun insertAlarmTopicLink(link: AlarmTopicLink)
 
@@ -42,7 +38,6 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateTopicStats(stats: TopicStatsEntity)
 
-    // --- ALARM SELECTED QUESTIONS (Mới) ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSelectedQuestion(item: AlarmSelectedQuestionEntity)
 
@@ -52,7 +47,6 @@ interface AppDao {
     @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
     fun getSelectedQuestionsForAlarm(alarmId: Int): Flow<List<AlarmSelectedQuestionEntity>>
 
-    // Ví dụ truy vấn lấy tất cả câu hỏi được chọn thủ công cho 1 báo thức
     @Query("""
         SELECT q.* FROM questions q
         INNER JOIN alarm_selected_questions asq ON q.questionId = asq.questionId
@@ -65,4 +59,34 @@ interface AppDao {
 
     @Query("DELETE FROM alarms WHERE isEnabled = 0")
     suspend fun deleteInactiveAlarms()
+
+    @Query("""
+        SELECT t.topicId, t.topicName, COUNT(q.questionId) AS questionCount 
+        FROM topics t 
+        LEFT JOIN questions q ON t.topicId = q.ownerTopicId 
+        GROUP BY t.topicId
+    """)
+    fun getAllTopicsWithCount(): Flow<List<TopicWithCountResult>>
+
+    @Query("SELECT * FROM questions WHERE questionId = :id")
+    suspend fun getQuestionById(id: Int): QuestionEntity?
+
+    @Delete
+    suspend fun deleteQuestion(question: QuestionEntity)
+
+    @Update
+    suspend fun updateQuestion(question: QuestionEntity)
+
+    @Query("SELECT topicName FROM topics WHERE topicId = :id")
+    suspend fun getTopicNameById(id: Int): String?
+
+    @Query("DELETE FROM topics WHERE topicId = :id")
+    suspend fun deleteTopicById(id: Int)
+
+    @Query("UPDATE topics SET topicName = :newName WHERE topicId = :topicId")
+    suspend fun updateTopicName(topicId: Int, newName: String)
+
+    @Transaction
+    @Query("SELECT * FROM topics")
+    fun getTopicsWithQuestions(): Flow<List<TopicWithQuestions>>
 }

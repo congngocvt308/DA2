@@ -24,6 +24,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     private val alarmDao = AppDatabase.getDatabase(application).appDao()
     private val _sortType = MutableStateFlow(SortType.DEFAULT)
+
     val timeUntilNextAlarms: StateFlow<String> = alarmDao.getAllAlarms().map { entities ->
         val activeAlarms = entities.filter { it.isEnabled}
         if(activeAlarms.isEmpty()) "Không có báo thức sắp tới"
@@ -39,7 +40,9 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             } else "Không có báo thức sắp tới"
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),"Đang tính toán...")
+
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
+
     val alarms: StateFlow<List<AlarmData>> = combine(
         alarmDao.getAllAlarms(),
         _sortType
@@ -65,7 +68,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                 minute = now.minute,
                 label = "Báo thức nhanh",
                 daysOfWeek = emptySet(),
-                questionCount = 3,
+                questionCount = 0,
                 isEnabled = true
             )
             alarmDao.insertAlarm(newEntity)

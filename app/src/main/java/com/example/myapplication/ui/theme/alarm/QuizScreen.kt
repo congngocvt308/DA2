@@ -20,38 +20,29 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.AnswerData
 import com.example.myapplication.data.QuizUiStateData
 
-// Màu sắc theo thiết kế
-val QuizBackground = Color.Black
-val OptionNormal = Color(0xFF333333) // Xám đậm
-val OptionError = Color(0xFFEE4540)  // Đỏ (Sai)
-val OptionSuccess = Color(0xFF4CAF50) // Xanh (Đúng)
-
 @Composable
 fun QuizScreen(
     viewModel: QuizViewModel = viewModel(),
     onBack: () -> Unit,
-    onQuizCompleted: () -> Unit // Gọi khi làm xong hết nhiệm vụ (Tắt báo thức)
+    onQuizCompleted: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentQuestion = uiState.questionPool.getOrNull(uiState.poolIndex)
 
-    // Logic tự động chuyển câu hoặc hoàn thành khi trả lời đúng
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) {
-            // TODO: Xử lý dừng nhạc chuông
             onQuizCompleted()
         }
     }
 
-    // Xử lý trạng thái tải/rỗng
     if (currentQuestion == null || uiState.questionPool.isEmpty()) {
-        return Box(modifier = Modifier.fillMaxSize().background(QuizBackground), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.White)
+        return Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
         }
     }
 
     Scaffold(
-        containerColor = QuizBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             QuizTopBar(
                 timerProgress = uiState.timerProgress,
@@ -69,14 +60,11 @@ fun QuizScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
-            // 1. Nội dung câu hỏi
-            // Spacer để đẩy câu hỏi lên giữa một chút
             Spacer(modifier = Modifier.weight(0.5f))
 
             Text(
                 text = currentQuestion.questionText,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -85,15 +73,12 @@ fun QuizScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 2. Danh sách đáp án
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Hiển thị tất cả các đáp án (options + correct answer)
                 currentQuestion.answers.forEach { answer ->
                     QuizOptionButton(
                         answer = answer,
-                        uiState = uiState, // Truyền trạng thái để tính toán màu
+                        uiState = uiState,
                         onSelect = {
-                            // 🚨 GỌI VIEWMODEL KHI CLICK 🚨
                             viewModel.onOptionSelected(answer.id)
                         }
                     )
@@ -105,7 +90,6 @@ fun QuizScreen(
     }
 }
 
-// --- Component: Thanh tiêu đề (Top Bar) ---
 @Composable
 fun QuizTopBar(
     timerProgress: Float,
@@ -114,22 +98,20 @@ fun QuizTopBar(
     onBack: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(top = 50.dp)) {
-        // Thanh tiến trình
         LinearProgressIndicator(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(4.dp),
-            color = if (timerProgress < 0.3f) Color(0xFFEE4540) else Color(0xFF4CAF50),
-            trackColor = Color.DarkGray,
+            color = if (timerProgress < 0.3f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+            trackColor = MaterialTheme.colorScheme.tertiary,
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) }
-            // Hiển thị tiến trình thành công
-            Text(text = "$currentIndex/$total", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = {}) { Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = Color.White) }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground) }
+            Text(text = "$currentIndex/$total", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = {}) { Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = MaterialTheme.colorScheme.onBackground) }
         }
     }
 }
@@ -142,33 +124,25 @@ fun QuizOptionButton(
 ) {
     val isSelected = (answer.id == uiState.selectedAnswerId)
 
-    // Logic màu sắc
     val targetColor = when {
-        // 1. Nếu đã trả lời và là đáp án ĐÚNG (luôn hiện Xanh)
-        uiState.isAnswered && answer.isCorrect -> OptionSuccess
-
-        // 2. Nếu đã trả lời, được người dùng chọn, và SAI -> Đỏ
-        uiState.isAnswered && isSelected && !answer.isCorrect -> OptionError
-
-        // 3. Nếu đang được chọn (trước khi phản hồi)
-        isSelected -> Color(0xFF555555) // Xám đậm hơn để báo hiệu đang chọn
-
-        // 4. Mặc định
-        else -> OptionNormal
+        uiState.isAnswered && answer.isCorrect -> MaterialTheme.colorScheme.secondary
+        uiState.isAnswered && isSelected && !answer.isCorrect -> MaterialTheme.colorScheme.primary
+        isSelected -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val backgroundColor by animateColorAsState(targetValue = targetColor, label = "OptionColor")
 
     Button(
         onClick = onSelect,
-        enabled = !uiState.isAnswered, // Vô hiệu hóa khi đã có phản hồi màu
+        enabled = !uiState.isAnswered,
         colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor,
+            containerColor = MaterialTheme.colorScheme.surface,
             disabledContainerColor = backgroundColor
         ),
         shape = RoundedCornerShape(28.dp),
         modifier = Modifier.fillMaxWidth().height(60.dp)
     ) {
-        Text(answer.text, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(answer.text, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
 }

@@ -68,7 +68,7 @@ fun AddQuestionDialog(
                             contentDescription = "Lưu",
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.clickable {
-                                viewModel.saveNewQuestion()
+                                viewModel.saveQuestion()
                                 onSaveSuccess()
                             }
                         )
@@ -127,7 +127,7 @@ fun AddQuestionDialog(
 
                     Button(
                         onClick = {
-                            viewModel.saveNewQuestion()
+                            viewModel.saveQuestion()
                             onSaveSuccess()
                         },
                         modifier = Modifier.fillMaxWidth().height(50.dp),

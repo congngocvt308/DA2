@@ -68,7 +68,7 @@ fun MainScreen() {
 
             composable(Screen.TOPIC_TAB) {
                 TopicScreen(
-                    onNavigateToSettings = { topicId ->
+                    onNavigateToDetail = { topicId ->
                         navController.navigate(Screen.topicDetailRoute(topicId))
                     }
                 )
@@ -78,22 +78,15 @@ fun MainScreen() {
 //                StatsScreen()
             }
 
-            // --- 2. MÀN HÌNH TRẢ LỜI CÂU HỎI (QuizScreen) ---
             composable(Screen.QUIZ_SCREEN) {
 
                 QuizScreen(
-                    viewModel = viewModel(), // Khởi tạo ViewModel
-
-                    // 🚨 onBack: Xử lý khi bấm mũi tên quay lại
+                    viewModel = viewModel(),
                     onBack = {
                         navController.popBackStack()
                     },
-
-                    // 🚨 onTaskCompleted: Xử lý logic dọn dẹp khi làm nhiệm vụ xong
                     onQuizCompleted = {
-                        // Tắt nhạc chuông và dọn dẹp Stack
                         navController.navigate(Screen.ALARM_TAB) {
-                            // Xóa cả QuizScreen và AlarmRingingScreen khỏi stack
                             popUpTo(Screen.ALARM_RINGING) { inclusive = true }
                         }
                     }
@@ -102,15 +95,12 @@ fun MainScreen() {
 
             composable(Screen.ALARM_RINGING) {
                 AlarmRingingScreen(
-                    alarmLabel = "Thức dậy đi học", // Có thể lấy từ tham số nav
+                    alarmLabel = "Thức dậy đi học",
                     onSnooze = { /* Logic Snooze */ },
                     onNavigateToQuiz = {
-                        // Chuyển sang màn hình trả lời câu hỏi
                         navController.navigate(Screen.QUIZ_SCREEN)
                     },
                     onFinish = {
-                        // Đóng Activity hoặc quay về màn hình chính
-                        // (Tùy logic app của bạn)
                     }
                 )
             }
@@ -131,16 +121,9 @@ fun MainScreen() {
 
             composable(
                 route = Screen.TOPIC_DETAIL,
-                // Khai báo rằng route này cần một tham số kiểu Int tên là "topicId"
                 arguments = listOf(navArgument("topicId") { type = NavType.IntType })
             ) { backStackEntry ->
-                // 1. Lấy topicId từ đường dẫn
-                val topicId = backStackEntry.arguments?.getInt("topicId") ?: -1
-
-                // 2. Hiển thị màn hình chi tiết
                 TopicDetailScreen(
-                    topicId = topicId,
-                    // Xử lý khi bấm nút Back: Quay lại màn hình trước
                     onBackClick = { navController.popBackStack() }
                 )
             }

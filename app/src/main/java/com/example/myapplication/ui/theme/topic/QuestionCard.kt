@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.theme.topic
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,12 +29,13 @@ import androidx.compose.ui.text.style.TextOverflow
 @Composable
 fun QuestionCard(
     question: QuestionData,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onClick: () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
@@ -53,9 +54,10 @@ fun QuestionCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                val firstAnswer = question.answers.firstOrNull()?.text ?: "Chưa có đáp án"
+                val correctAnswerText = question.answers.find { it.isCorrect }?.text
+                    ?: "Chưa có đáp án đúng"
                 Text(
-                    text = firstAnswer,
+                    text = correctAnswerText,
                     color = MaterialTheme.colorScheme.tertiary,
                     fontSize = 14.sp,
                     maxLines = 1,
