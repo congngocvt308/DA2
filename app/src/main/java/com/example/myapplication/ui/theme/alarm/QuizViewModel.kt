@@ -61,7 +61,23 @@ class QuizViewModel : ViewModel() {
             }
 
             // Hết giờ -> Báo TimeOut
-            _uiState.update { it.copy(isTimeOut = true) }
+            handleTimeOut()
+        }
+    }
+
+    private fun handleTimeOut() {
+        _uiState.update { state ->
+            state.copy(
+                isTimeOut = true,
+                correctlyAnsweredCount = 0,
+                poolIndex = (state.poolIndex + 1) % state.questionPool.size,
+                selectedAnswerId = null,
+                isAnswered = false
+            )
+        }
+        viewModelScope.launch {
+            delay(500)
+            startTimer()
         }
     }
 

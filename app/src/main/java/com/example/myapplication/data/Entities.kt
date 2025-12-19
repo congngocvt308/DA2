@@ -37,7 +37,7 @@ data class AlarmEntity(
     val minute: Int,
     val label: String?,
     val daysOfWeek: Set<String>,
-    val questionCount: Int = 3,
+    val questionCount: Int = 0,
     val isEnabled: Boolean = true,
     val ringtoneUri: String? = null,
     val snoozeDuration: Int = 5,

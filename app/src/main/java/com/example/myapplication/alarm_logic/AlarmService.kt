@@ -1,89 +1,128 @@
 package com.example.myapplication.alarm_logic
 
 import android.app.*
-import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.RingtoneManager
+import android.net.Uri
 import android.os.IBinder
-import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 import com.example.myapplication.R
-//import com.example.myapplication.ui.AlarmRingingActivity
+import com.example.myapplication.ui.theme.alarm.AlarmRingingActivity
+import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
 
-//class AlarmService : Service() {
-//
-//    private var mediaPlayer: MediaPlayer? = null
-//    private var vibrator: Vibrator? = null
-//
-//    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-//        val alarmLabel = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
-//
-//        // 1. Tạo Notification Channel (Bắt buộc cho Android 8+)
-//        createNotificationChannel()
-//
-//        // 2. Intent để mở màn hình Rung chuông (Full Screen Intent)
-//        val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-//            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            // Truyền dữ liệu sang màn hình rung chuông
-//            putExtra("ALARM_LABEL", alarmLabel)
-//        }
-//
-//        val fullScreenPendingIntent = PendingIntent.getActivity(
-//            this, 0, fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-//        )
-//
-//        // 3. Tạo thông báo (Notification)
-//        val notification = NotificationCompat.Builder(this, "ALARM_CHANNEL_ID")
-//            .setSmallIcon(R.drawable.ic_alarm) // Nhớ thêm icon vào drawable
-//            .setContentTitle("Báo thức đang kêu!")
-//            .setContentText(alarmLabel)
-//            .setPriority(NotificationCompat.PRIORITY_MAX)
-//            .setCategory(NotificationCompat.CATEGORY_ALARM)
-//            .setFullScreenIntent(fullScreenPendingIntent, true) // QUAN TRỌNG: Để hiện đè lên màn hình khóa
-//            .build()
-//
-//        // 4. Chạy Service dưới dạng Foreground
-//        startForeground(1, notification)
-//
-//        // 5. Phát nhạc
-//        startRinging()
-//        startVibrate()
-//
-//        return START_STICKY
-//    }
-//
-//    private fun startRinging() {
-//        // Lấy nhạc chuông mặc định
-//        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-//        mediaPlayer = MediaPlayer.create(this, alarmUri)
-//        mediaPlayer?.isLooping = true // Lặp lại
-//        mediaPlayer?.start()
-//    }
-//
-//    private fun startVibrate() {
-//        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-//        // Rung: nghỉ 1s, rung 2s, lặp lại (0 là lặp vô tận)
-//        vibrator?.vibrate(longArrayOf(0, 1000, 1000), 0)
-//    }
-//
-//    override fun onDestroy() {
-//        super.onDestroy()
-//        mediaPlayer?.stop()
-//        mediaPlayer?.release()
-//        vibrator?.cancel()
-//    }
-//
-//    override fun onBind(intent: Intent?): IBinder? = null
-//
-//    private fun createNotificationChannel() {
-//        val channel = NotificationChannel(
-//            "ALARM_CHANNEL_ID",
-//            "Kênh Báo Thức",
-//            NotificationManager.IMPORTANCE_HIGH
-//        )
-//        channel.setSound(null, null) // Tắt tiếng của notification để tự quản lý bằng MediaPlayer
-//        val manager = getSystemService(NotificationManager::class.java)
-//        manager.createNotificationChannel(channel)
-//    }
-//}
+class AlarmService : Service() {
+    private var mediaPlayer: MediaPlayer? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 1. Lấy dữ liệu
+        val ringtoneUri = intent?.getStringExtra("RINGTONE_URI") ?: ""
+        val volume = intent?.getFloatExtra("ALARM_VOLUME", 0.7f) ?: 0.7f
+        val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
+
+        val notification = createNotification(label)
+        startForeground(1, notification)
+
+        val activityIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+            // Flag quan trọng để tách khỏi MainActivity
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            putExtra("ALARM_LABEL", label)
+        }
+        startActivity(activityIntent)
+
+
+        playAlarmSound(ringtoneUri, volume)
+
+        return START_STICKY
+    }
+
+    private fun createNotificationChannel() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channelId = "ALARM_CHANNEL"
+            val channelName = "Báo thức hệ thống"
+
+            // 🚨 QUAN TRỌNG: Phải để IMPORTANCE_HIGH để màn hình có thể tự bật lên
+            val importance = NotificationManager.IMPORTANCE_HIGH
+
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
+                description = "Kênh dùng để hiển thị màn hình báo thức khi đang khóa"
+
+                // Tắt tiếng mặc định của Notification vì bạn đã dùng MediaPlayer phát riêng
+                setSound(null, null)
+
+                // Cho phép hiển thị trên màn hình khóa
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+
+                enableVibration(true)
+            }
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun playAlarmSound(uriString: String, volume: Float) {
+        try {
+            val uri = if (uriString.isNotBlank()) Uri.parse(uriString) else null
+
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(applicationContext, uri ?: android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                setVolume(volume, volume)
+                isLooping = true
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // Trong AlarmService.kt, sửa hàm createNotification
+
+    private fun createNotification(label: String): Notification {
+        val channelId = "ALARM_CHANNEL"
+
+        val activityIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+            // KHÔNG gửi sang MainActivity nữa
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            activityIntent,
+            // Sử dụng FLAG_MUTABLE nếu bạn cần update Intent dữ liệu sau này
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Báo thức: $label")
+            .setContentText("Vuốt để tắt hoặc chạm để mở")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Hiển thị nội dung trên lockscreen
+            .build()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+}

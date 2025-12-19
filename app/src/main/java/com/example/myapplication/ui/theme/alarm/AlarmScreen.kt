@@ -104,7 +104,7 @@ fun AlarmScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f))
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.4f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null

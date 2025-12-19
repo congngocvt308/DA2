@@ -3,14 +3,18 @@ package com.example.myapplication.ui.theme.alarm
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.alarm_logic.AlarmScheduler
 import com.example.myapplication.data.AlarmData
 import com.example.myapplication.data.AlarmEntity
+import com.example.myapplication.data.AlarmSettingData
 import com.example.myapplication.data.AppDatabase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,22 +28,65 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     private val alarmDao = AppDatabase.getDatabase(application).appDao()
     private val _sortType = MutableStateFlow(SortType.DEFAULT)
+    private val tickerFlow = flow {
+        while (true) {
+            emit(LocalDateTime.now()) // Bắn ra thời gian hiện tại
+            delay(60000) // Đợi 60 giây rồi lặp lại
+        }
+    }
 
-    val timeUntilNextAlarms: StateFlow<String> = alarmDao.getAllAlarms().map { entities ->
-        val activeAlarms = entities.filter { it.isEnabled}
-        if(activeAlarms.isEmpty()) "Không có báo thức sắp tới"
-        else{
-            val now = LocalDateTime.now()
-            val nextRingTimes = activeAlarms.map{ alarm ->
-                findNextRingTime(now, alarm.hour, alarm.minute, alarm.daysOfWeek)
+    val timeUntilNextAlarms: StateFlow<String> = combine(
+        alarmDao.getAllAlarms(), // Luồng 1: Dữ liệu DB
+        tickerFlow               // Luồng 2: Thời gian trôi
+    ) { entities, now ->         // 'now' được lấy từ tickerFlow
+
+        // Lọc các báo thức đang bật
+        val activeAlarms = entities.filter { it.isEnabled }
+
+        if (activeAlarms.isEmpty()) {
+            "Không có báo thức sắp tới"
+        } else {
+            // Tính thời gian reo của TẤT CẢ báo thức đang bật
+            val nextRingTimes = activeAlarms.map { alarm ->
+                findNextAlarmTime(
+                    now,
+                    alarm.hour,
+                    alarm.minute,
+                    alarm.daysOfWeek
+                )
             }
+
+            // Tìm cái gần nhất (nhỏ nhất)
             val nearestTime = nextRingTimes.minOrNull()
-            if(nearestTime !=null){
+
+            if (nearestTime != null) {
+                // Tính khoảng cách từ 'now' đến 'nearestTime'
                 val duration = Duration.between(now, nearestTime)
                 formatDuration(duration)
-            } else "Không có báo thức sắp tới"
+            } else {
+                "Không có báo thức sắp tới"
+            }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000),"Đang tính toán...")
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "Đang tính toán..."
+    )
+
+    private fun formatDuration(duration: Duration): String {
+        val days = duration.toDays()
+        val hours = duration.toHours() % 24
+        val minutes = duration.toMinutes() % 60
+
+        return when {
+            days < 1 -> {
+                if (hours == 0L && minutes == 0L) "Đổ chuông trong vòng chưa đầy 1 phút"
+                else "Báo thức tiếp theo sau $hours giờ $minutes phút"
+            }
+            days == 1L -> "Báo thức tiếp theo sau 1 ngày"
+            else -> "Báo thức tiếp theo sau $days ngày"
+        }
+    }
 
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
@@ -60,18 +107,37 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = emptyList()
     )
 
-    fun addQuickAlarm(minutesToAdd: Int) {
+    fun addQuickAlarm(minutes: Int) {
         viewModelScope.launch {
-            val now = LocalTime.now().plusMinutes(minutesToAdd.toLong())
-            val newEntity = AlarmEntity(
-                hour = now.hour,
-                minute = now.minute,
+            // 1. Tính toán thời gian đích (tự động xử lý qua ngày mới)
+            val now = LocalDateTime.now()
+            val targetTime = now.plusMinutes(minutes.toLong())
+
+            // 2. Tạo đối tượng Entity để lưu vào Database
+            // (Lưu ý: Bạn cần khớp các trường này với class AlarmEntity của bạn)
+            var quickAlarmEntity = AlarmEntity(
+                alarmId = 0, // Để 0 để Room tự sinh ID tự tăng
+                hour = targetTime.hour,
+                minute = targetTime.minute,
                 label = "Báo thức nhanh",
-                daysOfWeek = emptySet(),
-                questionCount = 0,
-                isEnabled = true
+                daysOfWeek = emptySet(), // Báo thức nhanh thì không lặp
+                isEnabled = true,        // Phải bật
+                ringtoneUri = ""
             )
-            alarmDao.insertAlarm(newEntity)
+
+            // 3. Lưu vào DB và nhận về ID mới (QUAN TRỌNG)
+            val newIdLong = alarmDao.insertAlarm(quickAlarmEntity)
+            quickAlarmEntity = quickAlarmEntity.copy(alarmId = newIdLong.toInt())
+
+            // 4. Khởi tạo Scheduler
+            val context = getApplication<Application>().applicationContext
+            val scheduler = AlarmScheduler(context)
+
+            // 5. Tạo đối tượng AlarmSettingData đúng chuẩn class bạn đưa
+            // để truyền vào Scheduler
+            scheduler.schedule(quickAlarmEntity)
+
+            // (Tùy chọn) Cập nhật UI thông báo hoặc reset state nếu cần
         }
     }
 
@@ -102,20 +168,28 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         _sortType.value = type
     }
 
-    private fun findNextRingTime(now: LocalDateTime, hour: Int, minute: Int, daysOfWeek: Set<String>): LocalDateTime{
-        var target = now.withHour(hour).withNano(0)
-        if(daysOfWeek.isEmpty()){
-            if(target.isBefore(now)||target.isEqual(now)){
+    fun findNextAlarmTime(
+        now: LocalDateTime,
+        targetHour: Int,
+        targetMinute: Int,
+        daysOfWeek: Set<String>
+    ): LocalDateTime {
+        var target = now.withHour(targetHour).withMinute(targetMinute).withSecond(0).withNano(0)
+        if (daysOfWeek.isEmpty()) {
+            if (target.isBefore(now) || target.isEqual(now)) {
                 target = target.plusDays(1)
             }
             return target
         }
-        for(i in 0..7){
-            val dayCode = getDayCode(target.dayOfWeek)
-            if(daysOfWeek.contains(dayCode)&&target.isAfter(now)){
-                return target
+        for (i in 0..7) {
+            val candidateDate = target.plusDays(i.toLong())
+            val dayCode = getDayCode(candidateDate.dayOfWeek)
+            if (daysOfWeek.contains(dayCode)) {
+                if (i == 0 && candidateDate.isBefore(now)) {
+                    continue
+                }
+                return candidateDate
             }
-            target = target.plusDays(1)
         }
         return target
     }
@@ -129,17 +203,6 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             java.time.DayOfWeek.FRIDAY -> "T6"
             java.time.DayOfWeek.SATURDAY -> "T7"
             java.time.DayOfWeek.SUNDAY -> "CN"
-        }
-    }
-
-    private fun formatDuration(duration: Duration): String{
-        val days = duration.toDays()
-        val hours = duration.toHours() % 24
-        val minutes = duration.toMinutes() % 60
-        return when{
-            days >=1 -> "Đổ chuông sau $days ngày"
-            hours == 0L && minutes == 0L -> "Đổ chuông trong vòng chưa đầy 1 phút"
-            else -> "Đổ chuông sau $hours giờ $minutes phút"
         }
     }
 

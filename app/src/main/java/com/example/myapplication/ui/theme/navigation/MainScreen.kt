@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.theme.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,6 +16,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.myapplication.alarm_logic.AlarmService
 import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
 import com.example.myapplication.ui.theme.alarm.AlarmScreen
 import com.example.myapplication.ui.theme.alarm.AlarmSettingsScreen
@@ -37,9 +40,20 @@ import com.example.myapplication.ui.theme.topic.TopicDetailScreen
 import com.example.myapplication.ui.theme.topic.TopicScreen
 
 @Composable
-fun MainScreen() {
+fun MainScreen(initialExternalRoute: String? = null) {
     val navController = rememberNavController()
+
+    LaunchedEffect(initialExternalRoute) {
+        if (initialExternalRoute == Screen.QUIZ_SCREEN) {
+            navController.navigate(Screen.QUIZ_SCREEN) {
+                popUpTo(Screen.ALARM_TAB) { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in listOf(
         Screen.ALARM_TAB,
@@ -86,6 +100,8 @@ fun MainScreen() {
                         navController.popBackStack()
                     },
                     onQuizCompleted = {
+                        val intent = Intent(context, AlarmService::class.java)
+                        context.stopService(intent)
                         navController.navigate(Screen.ALARM_TAB) {
                             popUpTo(Screen.ALARM_RINGING) { inclusive = true }
                         }

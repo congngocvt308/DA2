@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.alarm_logic.AlarmScheduler
 import com.example.myapplication.data.AlarmEntity
 import com.example.myapplication.data.AlarmSettingData
 import com.example.myapplication.data.AppDatabase
@@ -170,8 +171,10 @@ class AlarmSettingsViewModel(
 
     fun saveAlarm() {
         viewModelScope.launch {
+            val context = getApplication<Application>().applicationContext
+            val scheduler = AlarmScheduler(context)
             val state = _uiState.value
-            val alarmEntity = AlarmEntity(
+            var alarmEntity = AlarmEntity(
                 alarmId = if (state.id == -1) 0 else state.id,
                 hour = state.hour,
                 minute = state.minute,
@@ -184,11 +187,21 @@ class AlarmSettingsViewModel(
                 ringtoneUri = state.ringtoneUri
             )
             if (state.id == -1) {
-                alarmDao.insertAlarm(alarmEntity)
+                val newId = alarmDao.insertAlarm(alarmEntity)
+
+                // 🚨 QUAN TRỌNG: Cập nhật lại ID mới vào entity để scheduler dùng đúng ID này làm RequestCode
+                alarmEntity = alarmEntity.copy(alarmId = newId.toInt())
+
+                // 3. Truyền alarmEntity (đã có
+                scheduler.schedule(alarmEntity)
             } else {
+                // 4. Cập nhật báo thức cũ
                 alarmDao.updateAlarm(alarmEntity)
+
+                // Truyền alarmEntity vào scheduler
+                scheduler.schedule(alarmEntity)
             }
-            _uiState.update { it.copy(isSaved = true) }
+            _uiState.update { it.copy(isSaved = true, id = alarmEntity.alarmId) }
         }
     }
 

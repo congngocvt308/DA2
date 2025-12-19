@@ -42,7 +42,7 @@ fun AlarmRingingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color.Black)
             .padding(vertical = 60.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -50,7 +50,7 @@ fun AlarmRingingScreen(
 
         Text(
             text = currentDate,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium
         )
@@ -59,7 +59,7 @@ fun AlarmRingingScreen(
 
         Text(
             text = currentTime,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Color.White,
             fontSize = 100.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
@@ -80,7 +80,7 @@ fun AlarmRingingScreen(
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = alarmLabel,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -93,26 +93,26 @@ fun AlarmRingingScreen(
                 onSnooze()
                 onFinish()
             },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2E)),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .width(180.dp)
                 .height(56.dp)
         ) {
-            Text("Báo lại", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Báo lại", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = onNavigateToQuiz,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE50043)),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
         ) {
-            Text("Tắt báo thức", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Tắt báo thức", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
