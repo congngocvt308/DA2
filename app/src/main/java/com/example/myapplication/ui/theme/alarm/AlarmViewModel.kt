@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.Duration
+import java.util.Calendar
 
 enum class SortType{ DEFAULT, ACTIVE_FIRST}
 
@@ -107,39 +108,6 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = emptyList()
     )
 
-    fun addQuickAlarm(minutes: Int) {
-        viewModelScope.launch {
-            // 1. Tính toán thời gian đích (tự động xử lý qua ngày mới)
-            val now = LocalDateTime.now()
-            val targetTime = now.plusMinutes(minutes.toLong())
-
-            // 2. Tạo đối tượng Entity để lưu vào Database
-            // (Lưu ý: Bạn cần khớp các trường này với class AlarmEntity của bạn)
-            var quickAlarmEntity = AlarmEntity(
-                alarmId = 0, // Để 0 để Room tự sinh ID tự tăng
-                hour = targetTime.hour,
-                minute = targetTime.minute,
-                label = "Báo thức nhanh",
-                daysOfWeek = emptySet(), // Báo thức nhanh thì không lặp
-                isEnabled = true,        // Phải bật
-                ringtoneUri = ""
-            )
-
-            // 3. Lưu vào DB và nhận về ID mới (QUAN TRỌNG)
-            val newIdLong = alarmDao.insertAlarm(quickAlarmEntity)
-            quickAlarmEntity = quickAlarmEntity.copy(alarmId = newIdLong.toInt())
-
-            // 4. Khởi tạo Scheduler
-            val context = getApplication<Application>().applicationContext
-            val scheduler = AlarmScheduler(context)
-
-            // 5. Tạo đối tượng AlarmSettingData đúng chuẩn class bạn đưa
-            // để truyền vào Scheduler
-            scheduler.schedule(quickAlarmEntity)
-
-            // (Tùy chọn) Cập nhật UI thông báo hoặc reset state nếu cần
-        }
-    }
 
     fun toggleAlarm(alarmId: Int, isEnabled: Boolean) {
         viewModelScope.launch {

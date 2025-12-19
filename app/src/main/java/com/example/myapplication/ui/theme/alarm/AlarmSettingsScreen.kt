@@ -220,26 +220,6 @@ fun AlarmSettingsScreen(
                         // Click vào tên bài hát -> Mở Dialog
                         onSoundClick = { showSoundDialog = true }
                     )
-//                    Card(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(top = 20.dp),
-//                        shape = RoundedCornerShape(12.dp),
-//                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-//                    ) {
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(16.dp)
-//                        ){
-//                            SettingsSectionHeader(title = "Âm thanh báo thức")
-//                            SoundSelectionRow()
-//                            VolumeSliderRow(
-//                                volume = uiState.volume,
-//                                onVolumeChange = viewModel::updateVolume
-//                            )
-//                        }
-//                    }
                 }
 
                 // --- 7. CÀI ĐẶT TÙY CHỈNH ---

@@ -65,6 +65,22 @@ class AlarmSettingsViewModel(
         }
     }
 
+    fun setupQuickAlarm(minutesToAdd: Int) {
+        val now = LocalDateTime.now().plusMinutes(minutesToAdd.toLong())
+        _uiState.update {
+            it.copy(
+                id = -1, // Đảm bảo là tạo mới
+                hour = now.hour,
+                minute = now.minute,
+                label = "Báo thức nhanh",
+                daysOfWeek = emptySet(), // Không lặp lại
+                isSnoozeEnabled = true,
+                isLoading = false
+            )
+        }
+        updateTimeUntilAlarm()
+    }
+
     fun onLabelChanged(newLabel: String) {
         _uiState.update { it.copy(label = newLabel) }
     }

@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -31,20 +32,27 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.ui.theme.navigation.Screen
+import com.example.myapplication.utils.RingtoneUtils
+import com.example.myapplication.utils.SoundPlayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmScreen(
     viewModel: AlarmViewModel = viewModel(),
+    settingsViewModel: AlarmSettingsViewModel = viewModel(),
     onNavigateToSettings: (Int) -> Unit,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val settingsUiState by settingsViewModel.uiState.collectAsState()
     val alarmList by viewModel.alarms.collectAsState()
     val currentSortType by viewModel.sortType.collectAsState()
     val headerText by viewModel.timeUntilNextAlarms.collectAsState()
     var isFabMenuOpen by remember { mutableStateOf(false) }
     var isMoreMenuOpen by remember { mutableStateOf(false) }
     var showQuickDialog by remember { mutableStateOf(false) }
+    var showSoundDialog by remember { mutableStateOf(false) }
+    val previewPlayer = remember { SoundPlayer(context) }
 
     Box(
         modifier = Modifier
@@ -76,8 +84,6 @@ fun AlarmScreen(
                     .fillMaxWidth()
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
             )
-
-            TestStartButton(navController = navController)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -130,10 +136,41 @@ fun AlarmScreen(
 
         if (showQuickDialog) {
             QuickAlarmDialog(
-                onDismissRequest = { showQuickDialog = false },
-                onSave = { minutes ->
-                    viewModel.addQuickAlarm(minutes)
+                currentSoundTitle = RingtoneUtils.getRingtoneTitle(context, settingsUiState.ringtoneUri),
+                volume = settingsUiState.volume,
+                onVolumeChange = { newVol ->
+                    settingsViewModel.updateVolume(newVol)
+                    previewPlayer.playOrUpdateVolume(settingsUiState.ringtoneUri, newVol)
+                },
+                onSoundClick = { showSoundDialog = true },
+                onDismissRequest = {
                     showQuickDialog = false
+                    previewPlayer.stop()
+                },
+                onSave = { minutes ->
+                    // BƯỚC QUAN TRỌNG:
+                    // 1. Cập nhật thời gian vào SettingsViewModel
+                    settingsViewModel.setupQuickAlarm(minutes)
+                    // 2. Gọi hàm save có sẵn của SettingsViewModel
+                    settingsViewModel.saveAlarm()
+
+                    showQuickDialog = false
+                    previewPlayer.stop()
+                    // 3. Có thể gọi alarmViewModel.refresh() nếu cần cập nhật danh sách ngay
+                }
+            )
+        }
+
+        if (showSoundDialog) {
+            // Tái sử dụng Dialog chọn nhạc, truyền callback vào settingsViewModel
+            SoundSelectionDialog(
+                currentUri = settingsUiState.ringtoneUri,
+                currentVolume = settingsUiState.volume,
+                onDismiss = { showSoundDialog = false },
+                onConfirm = { newUri ->
+                    // Cập nhật vào ViewModel "mượn"
+                    settingsViewModel.updateRingtone(newUri)
+                    showSoundDialog = false
                 }
             )
         }
@@ -320,16 +357,5 @@ fun FabMenuItem(
         Spacer(modifier = Modifier.width(15.dp))
 
         Text(text, color = MaterialTheme.colorScheme.background, fontSize = 20.sp)
-    }
-}
-@Composable
-fun TestStartButton(navController: NavHostController) {
-    Button(
-        onClick = {
-            navController.navigate(Screen.ALARM_RINGING)
-        },
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Text("TEST: REO CHUÔNG")
     }
 }
