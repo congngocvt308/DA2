@@ -28,6 +28,7 @@ enum class SortType{ DEFAULT, ACTIVE_FIRST}
 class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     private val alarmDao = AppDatabase.getDatabase(application).appDao()
+    private val alarmScheduler = AlarmScheduler(application)
     private val _sortType = MutableStateFlow(SortType.DEFAULT)
     private val tickerFlow = flow {
         while (true) {
@@ -109,12 +110,16 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     )
 
 
-    fun toggleAlarm(alarmId: Int, isEnabled: Boolean) {
+    fun toggleAlarm(id: Int, isEnabled: Boolean) {
         viewModelScope.launch {
-            val oldAlarm = alarmDao.getAlarmById(alarmId)
-            if (oldAlarm != null) {
-                val updatedAlarm = oldAlarm.copy(isEnabled = isEnabled)
-                alarmDao.updateAlarm(updatedAlarm)
+            val alarm = alarmDao.getAlarmById(id) ?: return@launch
+            val updatedAlarm = alarm.copy(isEnabled = isEnabled)
+            alarmDao.updateAlarm(updatedAlarm)
+
+            if (isEnabled) {
+                alarmScheduler.schedule(updatedAlarm)
+            } else {
+                alarmScheduler.cancel(updatedAlarm)
             }
         }
     }
@@ -174,12 +179,13 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deleteAlarm(alarmId: Int) {
+    fun deleteAlarm(id: Int) {
         viewModelScope.launch {
-            val alarm = alarmDao.getAlarmById(alarmId)
-            if (alarm != null) {
-                alarmDao.deleteAlarm(alarm)
-            }
+            val alarm = alarmDao.getAlarmById(id) ?: return@launch
+            // 1. Tắt lịch hẹn trong hệ thống trước
+            alarmScheduler.cancel(alarm)
+            // 2. Xóa dữ liệu trong DB sau
+            alarmDao.deleteAlarm(alarm)
         }
     }
 

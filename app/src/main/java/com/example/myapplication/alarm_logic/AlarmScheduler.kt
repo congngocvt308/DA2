@@ -62,12 +62,20 @@ class AlarmScheduler(private val context: Context) {
             )
         }
     }
-    fun cancel(alarmId: Int) {
-        val intent = Intent(context, AlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context, alarmId, intent,
+    fun cancel(alarm: AlarmEntity) {
+        val pendingIntent = createPendingIntent(alarm)
+        alarmManager.cancel(pendingIntent)
+    }
+    // Trong AlarmScheduler của bạn
+    private fun createPendingIntent(alarm: AlarmEntity): PendingIntent {
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("ALARM_ID", alarm.alarmId)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            alarm.alarmId, // 🚨 ĐÂY LÀ KHÓA CHÍNH: RequestCode = alarmId
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.cancel(pendingIntent)
     }
 }

@@ -89,4 +89,7 @@ interface AppDao {
     @Transaction
     @Query("SELECT * FROM topics")
     fun getTopicsWithQuestions(): Flow<List<TopicWithQuestions>>
+
+    @Query("UPDATE alarms SET isEnabled = :enabled WHERE alarmId = :id")
+    suspend fun updateAlarmEnabledStatus(id: Int, enabled: Boolean)
 }

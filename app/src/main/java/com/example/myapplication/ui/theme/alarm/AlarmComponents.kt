@@ -103,6 +103,7 @@ fun AlarmCard(
             }
             Row(
                 modifier = Modifier.Companion.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(R.drawable.sun),

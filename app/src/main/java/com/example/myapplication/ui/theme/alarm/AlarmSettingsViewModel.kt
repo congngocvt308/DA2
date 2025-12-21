@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.theme.alarm
 
 import android.app.Application
+import android.media.RingtoneManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -53,10 +54,13 @@ class AlarmSettingsViewModel(
                 }
             } else {
                 val now = LocalTime.now()
+                val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString()
                 _uiState.update {
                     it.copy(
                         hour = now.hour,
                         minute = now.minute,
+                        ringtoneUri = defaultUri,
+                        volume = 0.7f,
                         isLoading = false
                     )
                 }

@@ -75,15 +75,19 @@ fun AlarmScreen(
                 onDeleteInactive = { viewModel.deleteInactiveAlarms()}
             )
 
+            Spacer(modifier = Modifier.height(20.dp))
+
             Text(
                 text =headerText,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             LazyColumn(
                 modifier = Modifier.weight(1f),

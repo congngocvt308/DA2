@@ -104,20 +104,27 @@ fun TopicScreen(
             )
         }
 
-        FabSpeedDial(
-            isMenuOpen = isFabMenuOpen,
-            onToggleMenu = { isFabMenuOpen = !isFabMenuOpen },
-            onAddNewTopic = {
-                isFabMenuOpen = false
-                showAddTopicDialog = true
-            },
-            onQuickTopicClick = {
-                isFabMenuOpen = false
-            },
+        AnimatedVisibility(
+            visible = !isSearching, // Chỉ hiện khi KHÔNG tìm kiếm
+            enter = fadeIn() + scaleIn(), // Hiệu ứng hiện ra (phóng to)
+            exit = fadeOut() + scaleOut(), // Hiệu ứng biến mất (thu nhỏ)
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-        )
+        ) {
+            FabSpeedDial(
+                isMenuOpen = isFabMenuOpen,
+                onToggleMenu = { isFabMenuOpen = !isFabMenuOpen },
+                onAddNewTopic = {
+                    isFabMenuOpen = false
+                    showAddTopicDialog = true
+                },
+                onQuickTopicClick = {
+                    isFabMenuOpen = false
+                }
+                // Bỏ modifier cũ ở đây vì đã đưa lên AnimatedVisibility
+            )
+        }
 
         if (showAddTopicDialog) {
             QuickTopicDialog(

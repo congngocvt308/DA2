@@ -128,8 +128,12 @@ class TopicDetailViewModel(
 
     fun onAddAnswerLine() {
         _draftAnswers.update { list ->
-            val newId = (list.maxOfOrNull { it.id } ?: 0) + 1
-            list + AnswerData(newId, "", false)
+            if (list.size < 5) {
+                val newId = (list.maxOfOrNull { it.id } ?: 0) + 1
+                list + AnswerData(newId, "", false)
+            } else {
+                list
+            }
         }
     }
 
@@ -150,7 +154,7 @@ class TopicDetailViewModel(
         _draftQuestionText.value = ""
         _draftAnswers.value = listOf(
             AnswerData(0, "", false),
-            AnswerData(1, "", false)
+            AnswerData(1, "", true)
         )
     }
 
@@ -162,18 +166,18 @@ class TopicDetailViewModel(
 
     fun saveQuestion() {
         viewModelScope.launch {
-            if (topicId == -1) return@launch
-            val currentAnswers = _draftAnswers.value
-            val questionText = _draftQuestionText.value
-            val correctObj = currentAnswers.find { it.isCorrect }
-            val correctText = correctObj?.text ?: ""
-            val wrongOptions = currentAnswers.filter { !it.isCorrect }.map { it.text }
+            val answers = _draftAnswers.value.filter { it.text.isNotBlank() }
+            if (answers.isEmpty() || topicId == -1) return@launch
+
+            val correctIndex = answers.indexOfFirst { it.isCorrect }.let {
+                if (it == -1) answers.indices.random() else it
+            }
             val questionEntity = QuestionEntity(
                 questionId = if (editingQuestionId == -1) 0 else editingQuestionId,
                 ownerTopicId = topicId,
-                prompt = questionText,
-                options = wrongOptions,
-                correctAnswer = correctText
+                prompt = _draftQuestionText.value,
+                correctAnswer = answers[correctIndex].text,
+                options = answers.filterIndexed { i, _ -> i != correctIndex }.map { it.text }
             )
             if (editingQuestionId == -1) {
                 topicDao.insertQuestion(questionEntity)

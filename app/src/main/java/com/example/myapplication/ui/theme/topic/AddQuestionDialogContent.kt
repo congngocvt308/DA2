@@ -105,20 +105,21 @@ fun AddQuestionDialog(
                                 onDelete = { viewModel.onRemoveAnswerLine(index) }
                             )
                         }
+                        if (answers.size < 5) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp)
+                                        .clickable { viewModel.onAddAnswerLine() },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.tertiary)
 
-                        item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .clickable { viewModel.onAddAnswerLine() },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.tertiary)
+                                    Spacer(modifier = Modifier.width(8.dp))
 
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Text("Thêm câu trả lời", color = MaterialTheme.colorScheme.tertiary, fontSize = 16.sp)
+                                    Text("Thêm câu trả lời", color = MaterialTheme.colorScheme.tertiary, fontSize = 16.sp)
+                                }
                             }
                         }
                     }

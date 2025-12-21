@@ -1,5 +1,10 @@
 package com.example.myapplication.ui.theme.topic
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -225,20 +230,32 @@ fun TopicDetailScreen(
             )
         }
 
-        Button(
-            onClick = {
-                viewModel.resetDraft()
-                showAddDialog = true
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        AnimatedVisibility(
+            visible = !isSearching,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(16.dp, 16.dp, 16.dp, 30.dp)
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp)
         ) {
-            Text("Thêm câu hỏi", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+            Button(
+                onClick = {
+                    viewModel.resetDraft()
+                    showAddDialog = true
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp, 16.dp, 16.dp, 30.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Text(
+                    text = "Thêm câu hỏi",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
 
         if (showAddDialog) {
