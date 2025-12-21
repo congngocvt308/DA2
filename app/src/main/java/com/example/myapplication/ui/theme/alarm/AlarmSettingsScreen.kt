@@ -6,7 +6,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -37,7 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.theme.components.PremiumPurchaseDialog
 import com.example.myapplication.ui.theme.mission.MissionSelectionDialog
+import com.example.myapplication.utils.PremiumManager
 import com.example.myapplication.utils.RingtoneUtils
 import com.example.myapplication.utils.SoundPlayer
 import kotlinx.coroutines.delay
@@ -53,6 +57,11 @@ fun AlarmSettingsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Premium Manager
+    val premiumManager = remember { PremiumManager.getInstance(context) }
+    val isPremium by premiumManager.isPremium.collectAsState()
+    
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -66,6 +75,8 @@ fun AlarmSettingsScreen(
     var showSnoozeDialog by remember { mutableStateOf(false) }
     var showMissionDialog by remember { mutableStateOf(false) }
     var showSoundDialog by remember { mutableStateOf(false) }
+    var showPremiumDialog by remember { mutableStateOf(false) }
+    var showResetPremiumDialog by remember { mutableStateOf(false) }
     val previewPlayer = remember { SoundPlayer(context) }
 
     val ringtoneTitle = remember(uiState.ringtoneUri) {
@@ -196,10 +207,16 @@ fun AlarmSettingsScreen(
                                 .fillMaxWidth()
                                 .padding(16.dp)
                         ){
-                            SettingsSectionHeader(title = "Nhiệm vụ báo thức")
+                            SettingsSectionHeader(
+                                title = "Nhiệm vụ báo thức",
+                                isPremium = isPremium,
+                                onLongPress = { showResetPremiumDialog = true }
+                            )
                             AlarmTaskSection(
                                 questionCount = uiState.questionCount,
-                                onAddClick = { showMissionDialog = true }
+                                isPremium = isPremium,
+                                onAddClick = { showMissionDialog = true },
+                                onLockedFeatureClick = { showPremiumDialog = true }
                             )
                         }
                     }
@@ -288,6 +305,23 @@ fun AlarmSettingsScreen(
             }
         )
     }
+    
+    if (showPremiumDialog) {
+        PremiumPurchaseDialog(
+            onDismiss = { showPremiumDialog = false },
+            onPurchaseSuccess = { showPremiumDialog = false }
+        )
+    }
+    
+    if (showResetPremiumDialog) {
+        ResetPremiumDialog(
+            onDismiss = { showResetPremiumDialog = false },
+            onConfirmReset = {
+                premiumManager.resetPremiumForTesting()
+                showResetPremiumDialog = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -346,17 +380,36 @@ fun SoundSelectionRow() {
     }
 }
 
+// Định nghĩa các tính năng nâng cao bị khóa
+data class PremiumFeature(
+    val id: Int,
+    val name: String,
+    val icon: @Composable () -> Unit
+)
+
 @Composable
 fun AlarmTaskSection(
     questionCount: Int,
-    onAddClick: () -> Unit
+    isPremium: Boolean,
+    onAddClick: () -> Unit,
+    onLockedFeatureClick: () -> Unit
 ) {
+    // Danh sách các tính năng nâng cao
+    val premiumFeatures = remember {
+        listOf(
+            PremiumFeature(1, "Toán", { Text("🧮", fontSize = 20.sp) }),
+            PremiumFeature(2, "Hình ảnh", { Text("🖼️", fontSize = 20.sp) }),
+            PremiumFeature(3, "QR Code", { Text("📱", fontSize = 20.sp) })
+        )
+    }
+    
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp, bottom = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Card đầu tiên: Thêm câu hỏi
         item {
             Box(modifier = Modifier){
                 Card(
@@ -392,33 +445,109 @@ fun AlarmTaskSection(
                 }
             }
         }
-        items(3) {
-            Box(modifier = Modifier){
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiary),
-                    modifier = Modifier
-                        .size(80.dp)
-                        .padding(top = 4.dp, end = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 4.dp, start = 20.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Center
-                    ){
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.background)
-                        }
+        
+        // Các tính năng Premium
+        items(premiumFeatures.size) { index ->
+            val feature = premiumFeatures[index]
+            PremiumFeatureCard(
+                feature = feature,
+                isUnlocked = isPremium,
+                onClick = {
+                    if (isPremium) {
+                        // TODO: Xử lý khi tính năng đã được mở khóa
+                        // Có thể mở dialog cài đặt cho từng loại nhiệm vụ
+                    } else {
+                        onLockedFeatureClick()
                     }
                 }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PremiumFeatureCard(
+    feature: PremiumFeature,
+    isUnlocked: Boolean,
+    onClick: () -> Unit
+) {
+    val goldColor = Color(0xFFFFD700)
+    
+    Box(modifier = Modifier) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isUnlocked) 
+                    goldColor.copy(alpha = 0.2f) 
+                else 
+                    MaterialTheme.colorScheme.tertiary
+            ),
+            onClick = onClick,
+            modifier = Modifier
+                .size(80.dp)
+                .padding(top = 4.dp, end = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isUnlocked) 
+                                goldColor.copy(alpha = 0.3f) 
+                            else 
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isUnlocked) {
+                        feature.icon()
+                    } else {
+                        Icon(
+                            Icons.Default.Lock, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.background,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = if (isUnlocked) feature.name else "Khóa",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isUnlocked) 
+                        goldColor 
+                    else 
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
+                    fontSize = 10.sp
+                )
+            }
+        }
+        
+        // Badge "PRO" nếu chưa mở khóa
+        if (!isUnlocked) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-4).dp, y = 0.dp),
+                shape = RoundedCornerShape(4.dp),
+                color = goldColor
+            ) {
+                Text(
+                    text = "PRO",
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                )
             }
         }
     }
@@ -609,15 +738,52 @@ fun CustomDayChip(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SettingsSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onBackground,
-        fontSize = 18.sp,
-        modifier = Modifier.fillMaxWidth()
-    )
+fun SettingsSectionHeader(
+    title: String,
+    isPremium: Boolean = false,
+    onLongPress: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onLongPress != null) {
+                    Modifier.combinedClickable(
+                        onClick = { },
+                        onLongClick = onLongPress
+                    )
+                } else {
+                    Modifier
+                }
+            ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 18.sp
+        )
+        
+        // Hiển thị badge Premium nếu đã mua
+        if (isPremium) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFFFD700).copy(alpha = 0.2f)
+            ) {
+                Text(
+                    text = "⭐ PREMIUM",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFD700),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -759,6 +925,102 @@ fun SnoozeDurationDialog(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Dialog để reset trạng thái Premium (chỉ dành cho testing)
+ */
+@Composable
+fun ResetPremiumDialog(
+    onDismiss: () -> Unit,
+    onConfirmReset: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.width(320.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Warning icon
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🔧",
+                        fontSize = 28.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Reset Premium",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Bạn có chắc muốn reset trạng thái Premium? Thao tác này chỉ dành cho testing.",
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontSize = 14.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "⚠️ Chức năng ẩn dành cho Developer",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(12.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Hủy")
+                    }
+                    
+                    Button(
+                        onClick = onConfirmReset,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Reset", color = Color.White)
                     }
                 }
             }
