@@ -11,8 +11,12 @@ data class AlarmSettingData(
     val ringtoneUri: String = "",
     val questionCount: Int = 0,
     val selectedQuestions: List<MissionQuestion> = emptyList(),
+    val selectedQRCodeIds: List<Int> = emptyList(),
     val volume: Float = 0.7f,
     val isLoading: Boolean = true,
     val isSaved: Boolean = false,
     val timeUntilAlarm: String = ""
-)
+) {
+    // Helper để lấy alarmId (nullable khi chưa lưu)
+    val alarmId: Int? get() = if (id > 0) id else null
+}

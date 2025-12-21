@@ -41,6 +41,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.ui.theme.components.PremiumPurchaseDialog
 import com.example.myapplication.ui.theme.mission.MissionSelectionDialog
+import com.example.myapplication.ui.theme.qrcode.QRCodeManagementDialog
+import com.example.myapplication.ui.theme.qrcode.QRCodeScannerScreen
+import com.example.myapplication.ui.theme.qrcode.QRCodeSelectionDialog
+import com.example.myapplication.ui.theme.qrcode.QRCodeViewModel
 import com.example.myapplication.utils.PremiumManager
 import com.example.myapplication.utils.RingtoneUtils
 import com.example.myapplication.utils.SoundPlayer
@@ -77,6 +81,13 @@ fun AlarmSettingsScreen(
     var showSoundDialog by remember { mutableStateOf(false) }
     var showPremiumDialog by remember { mutableStateOf(false) }
     var showResetPremiumDialog by remember { mutableStateOf(false) }
+    var showQRCodeManagement by remember { mutableStateOf(false) }
+    var showQRCodeSelection by remember { mutableStateOf(false) }
+    var showQRScanner by remember { mutableStateOf(false) }
+    
+    // State để lưu code từ camera scanner
+    var scannedCodeFromCamera by remember { mutableStateOf<Pair<String, String>?>(null) }
+    
     val previewPlayer = remember { SoundPlayer(context) }
 
     val ringtoneTitle = remember(uiState.ringtoneUri) {
@@ -216,7 +227,14 @@ fun AlarmSettingsScreen(
                                 questionCount = uiState.questionCount,
                                 isPremium = isPremium,
                                 onAddClick = { showMissionDialog = true },
-                                onLockedFeatureClick = { showPremiumDialog = true }
+                                onLockedFeatureClick = { showPremiumDialog = true },
+                                onQRCodeClick = { 
+                                    if (isPremium) {
+                                        showQRCodeSelection = true
+                                    } else {
+                                        showPremiumDialog = true
+                                    }
+                                }
                             )
                         }
                     }
@@ -322,6 +340,55 @@ fun AlarmSettingsScreen(
             }
         )
     }
+    
+    // QR Code Selection Dialog
+    if (showQRCodeSelection) {
+        QRCodeSelectionDialog(
+            alarmId = uiState.alarmId ?: 0,
+            initialSelectedIds = uiState.selectedQRCodeIds,
+            onDismiss = { showQRCodeSelection = false },
+            onConfirm = { selectedIds ->
+                viewModel.updateSelectedQRCodes(selectedIds)
+                showQRCodeSelection = false
+            },
+            onManageQRCodes = {
+                showQRCodeSelection = false
+                showQRCodeManagement = true
+            }
+        )
+    }
+    
+    // QR Code Management Dialog
+    if (showQRCodeManagement) {
+        QRCodeManagementDialog(
+            onDismiss = { 
+                showQRCodeManagement = false
+                scannedCodeFromCamera = null // Clear scanned code when closing
+            },
+            onScanCamera = {
+                showQRCodeManagement = false
+                showQRScanner = true
+            },
+            scannedCodeFromCamera = scannedCodeFromCamera,
+            onClearScannedCode = { scannedCodeFromCamera = null }
+        )
+    }
+    
+    // Full screen QR Scanner
+    if (showQRScanner) {
+        QRCodeScannerScreen(
+            onCodeScanned = { code, type ->
+                // Lưu code đã quét và quay về management dialog
+                scannedCodeFromCamera = Pair(code, type)
+                showQRScanner = false
+                showQRCodeManagement = true
+            },
+            onClose = { 
+                showQRScanner = false
+                showQRCodeManagement = true
+            }
+        )
+    }
 }
 
 @Composable
@@ -392,7 +459,8 @@ fun AlarmTaskSection(
     questionCount: Int,
     isPremium: Boolean,
     onAddClick: () -> Unit,
-    onLockedFeatureClick: () -> Unit
+    onLockedFeatureClick: () -> Unit,
+    onQRCodeClick: () -> Unit
 ) {
     // Danh sách các tính năng nâng cao
     val premiumFeatures = remember {
@@ -454,8 +522,11 @@ fun AlarmTaskSection(
                 isUnlocked = isPremium,
                 onClick = {
                     if (isPremium) {
-                        // TODO: Xử lý khi tính năng đã được mở khóa
-                        // Có thể mở dialog cài đặt cho từng loại nhiệm vụ
+                        // Xử lý tính năng QR Code
+                        if (feature.id == 3) {
+                            onQRCodeClick()
+                        }
+                        // TODO: Xử lý các tính năng khác (Toán, Hình ảnh)
                     } else {
                         onLockedFeatureClick()
                     }

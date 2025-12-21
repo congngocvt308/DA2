@@ -95,4 +95,70 @@ interface AppDao {
 
     @Query("UPDATE alarms SET isEnabled = :enabled WHERE alarmId = :id")
     suspend fun updateAlarmEnabledStatus(id: Int, enabled: Boolean)
+    
+    // ==================== QR CODE METHODS ====================
+    
+    @Query("SELECT * FROM qr_codes ORDER BY createdAt DESC")
+    fun getAllQRCodes(): Flow<List<QRCodeEntity>>
+    
+    @Query("SELECT * FROM qr_codes ORDER BY createdAt DESC")
+    suspend fun getAllQRCodesOnce(): List<QRCodeEntity>
+    
+    @Query("SELECT COUNT(*) FROM qr_codes")
+    suspend fun getQRCodeCount(): Int
+    
+    @Query("SELECT * FROM qr_codes WHERE qrId = :id")
+    suspend fun getQRCodeById(id: Int): QRCodeEntity?
+    
+    @Query("SELECT * FROM qr_codes WHERE codeValue = :code")
+    suspend fun getQRCodeByValue(code: String): QRCodeEntity?
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertQRCode(qrCode: QRCodeEntity): Long
+    
+    @Delete
+    suspend fun deleteQRCode(qrCode: QRCodeEntity)
+    
+    @Query("DELETE FROM qr_codes WHERE qrId = :id")
+    suspend fun deleteQRCodeById(id: Int)
+    
+    @Update
+    suspend fun updateQRCode(qrCode: QRCodeEntity)
+    
+    // ==================== ALARM-QR LINK METHODS ====================
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlarmQRLink(link: AlarmQRLinkEntity)
+    
+    @Query("DELETE FROM alarm_qr_link WHERE alarmId = :alarmId")
+    suspend fun clearQRLinksForAlarm(alarmId: Int)
+    
+    @Query("DELETE FROM alarm_qr_link WHERE alarmId = :alarmId AND qrId = :qrId")
+    suspend fun deleteAlarmQRLink(alarmId: Int, qrId: Int)
+    
+    @Query("SELECT COUNT(*) FROM alarm_qr_link WHERE alarmId = :alarmId")
+    suspend fun getQRLinkCountForAlarm(alarmId: Int): Int
+    
+    @Query("""
+        SELECT q.* FROM qr_codes q
+        INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+        WHERE link.alarmId = :alarmId
+    """)
+    fun getQRCodesForAlarm(alarmId: Int): Flow<List<QRCodeEntity>>
+    
+    @Query("""
+        SELECT q.* FROM qr_codes q
+        INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+        WHERE link.alarmId = :alarmId
+    """)
+    suspend fun getQRCodesForAlarmOnce(alarmId: Int): List<QRCodeEntity>
+    
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM qr_codes q
+            INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+            WHERE link.alarmId = :alarmId AND q.codeValue = :codeValue
+        )
+    """)
+    suspend fun isQRCodeValidForAlarm(alarmId: Int, codeValue: String): Boolean
 }

@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.myapplication.alarm_logic.AlarmService
 import com.example.myapplication.ui.theme.navigation.Screen
+import com.example.myapplication.ui.theme.qrcode.QRDismissScreen
 import com.example.myapplication.ui.theme.theme.MyApplicationTheme
 import kotlin.jvm.java
 
@@ -23,6 +24,7 @@ class AlarmRingingActivity : ComponentActivity() {
 
         val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        val hasQRCodes = intent.getBooleanExtra("HAS_QR_CODES", false)
 
         setContent {
             MyApplicationTheme {
@@ -37,6 +39,7 @@ class AlarmRingingActivity : ComponentActivity() {
                     composable("ringing_screen") {
                         AlarmRingingScreen(
                             alarmLabel = label,
+                            hasQRCodes = hasQRCodes,
                             onSnooze = {
                                 stopRinging()
                                 // Logic đặt báo thức lại sau 5p (nếu có)
@@ -45,6 +48,10 @@ class AlarmRingingActivity : ComponentActivity() {
                             onNavigateToQuiz = {
                                 // Chuyển sang màn hình Quiz nội bộ
                                 navController.navigate("quiz_screen")
+                            },
+                            onNavigateToQRScan = {
+                                // Chuyển sang màn hình quét QR
+                                navController.navigate("qr_dismiss_screen")
                             },
                             onFinish = {
                                 // Tắt hẳn (nếu người dùng không chọn quiz - tùy logic của bạn)
@@ -64,6 +71,20 @@ class AlarmRingingActivity : ComponentActivity() {
                             },
                             onQuizCompleted = {
                                 // Khi giải xong: Tắt nhạc và đóng Activity
+                                stopRinging()
+                                finish()
+                            }
+                        )
+                    }
+                    
+                    // 3. Màn hình quét QR/Barcode để tắt báo thức
+                    composable("qr_dismiss_screen") {
+                        QRDismissScreen(
+                            alarmId = alarmId,
+                            onBack = {
+                                navController.popBackStack()
+                            },
+                            onDismissSuccess = {
                                 stopRinging()
                                 finish()
                             }

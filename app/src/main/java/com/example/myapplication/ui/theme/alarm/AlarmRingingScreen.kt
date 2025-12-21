@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,8 +23,10 @@ import java.util.Locale
 @Composable
 fun AlarmRingingScreen(
     alarmLabel: String,
+    hasQRCodes: Boolean = false,
     onSnooze: () -> Unit,
     onNavigateToQuiz: () -> Unit,
+    onNavigateToQRScan: () -> Unit = {},
     onFinish: () -> Unit
 ) {
     var currentTime by remember { mutableStateOf("") }
@@ -103,6 +106,29 @@ fun AlarmRingingScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        
+        // Nút quét QR (chỉ hiển thị nếu có QR codes được cài đặt)
+        if (hasQRCodes) {
+            Button(
+                onClick = onNavigateToQRScan,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                shape = RoundedCornerShape(50),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+            ) {
+                Icon(
+                    Icons.Default.QrCode2,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Quét QR/Barcode", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Button(
             onClick = onNavigateToQuiz,

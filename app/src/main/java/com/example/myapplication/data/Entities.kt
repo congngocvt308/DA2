@@ -124,3 +124,34 @@ data class AlarmSelectedQuestionEntity(
     val questionId: Int,  // Có thể là ID dương (từ database) hoặc âm (câu hỏi mặc định: -1, -2, ...)
     val topicId: Int? = null
 )
+
+/**
+ * Entity lưu trữ QR/Barcode
+ * Người dùng có thể lưu tối đa 5 mã
+ */
+@Entity(tableName = "qr_codes")
+data class QRCodeEntity(
+    @PrimaryKey(autoGenerate = true) val qrId: Int = 0,
+    val name: String,           // Tên do người dùng đặt (VD: "Mã tủ lạnh", "Mã bàn làm việc")
+    val codeValue: String,      // Giá trị của mã QR/Barcode
+    val codeType: String,       // "QR" hoặc "BARCODE"
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+/**
+ * Bảng liên kết giữa Alarm và QR Code
+ * Mỗi báo thức có thể sử dụng tối đa 3 mã QR/Barcode
+ */
+@Entity(
+    tableName = "alarm_qr_link",
+    primaryKeys = ["alarmId", "qrId"],
+    foreignKeys = [
+        ForeignKey(entity = AlarmEntity::class, parentColumns = ["alarmId"], childColumns = ["alarmId"], onDelete = ForeignKey.CASCADE),
+        ForeignKey(entity = QRCodeEntity::class, parentColumns = ["qrId"], childColumns = ["qrId"], onDelete = ForeignKey.CASCADE)
+    ],
+    indices = [Index("alarmId"), Index("qrId")]
+)
+data class AlarmQRLinkEntity(
+    val alarmId: Int,
+    val qrId: Int
+)

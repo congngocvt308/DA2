@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.alarm_logic.AlarmScheduler
 import com.example.myapplication.data.AlarmEntity
+import com.example.myapplication.data.AlarmQRLinkEntity
 import com.example.myapplication.data.AlarmSettingData
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.MissionQuestion
@@ -59,6 +60,10 @@ class AlarmSettingsViewModel(
                         }
                     }
                     
+                    // Load selected QR codes
+                    val selectedQRCodes = alarmDao.getQRCodesForAlarmOnce(alarmId)
+                    val selectedQRCodeIds = selectedQRCodes.map { it.qrId }
+                    
                     _uiState.update {
                         it.copy(
                             id = alarm.alarmId,
@@ -71,6 +76,7 @@ class AlarmSettingsViewModel(
                             ringtoneUri = alarm.ringtoneUri ?: "",
                             questionCount = alarm.questionCount,
                             selectedQuestions = selectedQuestions,
+                            selectedQRCodeIds = selectedQRCodeIds,
                             isLoading = false
                         )
                     }
@@ -259,6 +265,9 @@ class AlarmSettingsViewModel(
             // 🚨 LƯU CÁC CÂU HỎI ĐƯỢC CHỌN VÀO DATABASE
             saveSelectedQuestions(alarmEntity.alarmId, state.selectedQuestions)
             
+            // Lưu các QR code được chọn
+            saveSelectedQRCodes(alarmEntity.alarmId, state.selectedQRCodeIds)
+            
             _uiState.update { it.copy(isSaved = true, id = alarmEntity.alarmId) }
         }
     }
@@ -297,6 +306,22 @@ class AlarmSettingsViewModel(
                 questionCount = count,
                 selectedQuestions = questions
             )
+        }
+    }
+    
+    fun updateSelectedQRCodes(qrCodeIds: List<Int>) {
+        _uiState.update { currentState ->
+            currentState.copy(selectedQRCodeIds = qrCodeIds)
+        }
+    }
+    
+    private suspend fun saveSelectedQRCodes(alarmId: Int, qrCodeIds: List<Int>) {
+        // Xóa các liên kết cũ
+        alarmDao.clearQRLinksForAlarm(alarmId)
+        
+        // Lưu các liên kết mới
+        qrCodeIds.forEach { qrId ->
+            alarmDao.insertAlarmQRLink(AlarmQRLinkEntity(alarmId = alarmId, qrId = qrId))
         }
     }
 }
