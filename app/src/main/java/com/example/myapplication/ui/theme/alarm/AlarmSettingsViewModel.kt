@@ -37,6 +37,28 @@ class AlarmSettingsViewModel(
             if (alarmId != -1) {
                 val alarm = alarmDao.getAlarmById(alarmId)
                 if (alarm != null) {
+                    // Load các câu hỏi đã chọn
+                    val selectedQuestionEntities = alarmDao.getSelectedQuestionsForAlarmOnce(alarmId)
+                    val selectedQuestions = selectedQuestionEntities.map { entity ->
+                        if (entity.questionId < 0) {
+                            // Câu hỏi mặc định
+                            val defaultId = -entity.questionId
+                            MissionQuestion(
+                                id = "default_$defaultId",
+                                text = getDefaultQuestionText(defaultId),
+                                isSelected = true
+                            )
+                        } else {
+                            // Câu hỏi từ database
+                            val question = alarmDao.getQuestionById(entity.questionId)
+                            MissionQuestion(
+                                id = entity.questionId.toString(),
+                                text = question?.prompt ?: "",
+                                isSelected = true
+                            )
+                        }
+                    }
+                    
                     _uiState.update {
                         it.copy(
                             id = alarm.alarmId,
@@ -48,6 +70,7 @@ class AlarmSettingsViewModel(
                             snoozeDuration = alarm.snoozeDuration,
                             ringtoneUri = alarm.ringtoneUri ?: "",
                             questionCount = alarm.questionCount,
+                            selectedQuestions = selectedQuestions,
                             isLoading = false
                         )
                     }
@@ -66,6 +89,17 @@ class AlarmSettingsViewModel(
                 }
             }
             updateTimeUntilAlarm()
+        }
+    }
+    
+    private fun getDefaultQuestionText(id: Int): String {
+        return when (id) {
+            1 -> "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?"
+            2 -> "1 + 1 = ?"
+            3 -> "Thủ đô Việt Nam?"
+            4 -> "2 x 2 = ?"
+            5 -> "Loại hình MVVM?"
+            else -> ""
         }
     }
 
@@ -221,7 +255,35 @@ class AlarmSettingsViewModel(
                 // Truyền alarmEntity vào scheduler
                 scheduler.schedule(alarmEntity)
             }
+            
+            // 🚨 LƯU CÁC CÂU HỎI ĐƯỢC CHỌN VÀO DATABASE
+            saveSelectedQuestions(alarmEntity.alarmId, state.selectedQuestions)
+            
             _uiState.update { it.copy(isSaved = true, id = alarmEntity.alarmId) }
+        }
+    }
+    
+    private suspend fun saveSelectedQuestions(alarmId: Int, questions: List<MissionQuestion>) {
+        // Xóa các câu hỏi cũ của báo thức này
+        alarmDao.clearSelectedQuestionsForAlarm(alarmId)
+        
+        // Lưu các câu hỏi mới được chọn
+        questions.forEach { question ->
+            // Xử lý cả câu hỏi mặc định (id bắt đầu bằng "default_") và câu hỏi từ database
+            val questionId = if (question.id.startsWith("default_")) {
+                // Câu hỏi mặc định: chuyển "default_1" -> -1, "default_2" -> -2, ...
+                val defaultIndex = question.id.removePrefix("default_").toIntOrNull() ?: return@forEach
+                -defaultIndex
+            } else {
+                question.id.toIntOrNull() ?: return@forEach
+            }
+            
+            val entity = com.example.myapplication.data.AlarmSelectedQuestionEntity(
+                alarmId = alarmId,
+                questionId = questionId,
+                topicId = null
+            )
+            alarmDao.insertSelectedQuestion(entity)
         }
     }
 

@@ -113,15 +113,14 @@ data class AlarmHistoryEntity(
 @Entity(
     tableName = "alarm_selected_questions",
     foreignKeys = [
-        ForeignKey(entity = AlarmEntity::class, parentColumns = ["alarmId"], childColumns = ["alarmId"], onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = TopicEntity::class, parentColumns = ["topicId"], childColumns = ["topicId"], onDelete = ForeignKey.CASCADE)
+        // Chỉ giữ ForeignKey cho alarmId, bỏ ForeignKey cho questionId vì câu hỏi mặc định có ID âm
+        ForeignKey(entity = AlarmEntity::class, parentColumns = ["alarmId"], childColumns = ["alarmId"], onDelete = ForeignKey.CASCADE)
     ],
     indices = [Index("alarmId"), Index("questionId"), Index("topicId")]
 )
 data class AlarmSelectedQuestionEntity(
     @PrimaryKey(autoGenerate = true) val selectionId: Int = 0,
     val alarmId: Int,
-    val questionId: Int,
+    val questionId: Int,  // Có thể là ID dương (từ database) hoặc âm (câu hỏi mặc định: -1, -2, ...)
     val topicId: Int? = null
 )

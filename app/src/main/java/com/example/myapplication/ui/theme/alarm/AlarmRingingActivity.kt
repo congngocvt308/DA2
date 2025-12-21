@@ -22,6 +22,7 @@ class AlarmRingingActivity : ComponentActivity() {
         turnScreenOnAndKeyguard()
 
         val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
+        val alarmId = intent.getIntExtra("ALARM_ID", -1)
 
         setContent {
             MyApplicationTheme {
@@ -56,8 +57,7 @@ class AlarmRingingActivity : ComponentActivity() {
                     // 2. Màn hình giải đố (Quiz) - Lắp đúng tham số của bạn vào đây
                     composable("quiz_screen") {
                         QuizScreen(
-                            // viewModel tự động lấy từ QuizViewModel = viewModel()
-                            // nên bạn không cần truyền thủ công nếu không muốn
+                            alarmId = alarmId,
                             onBack = {
                                 // Khi ấn nút Back trong Quiz, quay lại màn hình reo
                                 navController.popBackStack()

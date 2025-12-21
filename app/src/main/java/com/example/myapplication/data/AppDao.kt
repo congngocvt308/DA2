@@ -46,6 +46,9 @@ interface AppDao {
 
     @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
     fun getSelectedQuestionsForAlarm(alarmId: Int): Flow<List<AlarmSelectedQuestionEntity>>
+    
+    @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    suspend fun getSelectedQuestionsForAlarmOnce(alarmId: Int): List<AlarmSelectedQuestionEntity>
 
     @Query("""
         SELECT q.* FROM questions q

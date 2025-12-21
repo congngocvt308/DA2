@@ -75,6 +75,18 @@ fun MissionSelectionContent(
     var questionCount by remember { mutableFloatStateOf(if (initialCount > 0) initialCount.toFloat() else 0f) }
     val dbTopics by viewModel.missionTopics.collectAsState()
     var localTopics by remember { mutableStateOf<List<MissionTopic>>(emptyList()) }
+    
+    // Tính tổng số câu hỏi đã chọn
+    val totalSelectedQuestions = remember(localTopics) {
+        localTopics.flatMap { it.questions }.count { it.isSelected }
+    }
+    
+    // Điều chỉnh questionCount nếu vượt quá số câu hỏi đã chọn
+    LaunchedEffect(totalSelectedQuestions) {
+        if (questionCount > totalSelectedQuestions) {
+            questionCount = totalSelectedQuestions.toFloat()
+        }
+    }
 
     LaunchedEffect(dbTopics) {
         if (dbTopics.isNotEmpty()) {
@@ -145,21 +157,35 @@ fun MissionSelectionContent(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text("Số câu hỏi", fontSize = 16.sp, color = MaterialTheme.colorScheme.tertiary)
+                    Text(
+                        text = "Số câu hỏi (tối đa: $totalSelectedQuestions)", 
+                        fontSize = 16.sp, 
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Slider(
-                        value = questionCount,
-                        onValueChange = { questionCount = it },
-                        valueRange = 0f..10f,
-                        steps = 8,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.onSurface,
-                            activeTrackColor = MaterialTheme.colorScheme.onSurface,
-                            inactiveTrackColor = MaterialTheme.colorScheme.tertiary
+                    // Slider chỉ hoạt động khi có câu hỏi được chọn
+                    if (totalSelectedQuestions > 0) {
+                        Slider(
+                            value = questionCount,
+                            onValueChange = { questionCount = it },
+                            valueRange = 0f..totalSelectedQuestions.toFloat(),
+                            steps = if (totalSelectedQuestions > 1) totalSelectedQuestions - 1 else 0,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.onSurface,
+                                activeTrackColor = MaterialTheme.colorScheme.onSurface,
+                                inactiveTrackColor = MaterialTheme.colorScheme.tertiary
+                            )
                         )
-                    )
+                    } else {
+                        Text(
+                            text = "Vui lòng chọn ít nhất 1 câu hỏi bên dưới",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
 

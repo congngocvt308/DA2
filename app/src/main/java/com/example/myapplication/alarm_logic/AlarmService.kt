@@ -21,6 +21,7 @@ class AlarmService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 1. Lấy dữ liệu
+        val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val ringtoneUri = intent?.getStringExtra("RINGTONE_URI") ?: ""
         val volume = intent?.getFloatExtra("ALARM_VOLUME", 0.7f) ?: 0.7f
         val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
@@ -32,6 +33,7 @@ class AlarmService : Service() {
             // Flag quan trọng để tách khỏi MainActivity
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             putExtra("ALARM_LABEL", label)
+            putExtra("ALARM_ID", alarmId)
         }
         startActivity(activityIntent)
 

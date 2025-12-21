@@ -27,10 +27,18 @@ import com.example.myapplication.data.QuizUiStateData
 
 @Composable
 fun QuizScreen(
+    alarmId: Int = -1,
     viewModel: QuizViewModel = viewModel(),
     onBack: () -> Unit,
     onQuizCompleted: () -> Unit
 ) {
+    // Set alarmId khi khởi tạo
+    LaunchedEffect(alarmId) {
+        if (alarmId != -1) {
+            viewModel.setAlarmId(alarmId)
+        }
+    }
+    
     val uiState by viewModel.uiState.collectAsState()
     val currentQuestion = uiState.questionPool.getOrNull(uiState.poolIndex)
 
