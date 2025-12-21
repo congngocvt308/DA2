@@ -11,6 +11,7 @@ data class AlarmSettingData(
     val ringtoneUri: String = "",
     val questionCount: Int = 0,
     val selectedQuestions: List<MissionQuestion> = emptyList(),
+    val selectedTopicIds: List<MissionTopic> = emptyList(),
     val selectedQRCodeIds: List<Int> = emptyList(),
     val volume: Float = 0.7f,
     val isLoading: Boolean = true,

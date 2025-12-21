@@ -302,12 +302,21 @@ fun AlarmSettingsScreen(
     }
 
     if (showMissionDialog) {
+        val initialTopicIds = remember(uiState.selectedTopicIds) {
+            uiState.selectedTopicIds.filter { it.isSelected }.map { it.id }.toSet()
+        }
+
+        val initialQuestionIds = remember(uiState.selectedQuestions) {
+            uiState.selectedQuestions.map { it.id }.toSet()
+        }
         MissionSelectionDialog(
             initialCount = uiState.questionCount,
-            initialSelection = uiState.selectedQuestions,
+            initialSelectionIds = initialQuestionIds, // Truyền Set<Int>
+            initialTopicIds = initialTopicIds,
             onDismiss = { showMissionDialog = false },
-            onConfirm = { count, questions ->
-                viewModel.updateMission(count, questions)
+            onConfirm = { count, questions, topics ->
+                // questions trả về ở đây là List<MissionQuestion> với ID kiểu Int
+                viewModel.updateMission(count, questions, topics)
                 showMissionDialog = false
             }
         )

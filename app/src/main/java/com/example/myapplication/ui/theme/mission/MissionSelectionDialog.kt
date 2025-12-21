@@ -27,37 +27,47 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.MissionQuestion
 import com.example.myapplication.data.MissionTopic
+import com.example.myapplication.data.MissionUiState
 import com.example.myapplication.ui.theme.mission.MissionViewModel
 
 @Composable
 fun MissionSelectionDialog(
     initialCount: Int,
-    initialSelection: List<MissionQuestion>,
+    initialSelectionIds: Set<Int>, // Truyền Set ID Int vào đây
+    initialTopicIds: Set<Int>,
     onDismiss: () -> Unit,
-    onConfirm: (Int, List<MissionQuestion>) -> Unit,
+    onConfirm: (Int, List<MissionQuestion>, List<MissionTopic>) -> Unit,
     viewModel: MissionViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Khởi tạo data đúng 1 lần khi mở Dialog
+    LaunchedEffect(Unit) {
+        viewModel.initData(initialCount, initialSelectionIds, initialTopicIds)
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable { onDismiss() },
-            contentAlignment = Alignment.BottomCenter
-        ) {
+        Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() }, contentAlignment = Alignment.BottomCenter) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(enabled = false) {}
             ) {
                 MissionSelectionContent(
-                    initialCount = initialCount,
-                    initialSelection = initialSelection,
-                    viewModel = viewModel,
+                    uiState = uiState,
+                    onTopicClick = { id, selectAll -> viewModel.toggleTopic(id, selectAll) },
+                    onQuestionClick = { tId, qId -> viewModel.toggleQuestion(tId, qId) },
+                    onExpandClick = { viewModel.toggleExpansion(it) },
+                    onCountChange = { viewModel.updateCount(it) },
                     onDismiss = onDismiss,
-                    onConfirm = onConfirm
+                    onConfirm = {
+                        val selected =
+                            uiState.topics.flatMap { it.questions }.filter { it.isSelected }
+                        onConfirm(uiState.questionCount, selected, uiState.topics)
+                    }
                 )
             }
         }
@@ -66,72 +76,32 @@ fun MissionSelectionDialog(
 
 @Composable
 fun MissionSelectionContent(
-    initialCount: Int,
-    initialSelection: List<MissionQuestion>,
-    viewModel: MissionViewModel,
+    uiState: MissionUiState,
+    onTopicClick: (Int, Boolean) -> Unit,
+    onQuestionClick: (Int, Int) -> Unit,
+    onExpandClick: (Int) -> Unit,
+    onCountChange: (Int) -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: (Int, List<MissionQuestion>) -> Unit
+    onConfirm: () -> Unit
 ) {
-    var questionCount by remember { mutableFloatStateOf(if (initialCount > 0) initialCount.toFloat() else 0f) }
-    val dbTopics by viewModel.missionTopics.collectAsState()
-    var localTopics by remember { mutableStateOf<List<MissionTopic>>(emptyList()) }
-    
-    // Tính tổng số câu hỏi đã chọn
-    val totalSelectedQuestions = remember(localTopics) {
-        localTopics.flatMap { it.questions }.count { it.isSelected }
-    }
-    
-    // Điều chỉnh questionCount nếu vượt quá số câu hỏi đã chọn
-    LaunchedEffect(totalSelectedQuestions) {
-        if (questionCount > totalSelectedQuestions) {
-            questionCount = totalSelectedQuestions.toFloat()
-        }
-    }
-
-    LaunchedEffect(dbTopics) {
-        if (dbTopics.isNotEmpty()) {
-            val selectedIds = initialSelection.map { it.id }.toSet()
-
-            localTopics = dbTopics.map { topic ->
-                val updatedQuestions = topic.questions.map { question ->
-                    val isSelected = selectedIds.contains(question.id)
-                    question.copy(isSelected = isSelected)
-                }
-                val isTopicSelected = updatedQuestions.isNotEmpty() && updatedQuestions.all { it.isSelected }
-                val shouldExpand = updatedQuestions.any { it.isSelected }
-
-                topic.copy(
-                    questions = updatedQuestions,
-                    isSelected = isTopicSelected,
-                    isExpanded = shouldExpand
-                )
-            }
-        }
+    val totalSelected = remember(uiState.topics) {
+        uiState.topics.flatMap { it.questions }.count { it.isSelected }
     }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 700.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(max = 700.dp),
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            // Header
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
                     text = "Nhiệm vụ",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Close",
@@ -142,36 +112,22 @@ fun MissionSelectionContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Section: Slider chọn số lượng
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${questionCount.toInt()}",
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Số câu hỏi (tối đa: $totalSelectedQuestions)", 
-                        fontSize = 16.sp, 
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
+            ){
+                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("${uiState.questionCount}", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Số câu hỏi (tối đa: $totalSelected)", color = MaterialTheme.colorScheme.tertiary)
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Slider chỉ hoạt động khi có câu hỏi được chọn
-                    if (totalSelectedQuestions > 0) {
+                    if (totalSelected > 0) {
                         Slider(
-                            value = questionCount,
-                            onValueChange = { questionCount = it },
-                            valueRange = 0f..totalSelectedQuestions.toFloat(),
-                            steps = if (totalSelectedQuestions > 1) totalSelectedQuestions - 1 else 0,
+                            value = uiState.questionCount.toFloat(),
+                            onValueChange = { onCountChange(it.toInt()) },
+                            valueRange = 0f..totalSelected.toFloat(),
+                            steps = if (totalSelected > 1) totalSelected - 1 else 0,
                             colors = SliderDefaults.colors(
                                 thumbColor = MaterialTheme.colorScheme.onSurface,
                                 activeTrackColor = MaterialTheme.colorScheme.onSurface,
@@ -197,85 +153,28 @@ fun MissionSelectionContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
-            ) {
-                LazyColumn(modifier = Modifier.padding(vertical = 8.dp)) {
-                    item {
-                        Text(
-                            text = "Chọn câu hỏi",
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .align(Alignment.Start)
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                        )
-                    }
-
-                    items(localTopics) { topic ->
+            ){
+                LazyColumn(modifier = Modifier.padding(vertical = 8.dp)){
+                    items(uiState.topics) { topic ->
                         TopicItemRow(
                             topic = topic,
-                            onExpandClick = {
-                                localTopics = localTopics.map {
-                                    if (it.id == topic.id) it.copy(isExpanded = !it.isExpanded) else it
-                                }
-                            },
-                            onSelectTopic = { isSelected ->
-                                localTopics = localTopics.map { t ->
-                                    if (t.id == topic.id) {
-                                        val updatedQuestions = t.questions.map { q -> q.copy(isSelected = isSelected) }
-                                        t.copy(isSelected = isSelected, questions = updatedQuestions)
-                                    } else t
-                                }
-                            }
+                            onExpandClick = { onExpandClick(topic.id) },
+                            onSelectTopic = { onTopicClick(topic.id, it) }
                         )
-
                         if (topic.isExpanded) {
-                            topic.questions.forEach { question ->
-                                QuestionItemRow(
-                                    question = question,
-                                    onQuestionClick = {
-                                        localTopics = localTopics.map { t ->
-                                            if (t.id == topic.id) {
-                                                val updatedQuestions = t.questions.map { q ->
-                                                    if (q.id == question.id) q.copy(isSelected = !q.isSelected) else q
-                                                }
-                                                val allSelected = updatedQuestions.all { it.isSelected }
-                                                t.copy(questions = updatedQuestions, isSelected = allSelected)
-                                            } else t
-                                        }
-                                    }
-                                )
+                            topic.questions.forEach { q ->
+                                QuestionItemRow(q, onQuestionClick = { onQuestionClick(topic.id, q.id) })
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colorScheme.tertiary,
-                                thickness = 0.5.dp
-                            )
-                        }
-                    }
-
-                    if (localTopics.isEmpty()) {
-                        item {
-                            Text(
-                                "Chưa có dữ liệu. Hãy thêm Chủ đề và Câu hỏi trước.",
-                                modifier = Modifier.padding(20.dp),
-                                color = MaterialTheme.colorScheme.tertiary,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
             }
+            // Section: Danh sách Topic & Question
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    val allSelectedQuestions = localTopics.flatMap { it.questions }.filter { it.isSelected }
-                    onConfirm(questionCount.toInt(), allSelectedQuestions)
-                    onDismiss()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                onClick = onConfirm,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(28.dp)
             ) {
@@ -294,19 +193,20 @@ fun TopicItemRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onExpandClick() }
+            .clickable { onExpandClick() } // Click vào hàng để đóng/mở
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Nút Checkbox (đã chuyển sang dùng val từ ViewModel)
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
                 tint = if (topic.isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { onSelectTopic(!topic.isSelected) }
+                    .clickable { onSelectTopic(!topic.isSelected) } // Gọi sự kiện chọn tất cả
                     .background(
                         color = if (topic.isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                         shape = RoundedCornerShape(12.dp)
@@ -331,6 +231,7 @@ fun TopicItemRow(
             )
         }
 
+        // Icon mũi tên lên/xuống
         Icon(
             imageVector = if (topic.isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
             contentDescription = null,
@@ -351,6 +252,7 @@ fun QuestionItemRow(
             .padding(start = 48.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Nút Check nhỏ cho từng câu hỏi
         Icon(
             imageVector = Icons.Default.Check,
             contentDescription = null,
@@ -371,7 +273,7 @@ fun QuestionItemRow(
             text = question.text,
             color = if (question.isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.tertiary,
             fontSize = 14.sp,
-            maxLines = 1,
+            maxLines = 1, // Tăng lên 2 dòng để hiển thị câu hỏi dài tốt hơn
             overflow = TextOverflow.Ellipsis
         )
     }

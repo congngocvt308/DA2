@@ -55,8 +55,7 @@ data class AlarmEntity(
 )
 data class AlarmTopicLink(
     val alarmId: Int,
-    val topicId: Int,
-    val isSelectAll: Boolean = true
+    val topicId: Int
 )
 
 @Entity(
@@ -66,10 +65,12 @@ data class AlarmTopicLink(
 )
 data class QuestionProgressEntity(
     @PrimaryKey val questionId: Int,
-    val correctStreak: Int = 0,
+    val correctStreak: Int = 0,         // Số lần đúng liên tiếp
     val lastReviewedDate: Date? = null,
     val nextReviewDate: Date? = null,
-    val difficultyScore: Double = 1000.0
+    val difficultyScore: Double = 1000.0, // Dùng cho hệ thống ELO
+    val easinessFactor: Double = 2.5,     // Hệ số giãn cách (mặc định 2.5 của SM-2)
+    val interval: Int = 0                 // Khoảng cách ngày cho lần ôn tập tới
 )
 
 @Entity(
@@ -84,12 +85,17 @@ data class TopicStatsEntity(
 
 @Entity(
     tableName = "history",
-    foreignKeys = [ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE)],
-    indices = [Index("questionId")]
+    foreignKeys = [
+        ForeignKey(entity = QuestionEntity::class, parentColumns = ["questionId"], childColumns = ["questionId"], onDelete = ForeignKey.CASCADE),
+        // Thêm liên kết tới bảng AlarmHistory
+        ForeignKey(entity = AlarmHistoryEntity::class, parentColumns = ["historyId"], childColumns = ["alarmHistoryId"], onDelete = ForeignKey.CASCADE)
+    ],
+    indices = [Index("questionId"), Index("alarmHistoryId")]
 )
 data class HistoryEntity(
     @PrimaryKey(autoGenerate = true) val historyId: Int = 0,
     val questionId: Int,
+    val alarmHistoryId: Int? = null, // Null nếu là luyện tập tự do, có giá trị nếu là lúc tắt báo thức
     val isCorrect: Boolean,
     val answeredAt: Date,
     val timeToAnswerMs: Int

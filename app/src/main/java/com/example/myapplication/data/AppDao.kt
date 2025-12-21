@@ -29,9 +29,6 @@ interface AppDao {
     @Insert
     suspend fun insertQuestion(question: QuestionEntity): Long
 
-    @Insert
-    suspend fun insertAlarmTopicLink(link: AlarmTopicLink)
-
     @Query("SELECT * FROM topic_stats WHERE topicId = :topicId")
     suspend fun getTopicStats(topicId: Int): TopicStatsEntity?
 
@@ -161,4 +158,14 @@ interface AppDao {
         )
     """)
     suspend fun isQRCodeValidForAlarm(alarmId: Int, codeValue: String): Boolean
+
+    @Query("DELETE FROM alarm_topic_link WHERE alarmId = :alarmId")
+    suspend fun clearAlarmTopicLinks(alarmId: Int)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlarmTopicLink(link: AlarmTopicLink)
+
+    // Lấy danh sách các liên kết Topic của một báo thức cụ thể
+    @Query("SELECT * FROM alarm_topic_link WHERE alarmId = :alarmId")
+    suspend fun getTopicLinksForAlarmOnce(alarmId: Int): List<AlarmTopicLink>
 }
