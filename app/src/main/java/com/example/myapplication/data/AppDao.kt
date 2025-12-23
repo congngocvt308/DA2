@@ -29,12 +29,6 @@ interface AppDao {
     @Insert
     suspend fun insertQuestion(question: QuestionEntity): Long
 
-    @Query("SELECT * FROM topic_stats WHERE topicId = :topicId")
-    suspend fun getTopicStats(topicId: Int): TopicStatsEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateTopicStats(stats: TopicStatsEntity)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSelectedQuestion(item: AlarmSelectedQuestionEntity)
 
@@ -168,4 +162,45 @@ interface AppDao {
     // Lấy danh sách các liên kết Topic của một báo thức cụ thể
     @Query("SELECT * FROM alarm_topic_link WHERE alarmId = :alarmId")
     suspend fun getTopicLinksForAlarmOnce(alarmId: Int): List<AlarmTopicLink>
+
+    //
+    // 1. Lấy tất cả câu hỏi thuộc các Topic được chọn hết (qua bảng AlarmTopicLink)
+    @Query("""
+    SELECT q.* FROM questions q
+    INNER JOIN alarm_topic_link link ON q.ownerTopicId = link.topicId
+    WHERE link.alarmId = :alarmId
+""")
+    suspend fun getQuestionsFromLinkedTopics(alarmId: Int): List<QuestionEntity>
+
+    // 2. Lấy thông tin tiến độ của một danh sách câu hỏi (để tính SRS)
+    @Query("SELECT * FROM question_progress WHERE questionId IN (:questionIds)")
+    suspend fun getProgressForQuestions(questionIds: List<Int>): List<QuestionProgressEntity>
+
+    // 3. Lấy hoặc tạo mới Stats của Topic
+    @Query("SELECT * FROM topic_stats WHERE topicId = :topicId")
+    suspend fun getTopicStats(topicId: Int): TopicStatsEntity?
+
+    // 4. Các hàm Insert/Update cần thiết
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateQuestionProgress(progress: QuestionProgressEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateTopicStats(stats: TopicStatsEntity)
+
+    @Insert
+    suspend fun insertHistory(history: HistoryEntity)
+
+    @Insert
+    suspend fun insertAlarmHistory(history: AlarmHistoryEntity): Long
+
+    @Update
+    suspend fun updateAlarmHistory(history: AlarmHistoryEntity)
+
+    @Query("SELECT * FROM alarm_history WHERE historyId = :id")
+    suspend fun getAlarmHistoryById(id: Int): AlarmHistoryEntity?
+
+    // --- PHẦN BỔ SUNG CHO TOPIC STATS ---
+    @Query("SELECT ownerTopicId FROM questions WHERE questionId = :questionId")
+    suspend fun getTopicIdByQuestionId(questionId: Int): Int?
+
 }

@@ -3,10 +3,13 @@ package com.example.myapplication.ui.theme.alarm
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.AlarmHistoryEntity
 import com.example.myapplication.data.AnswerData
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.QuestionData
 import com.example.myapplication.data.QuizUiStateData
+// 1. IMPORT CLASS THUẬT TOÁN
+import com.example.myapplication.logic.QuestionAlgorithmManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
+import kotlin.math.abs
 
 const val QUESTION_DURATION_MS = 15000L
 const val TICK_INTERVAL_MS = 50L
@@ -24,7 +29,13 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<QuizUiStateData> = _uiState.asStateFlow()
     private var timerJob: Job? = null
     private val dao = AppDatabase.getDatabase(application).appDao()
+
+    // 2. KHỞI TẠO BỘ NÃO THUẬT TOÁN
+    private val algorithmManager = QuestionAlgorithmManager(dao)
+
     private var alarmId: Int = -1
+
+    private var currentAlarmHistoryId: Int? = null
 
     fun setAlarmId(id: Int) {
         alarmId = id
@@ -33,163 +44,155 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadQuestionsForQuiz() {
         viewModelScope.launch {
-            // Nếu không có alarmId, dùng câu hỏi mẫu
-            if (alarmId == -1) {
-                loadMockQuestions()
-                return@launch
-            }
-            
-            // Lấy danh sách các câu hỏi đã chọn
-            val selectedQuestions = dao.getSelectedQuestionsForAlarmOnce(alarmId)
-            
-            if (selectedQuestions.isEmpty()) {
-                loadMockQuestions()
-                return@launch
-            }
-            
-            // Tách riêng câu hỏi mặc định (ID âm) và câu hỏi từ database (ID dương)
-            val defaultQuestionIds = selectedQuestions.filter { it.questionId < 0 }.map { -it.questionId }
-            val dbQuestionIds = selectedQuestions.filter { it.questionId > 0 }.map { it.questionId }
-            
-            val allQuestions = mutableListOf<QuestionData>()
-            var answerIdCounter = 0
-            
-            // Load câu hỏi mặc định đã chọn
-            defaultQuestionIds.forEach { defaultId ->
-                getDefaultQuestionById(defaultId)?.let { question ->
-                    allQuestions.add(question.copy(
-                        answers = question.answers.map { 
-                            it.copy(id = answerIdCounter++) 
-                        }.shuffled()
-                    ))
-                }
-            }
-            
-            // Load câu hỏi từ database
-            dbQuestionIds.forEach { questionId ->
-                val entity = dao.getQuestionById(questionId)
-                if (entity != null) {
-                    val correctAns = AnswerData(
-                        id = answerIdCounter++,
-                        text = entity.correctAnswer,
-                        isCorrect = true
+            // Cập nhật trạng thái đang tải (cần thêm isLoading vào QuizUiStateData nếu chưa có)
+            _uiState.update { it.copy(isLoading = true) }
+
+            // BƯỚC A: KIỂM TRA SỐ LƯỢNG CÂU HỎI NGƯỜI DÙNG CÀI ĐẶT
+            val alarm = if (alarmId != -1) dao.getAlarmById(alarmId) else null
+            val targetCount = alarm?.questionCount ?: 0 // Mặc định 3 nếu không tìm thấy
+
+            // Nếu người dùng chọn 0 câu hỏi -> Tắt báo thức ngay lập tức
+            if (targetCount == 0) {
+                _uiState.update {
+                    it.copy(
+                        isFinished = true,
+                        questionPool = emptyList()
                     )
-                    val wrongAnswers = entity.options.map { text ->
-                        AnswerData(
-                            id = answerIdCounter++,
-                            text = text,
-                            isCorrect = false
-                        )
+                }
+                return@launch
+            }
+
+            if (alarmId != -1) {
+                val newHistory = AlarmHistoryEntity(
+                    alarmId = alarmId,
+                    snoozeCount = 0,
+                    scheduledTime = Date(), // Thời gian báo thức reo
+                    firstRingTime = Date(),
+                    dismissalTime = null,
+                    isDismissed = false
+                )
+                // Insert và lấy ID về để dùng cập nhật sau này
+                currentAlarmHistoryId = dao.insertAlarmHistory(newHistory).toInt()
+            }
+
+            // BƯỚC B: GỌI THUẬT TOÁN ĐỂ LẤY DANH SÁCH CÂU HỎI (SRS)
+            val generatedQuestions = try {
+                if (alarmId != -1) {
+                    // Thuật toán sẽ tự lọc câu hỏi, sắp xếp theo độ ưu tiên
+                    algorithmManager.generateMissionQuestions(alarmId, targetCount)
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            // Fallback: Nếu không lấy được câu nào (lỗi mạng/DB), dùng Mock
+            if (generatedQuestions.isEmpty()) {
+                loadMockQuestions(targetCount)
+                return@launch
+            }
+
+            // BƯỚC C: CHUYỂN ĐỔI DỮ LIỆU (MissionQuestion -> QuestionData có đáp án)
+            val fullQuestions = mutableListOf<QuestionData>()
+            var answerIdCounter = 0
+
+            generatedQuestions.forEach { missionQ ->
+                if (missionQ.id < 0) {
+                    // Xử lý câu hỏi mặc định (ID âm)
+                    // Lưu ý: missionQ.id là số âm (-1), hàm get của bạn đang case 1, 2...
+                    // nên cần lấy abs()
+                    getDefaultQuestionById(abs(missionQ.id))?.let { qData ->
+                        fullQuestions.add(qData.copy(
+                            answers = qData.answers.map {
+                                it.copy(id = answerIdCounter++)
+                            }.shuffled()
+                        ))
                     }
-                    val allAnswers = (listOf(correctAns) + wrongAnswers).shuffled()
-                    allQuestions.add(
-                        QuestionData(
+                } else {
+                    // Xử lý câu hỏi từ Database (ID dương)
+                    val entity = dao.getQuestionById(missionQ.id)
+                    if (entity != null) {
+                        val correctAns = AnswerData(answerIdCounter++, entity.correctAnswer, true)
+                        // Tách chuỗi options (giả sử đang lưu dạng JSON String hoặc String thường)
+                        // Bạn cần đảm bảo entity.options trả về List<String>.
+                        // Nếu entity.options là String, hãy dùng Gson để parse.
+                        val wrongAnswers = entity.options.map { text ->
+                            AnswerData(answerIdCounter++, text, false)
+                        }
+                        val allAnswers = (listOf(correctAns) + wrongAnswers).shuffled()
+
+                        fullQuestions.add(QuestionData(
                             id = entity.questionId,
                             questionText = entity.prompt,
                             answers = allAnswers
-                        )
-                    )
+                        ))
+                    }
                 }
             }
-            
-            if (allQuestions.isEmpty()) {
-                loadMockQuestions()
+
+            // Nếu convert xong mà vẫn rỗng -> dùng Mock
+            if (fullQuestions.isEmpty()) {
+                loadMockQuestions(targetCount)
                 return@launch
             }
-            
+
+            // Cập nhật UI và bắt đầu đếm giờ
             _uiState.value = QuizUiStateData(
-                questionPool = allQuestions.shuffled(),
+                questionPool = fullQuestions, // Không cần shuffle nữa vì thuật toán đã sắp xếp rồi
                 poolIndex = 0,
-                targetCorrectAnswers = allQuestions.size,
+                targetCorrectAnswers = fullQuestions.size,
                 timerProgress = 1f,
-                correctlyAnsweredCount = 0
+                correctlyAnsweredCount = 0,
+                isLoading = false
             )
             startTimer()
         }
     }
-    
-    // Lấy câu hỏi mặc định theo ID
+
+    // Giữ nguyên hàm này của bạn
     private fun getDefaultQuestionById(id: Int): QuestionData? {
         return when (id) {
-            1 -> QuestionData(
-                id = -1,
-                questionText = "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?",
-                answers = listOf(
-                    AnswerData(0, "Hồng Lâu Mộng", false),
-                    AnswerData(1, "Liêu Trai Chí Dị", true),
-                    AnswerData(2, "Tam Quốc Diễn Nghĩa", false),
-                    AnswerData(3, "Thủy Hử", false)
-                )
-            )
-            2 -> QuestionData(
-                id = -2,
-                questionText = "1 + 1 = ?",
-                answers = listOf(
-                    AnswerData(0, "3", false),
-                    AnswerData(1, "2", true),
-                    AnswerData(2, "1", false),
-                    AnswerData(3, "0", false)
-                )
-            )
-            3 -> QuestionData(
-                id = -3,
-                questionText = "Thủ đô Việt Nam?",
-                answers = listOf(
-                    AnswerData(0, "Hà Nội", true),
-                    AnswerData(1, "Hồ Chí Minh", false),
-                    AnswerData(2, "Đà Nẵng", false),
-                    AnswerData(3, "Huế", false)
-                )
-            )
-            4 -> QuestionData(
-                id = -4,
-                questionText = "2 x 2 = ?",
-                answers = listOf(
-                    AnswerData(0, "5", false),
-                    AnswerData(1, "4", true),
-                    AnswerData(2, "3", false),
-                    AnswerData(3, "6", false)
-                )
-            )
-            5 -> QuestionData(
-                id = -5,
-                questionText = "Loại hình MVVM?",
-                answers = listOf(
-                    AnswerData(0, "MVC", false),
-                    AnswerData(1, "MVVM", true),
-                    AnswerData(2, "MVP", false),
-                    AnswerData(3, "MVI", false)
-                )
-            )
+            1 -> QuestionData(-1, "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?", listOf(
+                AnswerData(0, "Hồng Lâu Mộng", false), AnswerData(1, "Liêu Trai Chí Dị", true),
+                AnswerData(2, "Tam Quốc Diễn Nghĩa", false), AnswerData(3, "Thủy Hử", false)
+            ))
+            2 -> QuestionData(-2, "1 + 1 = ?", listOf(
+                AnswerData(0, "3", false), AnswerData(1, "2", true),
+                AnswerData(2, "1", false), AnswerData(3, "0", false)
+            ))
+            3 -> QuestionData(-3, "Thủ đô Việt Nam?", listOf(
+                AnswerData(0, "Hà Nội", true), AnswerData(1, "Hồ Chí Minh", false),
+                AnswerData(2, "Đà Nẵng", false), AnswerData(3, "Huế", false)
+            ))
             else -> null
         }
     }
-    
-    private fun loadMockQuestions() {
-        // Giả lập data 5 câu hỏi (Fallback nếu không có câu hỏi được chọn)
-        val mockQuestions = listOf(
+
+    private fun loadMockQuestions(count: Int = 5) {
+        val allMocks = listOf(
             QuestionData(1, "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?", listOf(AnswerData(1, "Hồng Lâu Mộng", false), AnswerData(2, "Liêu Trai Chí Dị", true))),
             QuestionData(2, "1 + 1 = ?", listOf(AnswerData(3, "3", false), AnswerData(4, "2", true))),
             QuestionData(3, "Thủ đô Việt Nam?", listOf(AnswerData(5, "Hà Nội", true), AnswerData(6, "Hồ Chí Minh", false))),
-            QuestionData(4, "2 x 2 = ?", listOf(AnswerData(7, "5", false), AnswerData(8, "4", true))),
-            QuestionData(5, "Loại hình MVVM?", listOf(AnswerData(9, "MVC", false), AnswerData(10, "MVVM", true)))
         )
+        // Chỉ lấy đúng số lượng cần thiết
+        val finalMocks = allMocks.take(count)
+
         _uiState.value = QuizUiStateData(
-            questionPool = mockQuestions,
+            questionPool = finalMocks,
             poolIndex = 0,
-            targetCorrectAnswers = 5,
+            targetCorrectAnswers = finalMocks.size,
             timerProgress = 1f,
-            correctlyAnsweredCount = 0
+            correctlyAnsweredCount = 0,
+            isLoading = false
         )
         startTimer()
     }
 
     private fun startTimer() {
-        timerJob?.cancel() // Hủy timer cũ
+        timerJob?.cancel()
         timerJob = viewModelScope.launch {
             var timeLeft = QUESTION_DURATION_MS
-
-            // Reset trạng thái timer
             _uiState.update { it.copy(timerProgress = 1f, isTimeOut = false) }
 
             while (timeLeft > 0) {
@@ -198,8 +201,6 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
                 val progress = timeLeft.toFloat() / QUESTION_DURATION_MS
                 _uiState.update { it.copy(timerProgress = progress) }
             }
-
-            // Hết giờ -> Báo TimeOut
             handleTimeOut()
         }
     }
@@ -220,53 +221,66 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Logic khi người dùng chọn đáp án
+    // Logic khi người dùng chọn đáp án (ĐÃ UPDATE SRS)
     fun onOptionSelected(submittedAnswerId: Int) {
         val currentState = _uiState.value
-        if (currentState.isAnswered) return // Chặn nếu đã có phản hồi
+        if (currentState.isAnswered) return
         timerJob?.cancel()
 
         val currentQuestion = currentState.questionPool.getOrNull(currentState.poolIndex) ?: return
         val isCorrect = currentQuestion.answers.find { it.id == submittedAnswerId }?.isCorrect ?: false
 
-        // 1. Cập nhật state để UI hiển thị màu sắc phản hồi (Đỏ/Xanh)
+        // 1. Cập nhật UI ngay lập tức
         _uiState.update {
             it.copy(
                 selectedAnswerId = submittedAnswerId,
-                isAnswered = true, // Bật cờ phản hồi màu
+                isAnswered = true,
             )
         }
 
-        // 2. LOGIC CHUYỂN CÂU HỎI SAU 1 GIÂY (Bất kể đúng/sai)
-        viewModelScope.launch {
-            delay(1000) // Chờ 1 giây để người dùng xem màu đỏ/xanh
-            nextQuestion(isCorrect)
-        }
-    }
-    private fun nextQuestion(wasCorrect: Boolean) {
-        _uiState.update { state ->
-            // Chỉ tăng điểm nếu trả lời ĐÚNG
-            val newCorrectCount = state.correctlyAnsweredCount + if (wasCorrect) 1 else 0
+        // 2. TÍNH TOÁN VÀ LƯU KẾT QUẢ VÀO THUẬT TOÁN (Quan trọng)
+        // Chỉ lưu nếu là câu hỏi thật (ID > 0), bỏ qua câu mặc định (ID < 0)
+        if (currentQuestion.id > 0) {
+            viewModelScope.launch {
+                // Tính thời gian đã trả lời (dựa trên thanh progress)
+                val timeSpent = ((1f - currentState.timerProgress) * QUESTION_DURATION_MS).toLong()
 
-            // Kiểm tra điều kiện thắng (Đủ 5 câu đúng)
-            if (newCorrectCount >= state.targetCorrectAnswers) {
-                state.copy(isFinished = true)
-            } else {
-                // Luôn chuyển sang câu hỏi tiếp theo trong Pool
-                // Dùng % (modulo) để quay vòng nếu hết câu hỏi trong kho
-                val nextPoolIndex = (state.poolIndex + 1) % state.questionPool.size
-
-                state.copy(
-                    poolIndex = nextPoolIndex,
-                    correctlyAnsweredCount = newCorrectCount, // Cập nhật điểm
-                    selectedAnswerId = null,                  // Reset lựa chọn
-                    isAnswered = false,                       // Reset màu sắc
-                    isTimeOut = false                         // Reset timeout
+                algorithmManager.processAnswer(
+                    questionId = currentQuestion.id,
+                    isCorrect = isCorrect,
+                    timeSpentMs = timeSpent,
+                    alarmHistoryId = currentAlarmHistoryId // Nếu bạn có lưu lịch sử Alarm thì truyền ID vào đây
                 )
             }
         }
 
-        // Nếu chưa xong game -> Chạy lại timer cho câu mới
+        // 3. Chuyển câu hỏi sau 1 giây
+        viewModelScope.launch {
+            delay(1000)
+            nextQuestion(isCorrect)
+        }
+    }
+
+    private fun nextQuestion(wasCorrect: Boolean) {
+        _uiState.update { state ->
+            val newCorrectCount = state.correctlyAnsweredCount + if (wasCorrect) 1 else 0
+
+            if (newCorrectCount >= state.targetCorrectAnswers) {
+                finishAlarmHistory()
+                state.copy(isFinished = true)
+            } else {
+                val nextPoolIndex = (state.poolIndex + 1) % state.questionPool.size
+
+                state.copy(
+                    poolIndex = nextPoolIndex,
+                    correctlyAnsweredCount = newCorrectCount,
+                    selectedAnswerId = null,
+                    isAnswered = false,
+                    isTimeOut = false
+                )
+            }
+        }
+
         if (!_uiState.value.isFinished) {
             startTimer()
         }
@@ -275,5 +289,21 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+    }
+
+    private fun finishAlarmHistory() {
+        if (currentAlarmHistoryId != null) {
+            viewModelScope.launch {
+                val history = dao.getAlarmHistoryById(currentAlarmHistoryId!!)
+                if (history != null) {
+                    dao.updateAlarmHistory(
+                        history.copy(
+                            dismissalTime = java.util.Date(), // Ghi nhận thời gian tắt
+                            isDismissed = true
+                        )
+                    )
+                }
+            }
+        }
     }
 }

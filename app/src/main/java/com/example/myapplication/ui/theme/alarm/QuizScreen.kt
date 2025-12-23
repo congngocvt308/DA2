@@ -28,19 +28,16 @@ import com.example.myapplication.data.QuizUiStateData
 @Composable
 fun QuizScreen(
     alarmId: Int = -1,
-    viewModel: QuizViewModel = viewModel(),
     onBack: () -> Unit,
-    onQuizCompleted: () -> Unit
+    onQuizCompleted: () -> Unit,
+    viewModel: QuizViewModel = viewModel()
 ) {
     // Set alarmId khi khởi tạo
     LaunchedEffect(alarmId) {
-        if (alarmId != -1) {
-            viewModel.setAlarmId(alarmId)
-        }
+        viewModel.setAlarmId(alarmId)
     }
     
     val uiState by viewModel.uiState.collectAsState()
-    val currentQuestion = uiState.questionPool.getOrNull(uiState.poolIndex)
 
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) {
@@ -48,10 +45,24 @@ fun QuizScreen(
         }
     }
 
-    if (currentQuestion == null || uiState.questionPool.isEmpty()) {
-        return Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.White)
+    if (uiState.isLoading) {
+        return Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Color(0xFF42A5F5))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Đang chọn câu hỏi phù hợp...", color = Color.White)
+            }
         }
+    }
+
+    val currentQuestion = uiState.questionPool.getOrNull(uiState.poolIndex)
+    if (currentQuestion == null) {
+        return Box(modifier = Modifier.fillMaxSize().background(Color.Black))
     }
 
     Scaffold(
@@ -73,6 +84,15 @@ fun QuizScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            if (uiState.isTimeOut) {
+                Text(
+                    "HẾT GIỜ!",
+                    color = Color(0xFFE50043),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+
             Spacer(modifier = Modifier.weight(0.5f))
 
             Text(
@@ -115,7 +135,7 @@ fun QuizTopBar(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(4.dp),
             color = if (timerProgress < 0.3f) Color(0xFFE50043) else Color(0xFF42A5F5),
-            trackColor = Color.LightGray,
+            trackColor = Color(0xFF2C2C2E),
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -149,7 +169,7 @@ fun QuizOptionButton(
         label = "BlinkAlpha"
     )
     val targetColor = when {
-        uiState.isAnswered && answer.isCorrect -> Color.Green
+        uiState.isAnswered && answer.isCorrect -> Color(0xFF4CAF50)
         uiState.isAnswered && isSelected && !answer.isCorrect -> Color(0xFFE50043) // Chọn sai màu Đỏ
         isSelected -> Color(0xFF4C4C4E)
         else -> Color(0xFF2C2C2E)
@@ -163,7 +183,7 @@ fun QuizOptionButton(
 
     Button(
         onClick = onSelect,
-        enabled = !uiState.isAnswered,
+        enabled = !uiState.isAnswered && !uiState.isTimeOut,
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
             disabledContainerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
