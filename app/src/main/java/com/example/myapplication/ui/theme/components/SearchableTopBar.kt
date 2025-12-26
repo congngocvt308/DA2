@@ -46,7 +46,7 @@ fun SearchableTopBar(
         color = MaterialTheme.colorScheme.surface,
         modifier = Modifier
             .fillMaxWidth()
-            .height(106.dp)
+            .height(110.dp)
             .padding(top = 50.dp)
     ) {
         Crossfade(targetState = isSearching, label = "AppBarCrossfade") { searching ->

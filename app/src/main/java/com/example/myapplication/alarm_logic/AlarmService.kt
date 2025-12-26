@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.myapplication.R
 import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.ui.theme.MainActivity
 import com.example.myapplication.ui.theme.alarm.AlarmRingingActivity
 import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
 import kotlinx.coroutines.CoroutineScope
@@ -28,12 +29,9 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 1. Lấy dữ liệu
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
-        val ringtoneUri = intent?.getStringExtra("RINGTONE_URI") ?: ""
+        val ringtoneUri = intent?.getStringExtra("ALARM_URI") ?: ""
         val volume = intent?.getFloatExtra("ALARM_VOLUME", 0.7f) ?: 0.7f
         val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
-
-        val notification = createNotification(label)
-        startForeground(1, notification)
 
         // Kiểm tra xem báo thức có QR codes không
         serviceScope.launch {
@@ -41,13 +39,17 @@ class AlarmService : Service() {
             val qrCodeCount = if (alarmId > 0) {
                 dao.getQRLinkCountForAlarm(alarmId)
             } else 0
+            val hasQRCodes = qrCodeCount > 0
+
+            val notification = createNotification(label, alarmId, hasQRCodes)
+            startForeground(1, notification)
             
             val activityIntent = Intent(this@AlarmService, AlarmRingingActivity::class.java).apply {
                 // Flag quan trọng để tách khỏi MainActivity
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 putExtra("ALARM_LABEL", label)
                 putExtra("ALARM_ID", alarmId)
-                putExtra("HAS_QR_CODES", qrCodeCount > 0)
+                putExtra("HAS_QR_CODES", hasQRCodes)
             }
             startActivity(activityIntent)
         }
@@ -91,7 +93,7 @@ class AlarmService : Service() {
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
                 setVolume(volume, volume)
@@ -106,31 +108,34 @@ class AlarmService : Service() {
 
     // Trong AlarmService.kt, sửa hàm createNotification
 
-    private fun createNotification(label: String): Notification {
+    private fun createNotification(label: String, alarmId: Int, hasQRCodes: Boolean): Notification {
         val channelId = "ALARM_CHANNEL"
 
-        val activityIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-            // KHÔNG gửi sang MainActivity nữa
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // 🚨 ĐỔI MainActivity THÀNH AlarmRingingActivity
+        val ringingIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+            putExtra("ALARM_LABEL", label)
+            putExtra("ALARM_ID", alarmId)
+            putExtra("HAS_QR_CODES", hasQRCodes)
+            // Flag quan trọng để nó hiện lên ngay cả khi đang khóa
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
         }
 
-        val fullScreenPendingIntent = PendingIntent.getActivity(
+        val pendingIntent = PendingIntent.getActivity(
             this,
-            0,
-            activityIntent,
-            // Sử dụng FLAG_MUTABLE nếu bạn cần update Intent dữ liệu sau này
+            alarmId, // Dùng ID để tránh chồng lấn
+            ringingIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Báo thức: $label")
-            .setContentText("Vuốt để tắt hoặc chạm để mở")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
+            // 🚨 Dòng này sẽ bật AlarmRingingActivity lên màn hình khóa
+            .setFullScreenIntent(pendingIntent, true)
+            .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Hiển thị nội dung trên lockscreen
             .build()
     }
 

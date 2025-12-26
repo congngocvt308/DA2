@@ -14,7 +14,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AlarmTopicLink::class, QuestionProgressEntity::class,
         TopicStatsEntity::class, HistoryEntity::class, AlarmHistoryEntity::class,
         AlarmSelectedQuestionEntity::class,
-        QRCodeEntity::class, AlarmQRLinkEntity::class
+        QRCodeEntity::class, AlarmQRLinkEntity::class,
+        UserStatsEntity::class
     ],
     version = 2,
     exportSchema = false
@@ -23,6 +24,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun appDao(): AppDao
+
+    abstract fun statisticsDao(): StatisticsDao
 
     companion object {
         @Volatile

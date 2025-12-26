@@ -70,6 +70,10 @@ fun TopicScreen(
                 onBackClick = null,
                 actions = {}
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 26.dp),

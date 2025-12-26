@@ -161,3 +161,13 @@ data class AlarmQRLinkEntity(
     val alarmId: Int,
     val qrId: Int
 )
+
+@Entity(tableName = "UserStats")
+data class UserStatsEntity(
+    @PrimaryKey val userId: Int = 1, // App cá nhân thường chỉ có 1 user
+    val totalPoints: Int = 0,
+    val currentStreak: Int = 0,
+    val bestStreak: Int = 0,
+    val totalAlarmsDismissed: Int = 0,
+    val lastActiveDate: Long = 0L // Lưu timestamp ngày cuối cùng hoạt động
+)
