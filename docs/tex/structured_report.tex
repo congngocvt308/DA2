@@ -1,0 +1,868 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{report}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Menlo}
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{caption}
+\usepackage[unicode]{hyperref}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+%\usepackage{adjustbox}  % Tạm comment, có thể cài sau bằng tlmgr install adjustbox
+\usepackage{pdflscape}
+%\usepackage{xurl}  % Tạm comment, dùng url thay thế
+\usepackage{url}
+%\usepackage{seqsplit}  % Tạm comment, không dùng trong báo cáo
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Báo cáo Phân tích Có cấu trúc},
+}
+
+\title{\textbf{BÁO CÁO PHÂN TÍCH - THIẾT KẾ HỆ THỐNG}\\[0.3cm]
+\large{PHƯƠNG PHÁP CÓ CẤU TRÚC (SA/SD)}\\[0.3cm]
+\normalsize{Hệ thống Báo thức Thông minh với Quiz và QR Code}}
+\author{}
+\date{\today}
+
+% Macro chuẩn hóa hình ảnh
+\newcommand{\StdFig}[3]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+\newcommand{\WideFig}[3]{%
+  \begin{landscape}
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+  \end{landscape}
+  \clearpage
+}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{6pt}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\chapter{PHÂN TÍCH HỆ THỐNG (PHƯƠNG PHÁP CÓ CẤU TRÚC)}
+
+\section{Biểu đồ Phân cấp Chức năng (FDD)}
+
+Hệ thống Báo thức Thông minh được phân rã thành 5 module chính dựa trên kiến trúc và chức năng nghiệp vụ. Mỗi module đảm nhận một nhóm chức năng liên quan, tương tác với các thành phần khác thông qua luồng dữ liệu và điều phối nghiệp vụ.
+
+\StdFig{images/structured_fdd_overview.png}{Biểu đồ phân cấp chức năng - Tổng quan}{fig:fdd_overview}
+
+Hình \ref{fig:fdd_overview} mô tả 5 module chính của hệ thống. Các hình sau đây trình bày chi tiết từng module:
+
+\StdFig{images/structured_fdd_alarm.png}{FDD Module 1: Quản lý Báo thức}{fig:fdd_alarm}
+
+\StdFig{images/structured_fdd_topic.png}{FDD Module 2: Quản lý Chủ đề và Câu hỏi}{fig:fdd_topic}
+
+\StdFig{images/structured_fdd_execution.png}{FDD Module 3: Thực thi Báo thức}{fig:fdd_execution}
+
+\StdFig{images/structured_fdd_qr.png}{FDD Module 4: Quản lý QR Code}{fig:fdd_qr}
+
+\StdFig{images/structured_fdd_stats.png}{FDD Module 5: Thống kê và Báo cáo}{fig:fdd_stats}
+
+\subsection{Phân tích chi tiết các module}
+
+\subsubsection{Module 1: Quản lý Báo thức}
+
+Module này được thực hiện bởi tầng điều phối cấu hình báo thức, quản lý toàn bộ vòng đời của báo thức từ tạo mới đến xóa bỏ.
+
+\textbf{1.1 Tạo báo thức mới:} Quy trình thực hiện như sau:
+\begin{enumerate}
+    \item Tầng điều phối nhận thông tin từ giao diện người dùng (giờ, phút, nhãn, ngày lặp, số câu hỏi, nhạc chuông, cấu hình snooze).
+    \item Nếu là báo thức mới (chưa có ID): tầng dữ liệu tạo bản ghi mới trong kho báo thức và trả về mã báo thức mới.
+    \item Lưu các liên kết: tầng dữ liệu lưu liên kết giữa báo thức với chủ đề/câu hỏi đã chọn, và liên kết với mã QR đã chọn.
+    \item Bộ lập lịch nhận yêu cầu và đặt lịch hẹn với hệ thống Android.
+\end{enumerate}
+
+\textit{Ràng buộc nghiệp vụ:} Trước khi lưu liên kết mới, hệ thống phải loại bỏ các liên kết cũ của báo thức đó để tránh dữ liệu dư thừa. Điều này đảm bảo tính nhất quán dữ liệu.
+
+\textbf{1.2 Chỉnh sửa báo thức:} Quy trình tương tự 1.1, nhưng tầng dữ liệu cập nhật bản ghi hiện có thay vì tạo mới. Logic điều phối xử lý cả hai trường hợp (tạo mới và cập nhật) trong cùng một luồng, phân biệt bằng trạng thái báo thức.
+
+\textbf{1.3 Xóa báo thức:} Quy trình:
+\begin{enumerate}
+    \item Bộ lập lịch hủy lịch hẹn hệ thống (quan trọng để tránh báo thức "ma").
+    \item Tầng dữ liệu xóa bản ghi báo thức khỏi kho dữ liệu.
+    \item Nhờ ràng buộc CASCADE trong cơ sở dữ liệu, các bản ghi liên kết trong bảng liên kết báo thức–chủ đề, bảng câu hỏi đã chọn, và bảng liên kết báo thức–QR tự động bị xóa.
+\end{enumerate}
+
+ Việc hủy lịch hẹn trước khi xóa dữ liệu là bắt buộc. Nếu chỉ xóa dữ liệu mà không hủy lịch, hệ thống Android vẫn sẽ gửi sự kiện khi đến giờ, dẫn đến lỗi khi receiver không tìm thấy báo thức trong kho dữ liệu.
+
+\textbf{1.4 Bật/Tắt báo thức:} Đây là thao tác phổ biến nhất (hàng ngày). Quy trình:
+\begin{itemize}
+    \item Cập nhật trạng thái bật/tắt trong kho dữ liệu trước.
+    \item Nếu bật: bộ lập lịch đặt lại lịch hẹn.
+    \item Nếu tắt: bộ lập lịch hủy lịch hẹn.
+\end{itemize}
+
+\textit{Tối ưu:} Sử dụng luồng dữ liệu phản ứng giúp giao diện tự động cập nhật khi kho dữ liệu thay đổi, không cần truy vấn lại.
+
+\textbf{1.5 Xem danh sách báo thức:} Tầng dữ liệu cung cấp danh sách tất cả báo thức. Tầng điều phối kết hợp với tùy chọn sắp xếp, cho phép hiển thị theo mặc định hoặc ưu tiên báo thức đang bật.
+
+\textbf{1.6 Tạo báo thức nhanh:} Tính giờ hiện tại cộng thêm X phút, đặt các thuộc tính mặc định (không lặp lại, bật snooze), và mở màn hình cấu hình sẵn.
+
+\subsubsection{Module 2: Quản lý Chủ đề và Câu hỏi}
+
+Module này được thực hiện bởi tầng điều phối quản lý nội dung học tập, quản lý chủ đề và câu hỏi trong từng chủ đề.
+
+\textbf{2.1 Quản lý chủ đề:} Tầng điều phối cung cấp danh sách chủ đề đã lọc, kết hợp giữa truy vấn lấy tất cả chủ đề kèm số câu hỏi (sử dụng JOIN) và từ khóa tìm kiếm. Hệ thống sử dụng luồng dữ liệu phản ứng để tự động cập nhật danh sách khi có thay đổi.
+
+\textit{Đặc điểm:} Truy vấn sử dụng LEFT JOIN để đảm bảo chủ đề không có câu hỏi vẫn hiển thị (số câu hỏi = 0).
+
+\textbf{2.2 Quản lý câu hỏi:} Tầng điều phối xử lý các thao tác tạo, đọc, cập nhật, xóa câu hỏi trong một chủ đề cụ thể. Khi thêm câu hỏi mới, hệ thống kiểm tra tính hợp lệ: nội dung câu hỏi không rỗng, có đủ đáp án. Danh sách đáp án sai được lưu dưới dạng JSON trong cơ sở dữ liệu.
+
+\textit{Ràng buộc nghiệp vụ:} Khi xóa chủ đề, tất cả câu hỏi trong chủ đề đó cũng tự động bị xóa nhờ ràng buộc CASCADE trong cơ sở dữ liệu.
+
+\subsubsection{Module 3: Thực thi Báo thức}
+
+Đây là module phức tạp nhất, liên quan đến nhiều thành phần hệ thống: receiver nhận sự kiện, dịch vụ nền phát nhạc, màn hình reo báo thức, và màn hình quiz.
+
+\textbf{3.1 Kích hoạt báo thức:} Receiver nhận sự kiện từ hệ thống Android khi đến giờ báo thức. Quy trình:
+\begin{itemize}
+    \item Receiver chuyển sang xử lý bất đồng bộ (vì receiver có thời gian chạy giới hạn).
+    \item Đọc cấu hình báo thức từ kho dữ liệu.
+    \item Kiểm tra ngày lặp lại: nếu rỗng (báo thức một lần) thì tắt báo thức, nếu không thì đặt lại lịch cho ngày tiếp theo.
+    \item Khởi chạy dịch vụ nền để phát nhạc và hiển thị giao diện.
+\end{itemize}
+
+ Việc xử lý lặp lại ngay trong receiver đảm bảo báo thức tự động đặt lại lịch mà không cần người dùng can thiệp. Điều này quan trọng cho báo thức hàng ngày.
+
+\textbf{3.2 Hiển thị giao diện báo thức đang reo:} Dịch vụ nền tạo thông báo với mức ưu tiên cao và thiết lập để hiển thị màn hình reo ngay cả khi màn hình khóa. Đồng thời khởi chạy trình phát nhạc để phát nhạc chuông liên tục.
+
+\textit{Điểm kỹ thuật:} Hiển thị màn hình khi khóa yêu cầu quyền đặc biệt (Android 10+). Hệ thống kiểm tra quyền này khi khởi động.
+
+\textbf{3.3 Thực hiện Quiz:} Khi người dùng nhấn "Tắt", hệ thống kiểm tra xem báo thức có mã QR không. Nếu có thì yêu cầu quét QR trước. Sau đó chuyển đến màn hình quiz. Tầng điều phối quiz gọi bộ chọn câu hỏi theo thuật toán SRS để chọn câu hỏi phù hợp.
+
+\textbf{3.3.1 Chọn câu hỏi theo thuật toán SRS:} Bộ chọn câu hỏi thực hiện:
+\begin{enumerate}
+    \item Gom bể câu hỏi: đọc câu hỏi lẻ đã chọn và câu hỏi từ các chủ đề đã chọn, loại trùng lặp.
+    \item Đọc tiến độ: với mỗi câu hỏi, đọc tiến độ học tập từ kho dữ liệu.
+    \item Tính điểm ưu tiên:
+    \begin{itemize}
+        \item Nếu progress = null (câu chưa học): priority = 500.0
+        \item Nếu đã đến hạn ôn: priority = 1000.0 + thời gian chênh lệch (milliseconds)
+        \item Còn lại: priority = điểm độ khó
+    \end{itemize}
+    \item Sắp xếp giảm dần theo priority, thêm yếu tố ngẫu nhiên nhỏ để tránh lặp lại hoàn toàn.
+    \item Lấy top N câu hỏi.
+\end{enumerate}
+
+\textit{Phân tích thuật toán:} Công thức priority đảm bảo câu đến hạn ôn luôn được ưu tiên cao nhất (1000+), câu chưa học được ưu tiên trung bình (500), câu khác dựa trên độ khó. Yếu tố random nhỏ giúp tránh việc người dùng gặp cùng một bộ câu hỏi mỗi lần.
+
+\textbf{3.3.2 Hiển thị câu hỏi và đếm giờ:} Hệ thống hiển thị câu hỏi với 4 đáp án đã xáo trộn. Bộ đếm ngược khởi chạy đếm ngược 15 giây, cập nhật tiến độ mỗi 50ms. Giao diện vẽ thanh tiến độ tròn dựa trên giá trị này. Nếu hết giờ, tự động đánh dấu sai và chuyển câu tiếp.
+
+\textbf{3.3.3 Kiểm tra đáp án:} Tầng điều phối so sánh đáp án người dùng chọn với đáp án đúng. Hiển thị màu xanh (đúng) hoặc đỏ (sai) trong 1 giây trước khi chuyển câu tiếp.
+
+\textbf{3.3.4 Cập nhật tiến độ học tập SRS:} Bộ xử lý đáp án thực hiện:
+\begin{itemize}
+    \item Ghi lịch sử trả lời vào kho dữ liệu (mã câu hỏi, mã lịch sử báo thức, kết quả đúng/sai, thời gian trả lời).
+    \item Đọc tiến độ học tập cũ (hoặc tạo mới nếu chưa có).
+    \item Cập nhật theo công thức SM-2:
+    \begin{itemize}
+        \item \textbf{Nếu đúng:} correctStreak++, easinessFactor += 0.1 (max 3.0), interval = interval * easinessFactor (hoặc 1 nếu lần đầu), difficultyScore -= 50.
+        \item \textbf{Nếu sai:} correctStreak = 0, easinessFactor -= 0.2 (min 1.3), interval = 1, difficultyScore += 100.
+    \end{itemize}
+    \item Tính ngày ôn tập tiếp theo = hiện tại + khoảng cách (ngày).
+    \item Cập nhật điểm ELO của chủ đề (±10 hoặc ±5).
+\end{itemize}
+
+ Công thức SM-2 (SuperMemo 2) là thuật toán spaced repetition phổ biến. Hệ số easinessFactor điều chỉnh khoảng cách ôn tập: càng nhớ tốt, khoảng cách càng tăng. Điểm ELO phản ánh mức độ thành thạo với topic.
+
+\subsubsection{Module 4: Quản lý QR Code}
+
+Module này được thực hiện bởi tầng điều phối quản lý mã QR, sử dụng công nghệ nhận dạng mã vạch để quét và xác thực.
+
+\textbf{4.1 Quét QR/Barcode:} Màn hình quét khởi động camera, phân tích từng khung hình bằng công nghệ nhận dạng mã vạch. Khi phát hiện mã, hệ thống trích xuất giá trị mã và loại mã (QR hoặc BARCODE).
+
+\textbf{4.2 Lưu mã QR:} Trước khi lưu, hệ thống kiểm tra: (1) số lượng mã đã lưu phải nhỏ hơn 5, (2) không trùng lặp với mã đã có. Nếu thỏa mãn, lưu mã QR vào kho dữ liệu.
+
+\textit{Ràng buộc nghiệp vụ:} Hệ thống giới hạn tối đa 5 mã QR trong toàn bộ hệ thống và tối đa 3 mã QR cho mỗi báo thức. Đây là ràng buộc nghiệp vụ, không phải ràng buộc cơ sở dữ liệu.
+
+\textbf{4.3 Xóa mã QR:} Tầng dữ liệu xóa mã QR khỏi kho dữ liệu. Nếu mã này đang được sử dụng bởi báo thức nào, ràng buộc CASCADE sẽ tự động xóa bản ghi liên kết trong bảng liên kết báo thức–QR.
+
+\textbf{4.4 Liên kết QR với báo thức:} Trong màn hình cấu hình báo thức, người dùng chọn tối đa 3 mã QR. Tầng điều phối lưu danh sách mã đã chọn vào trạng thái. Khi lưu báo thức, hệ thống lưu các liên kết vào bảng liên kết báo thức–QR.
+
+\textbf{4.5 Xác thực mã QR khi tắt báo thức:} Khi người dùng quét mã, hệ thống so sánh với danh sách mã đã liên kết với báo thức (truy vấn JOIN giữa bảng mã QR và bảng liên kết). Chỉ khi quét đúng mã, hệ thống mới cho phép chuyển sang Quiz.
+
+\subsubsection{Module 5: Thống kê và Báo cáo}
+
+Module này được thực hiện bởi tầng điều phối thống kê, tính toán các chỉ số từ dữ liệu lịch sử và hiển thị dưới dạng biểu đồ.
+
+\textbf{5.1 Xem thống kê độ chính xác theo tuần:} Tầng dữ liệu thực thi truy vấn nhóm theo ngày, tính tổng số câu trả lời đúng và tổng số câu hỏi. Tầng điều phối xử lý để tạo danh sách 7 ngày (từ 6 ngày trước đến hôm nay), điền độ chính xác bằng 0 nếu không có dữ liệu.
+
+\textbf{5.2 Xem phân phối trạng thái học tập:} Hệ thống nhóm theo trạng thái (Mới/Học/Thành thạo) dựa trên số lần đúng liên tiếp. Giao diện vẽ biểu đồ tròn 3 phần.
+
+\textbf{5.3 Tính điểm Wake-up Score:} Hệ thống lấy 5 lần báo thức reo gần nhất, tính điểm trung bình theo công thức: 100 trừ đi (số lần snooze × 10) trừ đi (số phút trễ × 0.5), giới hạn trong khoảng [0, 100].
+
+\textbf{5.4 Theo dõi streak và điểm số:} Kho dữ liệu lưu chuỗi ngày liên tiếp hiện tại, kỷ lục chuỗi ngày, và tổng điểm tích lũy. Sau mỗi lần hoàn thành quiz, hệ thống tăng điểm và kiểm tra streak (so sánh ngày hoạt động cuối với hôm qua).
+
+\section{Biểu đồ Luồng Dữ liệu (DFD)}
+
+\subsection{DFD Context - Sơ đồ Luồng Dữ liệu Ngữ cảnh}
+
+\StdFig{images/structured_dfd_context.png}{DFD Context - Luồng dữ liệu giữa tác nhân và hệ thống}{fig:dfd_context}
+
+Ở mức ngữ cảnh, hệ thống được xem như một "hộp đen" tương tác với 2 tác nhân ngoài:
+
+\textbf{E1 - Người dùng:} Cung cấp thông tin báo thức (giờ, phút, nhãn, ngày lặp, số câu hỏi, QR codes), chủ đề \& câu hỏi, mã QR/Barcode, lệnh bật/tắt/snooze, đáp án quiz. Nhận về danh sách báo thức, thông báo đổ chuông (notification + full-screen), câu hỏi quiz, kết quả quiz, báo cáo thống kê.
+
+\textbf{E2 - Hệ thống Lập lịch Android:} Nhận lịch hẹn báo thức (thời gian kích hoạt, intent chứa mã báo thức). Gửi sự kiện đổ chuông (broadcast) đến receiver của hệ thống.
+
+ DFD Context giúp xác định ranh giới hệ thống. Hệ thống không tự kích hoạt báo thức mà phụ thuộc vào hệ thống lập lịch của Android. Điều này kéo theo ràng buộc: phải có quyền đặt báo thức chính xác (Android 12+) và xử lý trường hợp bị từ chối quyền. Hệ thống kiểm tra quyền này khi khởi động và hiển thị hộp thoại yêu cầu người dùng cấp quyền.
+
+\subsection{DFD Level 0 - Các tiến trình chính}
+
+\WideFig{images/structured_dfd_level0.png}{DFD Level 0 - 7 tiến trình chính và 5 kho dữ liệu}{fig:dfd_level0}
+
+Bảng \ref{tab:processes_level0} mô tả chi tiết 7 tiến trình chính:
+
+\begin{table}[H]
+\caption{Mô tả các tiến trình Level 0}
+\label{tab:processes_level0}
+\small
+\begin{tabularx}{\linewidth}{|p{1.4cm}|p{3cm}|X|}
+\hline
+\textbf{Mã} & \textbf{Tiến trình} & \textbf{Chức năng chính và luồng xử lý} \\
+\hline
+P1 & Quản lý Báo thức & Nhận thông tin từ người dùng, validate (giờ/phút hợp lệ, số câu hỏi không âm), lưu/sửa/xóa vào kho báo thức; gửi yêu cầu lập lịch cho bộ lập lịch báo thức. \\
+\hline
+P2 & Quản lý Chủ đề \& Câu hỏi & Nhận chủ đề/câu hỏi, kiểm tra tên chủ đề không trùng, câu hỏi đủ đáp án; lưu vào kho chủ đề và câu hỏi; cập nhật UI theo thời gian thực qua dòng dữ liệu phản ứng. \\
+\hline
+P3 & Lập lịch Báo thức & Đọc cấu hình báo thức, tính thời gian kích hoạt (xử lý lặp tuần), tạo PendingIntent với mã báo thức, gọi AlarmManager đặt lịch chính xác. \\
+\hline
+P4 & Xử lý Báo thức Reo & Nhận broadcast từ hệ thống, quyết định đặt lại lịch hay tắt, khởi động quiz hoặc quét QR, ghi lịch sử reo. \\
+\hline
+P5 & Thực thi Quiz & Đọc câu hỏi và tiến độ, chọn câu theo SRS, hiển thị, nhận đáp án, cập nhật tiến độ và điểm ELO. \\
+\hline
+P6 & Quản lý QR Code & Lưu/xóa QR, liên kết QR với báo thức, xác thực mã QR khi tắt báo thức. \\
+\hline
+P7 & Tạo báo cáo Thống kê & Đọc lịch sử và thống kê, tính độ chính xác tuần, phân phối SRS, điểm Wake-up Score, trả kết quả cho người dùng. \\
+\hline
+\end{tabularx}
+\end{table}
+
+Bảng \ref{tab:datastores_level0} mô tả 5 kho dữ liệu dựa trên phân tích cấu trúc dữ liệu và các ràng buộc:
+
+\begin{table}[H]
+\caption{Mô tả các kho dữ liệu Level 0}
+\label{tab:datastores_level0}
+\small
+\begin{tabularx}{\linewidth}{|p{1.5cm}|p{3.8cm}|X|}
+\hline
+\textbf{Mã} & \textbf{Kho dữ liệu} & \textbf{Nội dung chính và cấu trúc} \\
+\hline
+DS1 & Alarms & Kho cấu hình báo thức và các liên kết với chủ đề, câu hỏi, QR. Có 12 thuộc tính chính và 3 bảng liên kết, dùng CASCADE để giữ toàn vẹn. \\
+\hline
+DS2 & Topics \& Questions & Kho chủ đề và câu hỏi; mỗi câu hỏi tham chiếu chủ đề, dùng JSON để lưu đáp án sai; CASCADE khi xóa chủ đề. \\
+\hline
+DS3 & QR Codes & Kho QR/Barcode và liên kết với báo thức; ràng buộc nghiệp vụ tối đa 5 mã trong hệ thống, tối đa 3 mã cho mỗi báo thức. \\
+\hline
+DS4 & Progress \& History & Kho tiến độ SRS, lịch sử trả lời quiz, lịch sử reo báo thức; phục vụ thuật toán SRS và thống kê hành vi. \\
+\hline
+DS5 & User Stats & Kho thống kê người dùng (điểm, streak, số báo thức hoàn thành) và ELO theo chủ đề; dùng cho gamification và phân tích học tập. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\textit{Phân tích cân bằng luồng dữ liệu:} Mọi luồng dữ liệu đi vào từ E1 đều có luồng đi ra tương ứng (danh sách, kết quả, thông báo). Luồng từ E2 chỉ có 1 chiều (sự kiện đổ chuông) vì AlarmManager không nhận feedback từ app sau khi gửi broadcast. Điều này phù hợp với kiến trúc Android.
+
+\subsection{DFD Level 1 - Phân rã P4 (Xử lý Báo thức Reo)}
+
+\WideFig{images/structured_dfd_level1_p4.png}{DFD Level 1 - Phân rã tiến trình P4}{fig:dfd_level1_p4}
+
+P4 được phân rã thành 7 tiến trình con:
+
+\begin{itemize}
+    \item \textbf{P4.1 - Nhận sự kiện đổ chuông:} Receiver nhận sự kiện từ hệ thống, trích xuất mã báo thức từ intent, đọc cấu hình báo thức từ DS1. Receiver chuyển sang xử lý bất đồng bộ vì có giới hạn thời gian chạy. Việc xử lý bất đồng bộ là bắt buộc để đảm bảo không bị timeout.
+
+    \item \textbf{P4.2 - Khởi chạy Dịch vụ nền:} Tạo dịch vụ nền với mức ưu tiên thông báo cao. Khởi động trình phát nhạc để phát nhạc chuông liên tục. Thông báo được thiết lập để hiển thị màn hình reo ngay cả khi màn hình khóa.
+
+    \item \textbf{P4.3 - Hiển thị màn hình reo:} Màn hình reo hiển thị nhãn, thời gian, nút "Tắt", nút "Snooze" (nếu được bật). Tạo bản ghi lịch sử báo thức với trạng thái chưa tắt, thời gian reo đầu tiên là thời điểm hiện tại.
+
+    \item \textbf{P4.4 - Xử lý Snooze:} Cập nhật số lần snooze trong lịch sử báo thức (DS4), tính thời gian reo lại bằng thời gian hiện tại cộng thời gian snooze (phút), đặt lịch tạm thời với hệ thống lập lịch (sử dụng báo thức một lần, không lưu vào kho dữ liệu). Snooze được xử lý như một báo thức tạm thời, không ảnh hưởng đến lịch chính.
+
+    \item \textbf{P4.5 - Kiểm tra điều kiện tắt:} Đọc cấu hình QR từ DS3, nếu có QR thì yêu cầu quét (gọi P6.5 - Xác thực QR). Sau đó kiểm tra số câu hỏi: nếu lớn hơn 0 thì khởi động P5 (Quiz), nếu bằng 0 thì cho phép tắt ngay. Logic điều hướng dựa trên các điều kiện này.
+
+    \item \textbf{P4.6 - Lập lại lịch lặp lại:} Đọc ngày lặp lại từ DS1. Nếu rỗng (báo thức một lần): cập nhật trạng thái báo thức thành tắt. Nếu không rỗng: tính ngày tiếp theo trong tuần có trong danh sách ngày lặp lại, gọi bộ lập lịch đặt lại lịch. Logic này được thực hiện ngay sau khi nhận sự kiện.
+
+    \item \textbf{P4.7 - Ghi lịch sử báo thức:} Cập nhật lịch sử báo thức: thời gian tắt là thời điểm hiện tại, trạng thái đã tắt là đúng. Lịch sử này dùng cho tính điểm Wake-up Score và phân tích thói quen. Việc cập nhật này được thực hiện sau khi hoàn thành quiz.
+\end{itemize}
+
+\textit{Điểm đáng chú ý:} P4.5 là "checkpoint" quan trọng. Nếu thiếu QR hoặc Quiz chưa hoàn thành, người dùng không thể tắt báo thức (nhạc tiếp tục phát). Đây là tính năng cốt lõi giúp người dùng thức dậy. Việc kiểm tra điều kiện được thực hiện tuần tự: QR trước, sau đó mới đến Quiz.
+
+\subsection{DFD Level 1 - Phân rã P5 (Thực thi Quiz)}
+
+\WideFig{images/structured_dfd_level1_p5.png}{DFD Level 1 - Phân rã tiến trình P5 với thuật toán SRS}{fig:dfd_level1_p5}
+
+P5 được phân rã thành 5 tiến trình con, trong đó P5.1 và P5.4 là quan trọng nhất:
+
+\begin{itemize}
+    \item \textbf{P5.1 - Chọn câu hỏi theo SRS:} Đây là trái tim của hệ thống học tập thông minh. Bộ chọn câu hỏi thực hiện:
+    \begin{enumerate}
+        \item Đọc danh sách câu hỏi đã chọn: truy vấn câu hỏi lẻ và câu hỏi từ chủ đề, lấy tất cả câu hỏi (chọn thủ công + từ chủ đề), loại trùng lặp.
+        \item Đọc tiến độ: với mỗi câu hỏi, đọc tiến độ học tập từ kho dữ liệu.
+        \item Tính điểm ưu tiên theo công thức:
+        \begin{itemize}
+            \item Nếu chưa có tiến độ (câu chưa học): điểm ưu tiên = 500.0
+            \item Nếu đã đến hạn ôn: điểm ưu tiên = 1000.0 + thời gian chênh lệch (milliseconds)
+            \item Còn lại: điểm ưu tiên = điểm độ khó
+        \end{itemize}
+        \item Sắp xếp giảm dần theo điểm ưu tiên, thêm yếu tố ngẫu nhiên nhỏ để tránh lặp lại hoàn toàn.
+        \item Lấy top N câu hỏi, lưu vào bộ nhớ tạm.
+    \end{enumerate}
+
+    \item \textbf{P5.2 - Hiển thị câu hỏi và đếm giờ:} Lấy câu hỏi từ bộ nhớ tạm, hiển thị nội dung câu hỏi + 4 đáp án (đã xáo trộn). Khởi chạy bộ đếm ngược 15 giây, cập nhật tiến độ mỗi 50ms để cập nhật giao diện mượt mà. Nếu hết giờ, tự động đánh dấu sai và chuyển câu tiếp.
+
+    \item \textbf{P5.3 - Kiểm tra đáp án:} So sánh đáp án người dùng chọn với đáp án đúng. Hiển thị kết quả (màu xanh/đỏ) trong 1 giây. Gửi thông tin (mã câu hỏi, kết quả đúng/sai, thời gian trả lời) cho P5.4. Việc tính thời gian trả lời dựa trên tiến độ đếm ngược.
+
+    \item \textbf{P5.4 - Cập nhật tiến độ SRS:} Bộ xử lý đáp án thực hiện:
+    \begin{enumerate}
+        \item Ghi lịch sử trả lời vào DS4 (mã câu hỏi, mã lịch sử báo thức, kết quả đúng/sai, thời gian trả lời).
+        \item Đọc tiến độ học tập cũ (hoặc tạo mới nếu chưa có).
+        \item Cập nhật theo công thức SM-2:
+        \begin{itemize}
+            \item \textbf{Nếu đúng:} tăng số lần đúng liên tiếp, tăng hệ số dễ dàng thêm 0.1 (tối đa 3.0), khoảng cách = khoảng cách × hệ số dễ dàng (hoặc 1 nếu lần đầu), giảm điểm độ khó 50.
+            \item \textbf{Nếu sai:} đặt số lần đúng liên tiếp về 0, giảm hệ số dễ dàng 0.2 (tối thiểu 1.3), đặt khoảng cách về 1, tăng điểm độ khó 100.
+        \end{itemize}
+        \item Tính ngày ôn tập tiếp theo = hiện tại + khoảng cách (ngày), ngày ôn cuối = hiện tại.
+        \item Lưu tiến độ học tập vào DS4.
+    \end{enumerate}
+
+    \item \textbf{P5.5 - Tính điểm ELO Topic:} Đọc mã chủ đề từ mã câu hỏi, đọc thống kê chủ đề từ DS5. Cập nhật:
+    \begin{itemize}
+        \item Nếu đúng: điểm ELO người dùng tăng 10
+        \item Nếu sai: điểm ELO người dùng giảm 5 (tối thiểu 0)
+    \end{itemize}
+    Điểm ELO phản ánh mức độ thành thạo của người dùng với chủ đề đó. Hệ thống chỉ cập nhật ELO nếu câu hỏi thuộc một chủ đề cụ thể (bỏ qua câu hỏi mặc định).
+\end{itemize}
+
+ Thuật toán SRS đảm bảo câu hỏi được ôn tập đúng thời điểm (spaced repetition), giúp tối ưu việc ghi nhớ. Việc cập nhật difficultyScore và ELO giúp hệ thống thích ứng với khả năng của người dùng.
+
+\section{Đặc tả Chức năng}
+
+\subsection{Mini-spec P5.1: Chọn câu hỏi theo SRS}
+
+\textbf{Mục tiêu:} Chọn N câu hỏi phù hợp nhất cho Quiz dựa trên thuật toán Spaced Repetition System, đảm bảo câu hỏi đến hạn ôn được ưu tiên cao nhất.
+
+\textbf{Input:}
+\begin{itemize}
+    \item Mã báo thức (số nguyên)
+    \item Số câu hỏi cần chọn (số nguyên, 1-100)
+    \item DS2: Danh sách câu hỏi của các chủ đề/câu hỏi đã chọn
+    \item DS4: Tiến độ học tập của từng câu
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item DS\_TEMP: Danh sách câu hỏi đã sắp xếp theo thứ tự ưu tiên
+\end{itemize}
+
+\textbf{Xử lý:}
+\begin{enumerate}
+    \item Đọc câu hỏi lẻ đã chọn cho báo thức từ kho dữ liệu.
+    \item Đọc câu hỏi từ các chủ đề đã liên kết với báo thức, lấy tất cả câu hỏi từ các chủ đề đó.
+    \item Gom bể: kết hợp câu hỏi lẻ và câu hỏi từ chủ đề, loại trùng lặp.
+    \item NẾU bể câu hỏi rỗng: Trả về danh sách rỗng (không có câu hỏi).
+    \item Đọc tiến độ học tập cho tất cả câu hỏi trong bể.
+    \item Với mỗi câu hỏi, tính điểm ưu tiên:
+    \begin{itemize}
+        \item NẾU chưa có tiến độ (câu chưa học): điểm ưu tiên = 500.0
+        \item NẾU có tiến độ:
+        \begin{itemize}
+            \item NẾU đã đến hạn ôn: điểm ưu tiên = 1000.0 + thời gian chênh lệch (milliseconds)
+            \item NGƯỢC LẠI: điểm ưu tiên = điểm độ khó
+        \end{itemize}
+    \end{itemize}
+    \item Sắp xếp danh sách câu hỏi theo điểm ưu tiên GIẢM DẦN, thêm yếu tố ngẫu nhiên nhỏ.
+    \item Lấy TOP N câu hỏi theo số lượng yêu cầu.
+    \item Chuyển đổi sang định dạng câu hỏi quiz và trả về.
+\end{enumerate}
+
+\textbf{Kiểm tra hợp lệ:}
+\begin{itemize}
+    \item Số lượng câu hỏi cần chọn phải lớn hơn 0 và nhỏ hơn hoặc bằng 100 (giao diện slider giới hạn 0-10).
+    \item Nếu số câu hỏi có sẵn nhỏ hơn số lượng yêu cầu, chỉ trả về số câu có sẵn.
+\end{itemize}
+
+\textbf{Ngoại lệ:}
+\begin{itemize}
+    \item Nếu không có câu hỏi nào → Trả về danh sách rỗng, P5 sẽ tắt báo thức ngay lập tức.
+    \item Nếu kho dữ liệu lỗi → Trả về danh sách rỗng, hệ thống có thể sử dụng câu hỏi mặc định.
+\end{itemize}
+
+\textbf{Side-effects:} Không có side-effect trực tiếp lên DB. Chỉ đọc dữ liệu.
+
+\subsection{Mini-spec P5.4: Cập nhật tiến độ SRS}
+
+\textbf{Mục tiêu:} Cập nhật trạng thái học tập của câu hỏi sau khi người dùng trả lời, áp dụng công thức SM-2 (SuperMemo 2) để tính khoảng cách ôn tập tiếp theo.
+
+\textbf{Input:}
+\begin{itemize}
+    \item Mã câu hỏi (số nguyên, > 0)
+    \item Kết quả đúng hay sai (boolean)
+    \item Thời gian trả lời (số nguyên dài, milliseconds)
+    \item Mã lịch sử báo thức (số nguyên, có thể rỗng)
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item DS4 (bảng tiến độ học tập): Cập nhật tiến độ mới
+    \item DS4 (bảng lịch sử): Ghi lại lịch sử trả lời
+    \item DS5 (bảng thống kê chủ đề): Cập nhật điểm ELO (nếu có mã chủ đề)
+\end{itemize}
+
+\textbf{Xử lý:}
+\begin{enumerate}
+    \item Ghi lại lịch sử trả lời:
+    \begin{itemize}
+        \item Lưu vào bảng lịch sử: mã câu hỏi, mã lịch sử báo thức, kết quả đúng/sai, thời gian trả lời, thời điểm trả lời.
+    \end{itemize}
+    \item Đọc tiến độ học tập cho câu hỏi
+    \begin{itemize}
+        \item NẾU không tồn tại: Tạo mới tiến độ với giá trị mặc định:
+        \begin{itemize}
+            \item Số lần đúng liên tiếp = 0
+            \item Hệ số dễ dàng = 2.5
+            \item Khoảng cách = 0
+            \item Điểm độ khó = 1000.0
+        \end{itemize}
+    \end{itemize}
+    \item NẾU đáp án đúng:
+    \begin{itemize}
+        \item Tăng số lần đúng liên tiếp thêm 1
+        \item Tăng hệ số dễ dàng thêm 0.1 (tối đa 3.0)
+        \item NẾU khoảng cách = 0:
+        \begin{itemize}
+            \item Khoảng cách = 1 (lần đầu đúng, ôn lại sau 1 ngày)
+        \end{itemize}
+        \item NGƯỢC LẠI:
+        \begin{itemize}
+            \item Khoảng cách = làm tròn (khoảng cách × hệ số dễ dàng) (giãn cách tăng theo hệ số)
+        \end{itemize}
+        \item Giảm điểm độ khó 50 (câu dễ hơn)
+    \end{itemize}
+    \item NẾU đáp án sai:
+    \begin{itemize}
+        \item Đặt số lần đúng liên tiếp về 0 (reset streak)
+        \item Giảm hệ số dễ dàng 0.2 (tối thiểu 1.3)
+        \item Đặt khoảng cách về 1 (phải ôn lại sớm)
+        \item Tăng điểm độ khó 100 (câu khó hơn)
+    \end{itemize}
+    \item Tính thời gian ôn tập tiếp theo:
+    \begin{itemize}
+        \item Thời gian ôn tiếp theo = thời gian hiện tại + (khoảng cách × 24 × 60 × 60 × 1000 milliseconds)
+        \item Ngày ôn cuối = thời điểm hiện tại
+        \item Ngày ôn tiếp theo = thời gian ôn tiếp theo
+    \end{itemize}
+    \item Cập nhật vào kho dữ liệu:
+    \begin{itemize}
+        \item Cập nhật bảng tiến độ học tập với các giá trị mới: số lần đúng liên tiếp, hệ số dễ dàng, khoảng cách, điểm độ khó, ngày ôn tiếp theo, ngày ôn cuối.
+    \end{itemize}
+    \item Tính điểm ELO chủ đề:
+    \begin{itemize}
+        \item Đọc mã chủ đề từ mã câu hỏi
+        \item NẾU có mã chủ đề:
+        \begin{itemize}
+            \item Đọc thống kê chủ đề (hoặc tạo mới nếu chưa có)
+            \item NẾU đúng: điểm ELO người dùng tăng 10.0
+            \item NGƯỢC LẠI: điểm ELO người dùng = tối đa (điểm ELO người dùng - 5.0, 0.0)
+            \item Cập nhật thống kê chủ đề
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Kiểm tra hợp lệ:}
+\begin{itemize}
+    \item Mã câu hỏi phải lớn hơn 0 (câu hỏi mặc định có ID âm, hệ thống bỏ qua cập nhật SRS cho những câu này).
+    \item Thời gian trả lời phải lớn hơn hoặc bằng 0 (logic tính toán đảm bảo giá trị hợp lệ).
+\end{itemize}
+
+\textbf{Ngoại lệ:}
+\begin{itemize}
+    \item Nếu mã câu hỏi nhỏ hơn 0 (câu hỏi mặc định), bỏ qua cập nhật SRS.
+    \item Nếu kho dữ liệu lỗi → Ngoại lệ được xử lý, không ảnh hưởng đến giao diện.
+\end{itemize}
+
+\textbf{Side-effects:}
+\begin{itemize}
+    \item Ghi 1 bản ghi mới vào bảng lịch sử.
+    \item Cập nhật 1 bản ghi trong bảng tiến độ học tập (hoặc tạo mới nếu chưa có).
+    \item Cập nhật 1 bản ghi trong bảng thống kê chủ đề (nếu có mã chủ đề).
+\end{itemize}
+
+\textbf{Transaction:} Hệ thống không sử dụng transaction rõ ràng, nhưng cơ sở dữ liệu đảm bảo tính nguyên tử cho mỗi thao tác riêng lẻ. Nếu một thao tác thất bại, các thao tác khác vẫn có thể thành công (không có rollback). Điều này chấp nhận được vì mỗi thao tác độc lập.
+
+\subsection{Mini-spec P4.5: Kiểm tra điều kiện tắt}
+
+\textbf{Mục tiêu:} Xác định người dùng có đủ điều kiện tắt báo thức chưa (đã quét QR và hoàn thành Quiz), đảm bảo người dùng không thể tắt báo thức dễ dàng.
+
+\textbf{Input:}
+\begin{itemize}
+    \item Mã báo thức (số nguyên)
+    \item DS1: Cấu hình báo thức (số câu hỏi, mã QR)
+    \item DS3: Danh sách QR đã liên kết (qua bảng liên kết báo thức–QR)
+    \item Kết quả từ P5 (Quiz) hoặc P6 (QR Scanner): trạng thái hoàn thành Quiz, trạng thái xác thực QR
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item Lệnh tắt báo thức (gửi cho P4.2 để dừng service)
+    \item Hoặc yêu cầu tiếp tục Quiz/QR (navigate đến màn hình tương ứng)
+\end{itemize}
+
+\textbf{Xử lý:}
+\begin{enumerate}
+    \item Đọc cấu hình báo thức từ kho dữ liệu theo mã báo thức.
+    \item Đọc số lượng mã QR đã liên kết:
+    \begin{itemize}
+        \item Truy vấn đếm số bản ghi trong bảng liên kết báo thức–QR cho báo thức này.
+    \end{itemize}
+    \item NẾU số lượng mã QR > 0:
+    \begin{itemize}
+        \item Kiểm tra trạng thái xác thực QR (do P6 đặt sau khi quét thành công)
+        \item NẾU chưa xác thực QR:
+        \begin{itemize}
+            \item RETURN "Yêu cầu quét QR" (Chuyển đến màn hình quét QR)
+        \end{itemize}
+        \item NẾU đã xác thực QR:
+        \begin{itemize}
+            \item Tiếp tục bước 4
+        \end{itemize}
+    \end{itemize}
+    \item NẾU số câu hỏi > 0:
+    \begin{itemize}
+        \item Kiểm tra trạng thái hoàn thành Quiz (do P5 đặt sau khi trả lời đủ số câu đúng)
+        \item NẾU chưa hoàn thành Quiz:
+        \begin{itemize}
+            \item RETURN "Yêu cầu làm Quiz" (Chuyển đến màn hình Quiz)
+        \end{itemize}
+        \item NẾU đã hoàn thành Quiz:
+        \begin{itemize}
+            \item Tiếp tục bước 5
+        \end{itemize}
+    \end{itemize}
+    \item Tất cả điều kiện đã đủ:
+    \begin{itemize}
+        \item Cập nhật lịch sử báo thức: thời gian tắt = hiện tại, trạng thái đã tắt = đúng
+        \item Gửi lệnh dừng dịch vụ nền cho P4.2
+        \item Gửi lệnh cho P4.6 (Lập lại lịch lặp lại) nếu cần
+        \item RETURN "Đã tắt báo thức"
+        \item Chuyển về màn hình chính
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Kiểm tra hợp lệ:}
+\begin{itemize}
+    \item Mã báo thức phải tồn tại trong kho dữ liệu.
+\end{itemize}
+
+\textbf{Ngoại lệ:}
+\begin{itemize}
+    \item Nếu người dùng buộc dừng ứng dụng, dịch vụ nền sẽ bị dừng (hệ thống Android tự xử lý). Hệ thống không có xử lý đặc biệt cho trường hợp này.
+    \item Nếu kho dữ liệu lỗi khi cập nhật lịch sử báo thức → Ngoại lệ, nhưng dịch vụ nền vẫn dừng.
+\end{itemize}
+
+\textbf{Side-effects:}
+\begin{itemize}
+    \item Cập nhật 1 bản ghi trong bảng lịch sử báo thức.
+    \item Dừng dịch vụ nền (phát nhạc dừng).
+    \item Chuyển đến màn hình khác (màn hình quét QR hoặc màn hình Quiz).
+\end{itemize}
+
+\textbf{Điểm quan trọng:} Logic kiểm tra điều kiện được thực hiện tuần tự: QR trước, sau đó mới đến Quiz. Điều này đảm bảo người dùng phải hoàn thành cả 2 bước (nếu có) mới tắt được báo thức. Việc điều hướng dựa trên các điều kiện này.
+
+\section{Phân tích Hệ thống về mặt Dữ liệu}
+
+\subsection{Mô hình ER hạn chế}
+
+\WideFig{images/structured_erd.png}{Mô hình ER - Entity Relationship Diagram}{fig:erd}
+
+Mô hình ER được xây dựng dựa trên phân tích cấu trúc dữ liệu và các ràng buộc nghiệp vụ. Bảng \ref{tab:entities} mô tả chi tiết các thực thể:
+
+\begin{table}[H]
+\caption{Mô tả các thực thể và thuộc tính (tóm tắt, căn trái để tránh tràn dòng)}
+\label{tab:entities}
+\small
+\begin{longtable}{|p{2.2cm}|p{2.6cm}|p{2.1cm}|p{7.5cm}|}
+\hline
+\textbf{Thực thể} & \textbf{Thuộc tính} & \textbf{Kiểu} & \textbf{Ràng buộc và mô tả} \\
+\hline
+\endfirsthead
+\multicolumn{4}{c}{{\bfseries \tablename\ \thetable{} -- tiếp tục từ trang trước}} \\\hline
+\textbf{Thực thể} & \textbf{Thuộc tính} & \textbf{Kiểu} & \textbf{Ràng buộc và mô tả} \\\hline
+\endhead
+\hline \multicolumn{4}{|r|}{{Tiếp tục ở trang sau}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
+ALARMS & alarmId & INT & PK tự tăng. \\\cline{2-4}
+& hour, minute & INT & Giờ/phút 24h, bắt buộc. \\\cline{2-4}
+& label & VARCHAR(100) & Tùy chọn. \\\cline{2-4}
+& daysOfWeek & SET & Tập ngày lặp; rỗng = một lần. Lưu Set chuỗi. \\\cline{2-4}
+& questionCount & INT & Số câu hỏi (0-100). \\\cline{2-4}
+& isEnabled & BOOLEAN & Trạng thái bật/tắt. \\\cline{2-4}
+& ringtoneUri & VARCHAR(255) & URI nhạc chuông, cho phép rỗng. \\\cline{2-4}
+& snoozeDuration & INT & 1–60 phút. \\\cline{2-4}
+& snoozeEnabled & BOOLEAN & Cho phép snooze. \\\hline
+TOPICS & topicId & INT & PK tự tăng. \\\cline{2-4}
+& topicName & VARCHAR(100) & NOT NULL, unique. \\\hline
+QUESTIONS & questionId & INT & PK tự tăng. \\\cline{2-4}
+& ownerTopicId & INT & FK đến chủ đề, CASCADE delete. \\\cline{2-4}
+& prompt & TEXT & Nội dung câu hỏi. \\\cline{2-4}
+& options & JSON & Danh sách đáp án sai (List chuỗi). \\\cline{2-4}
+& correctAnswer & VARCHAR(255) & Đáp án đúng. \\\hline
+QR\_CODES & qrId & INT & PK tự tăng. \\\cline{2-4}
+& name & VARCHAR(50) & Tên do người dùng đặt. \\\cline{2-4}
+& codeValue & VARCHAR(255) & Giá trị mã, unique. \\\cline{2-4}
+& codeType & ENUM & QR hoặc BARCODE. \\\cline{2-4}
+& createdAt & BIGINT & Thời gian tạo (timestamp). \\\hline
+QUESTION\_PROGRESS & questionId & INT & PK, FK; mỗi câu tối đa một bản ghi tiến độ. \\\cline{2-4}
+& correctStreak & INT & Số lần đúng liên tiếp. \\\cline{2-4}
+& lastReviewedDate & DATE & Ngày ôn cuối. \\\cline{2-4}
+& nextReviewDate & DATE & Ngày ôn tiếp theo. \\\cline{2-4}
+& difficultyScore & DOUBLE & Điểm độ khó. \\\cline{2-4}
+& easinessFactor & DOUBLE & Hệ số dễ dàng (1.3–3.0). \\\cline{2-4}
+& interval & INT & Khoảng cách ngày ôn tiếp. \\\hline
+TOPIC\_STATS & topicId & INT & PK, FK; mỗi chủ đề một bản ghi ELO. \\\cline{2-4}
+& userEloScore & DOUBLE & Điểm ELO người dùng. \\\hline
+HISTORY & historyId & INT & PK tự tăng. \\\cline{2-4}
+& questionId & INT & FK đến câu hỏi. \\\cline{2-4}
+& alarmHistoryId & INT & FK đến alarm\_history, cho phép rỗng. \\\cline{2-4}
+& isCorrect & BOOLEAN & Kết quả đúng/sai. \\\cline{2-4}
+& answeredAt & DATETIME & Thời gian trả lời. \\\cline{2-4}
+& timeToAnswerMs & INT & Thời gian suy nghĩ (ms). \\\hline
+ALARM\_HISTORY & historyId & INT & PK tự tăng. \\\cline{2-4}
+& alarmId & INT & FK đến báo thức. \\\cline{2-4}
+& snoozeCount & INT & Số lần snooze. \\\cline{2-4}
+& scheduledTime & DATETIME & Thời gian hẹn ban đầu. \\\cline{2-4}
+& firstRingTime & DATETIME & Thời gian reo thực tế. \\\cline{2-4}
+& dismissalTime & DATETIME & Thời gian tắt (có thể rỗng). \\\cline{2-4}
+& isDismissed & BOOLEAN & Đã tắt hay chưa. \\\hline
+USER\_STATS & userId & INT & PK, mặc định 1. \\\cline{2-4}
+& totalPoints & INT & Tổng điểm tích lũy. \\\cline{2-4}
+& currentStreak & INT & Chuỗi ngày liên tiếp hiện tại. \\\cline{2-4}
+& bestStreak & INT & Kỷ lục chuỗi ngày. \\\cline{2-4}
+& totalAlarmsDismissed & INT & Tổng báo thức đã tắt. \\\cline{2-4}
+& lastActiveDate & BIGINT & Ngày hoạt động cuối (timestamp). \\\hline
+ALARM\_TOPIC\_LINK & alarmId, topicId & INT & Liên kết báo thức–chủ đề, PK kép, CASCADE. \\\hline
+ALARM\_SELECTED\_QUESTIONS & selectionId & INT & PK; chứa alarmId (FK) và questionId (có thể âm cho câu mặc định). \\\hline
+ALARM\_QR\_LINK & alarmId, qrId & INT & Liên kết báo thức–QR, PK kép, CASCADE. \\\hline
+\end{longtable}
+\end{table}
+
+\subsection{Quan hệ giữa các thực thể}
+
+Bảng \ref{tab:relationships} mô tả chi tiết các quan hệ dựa trên ràng buộc khóa ngoại trong cơ sở dữ liệu:
+
+\begin{table}[H]
+\caption{Quan hệ giữa các thực thể}
+\label{tab:relationships}
+\small
+\begin{tabularx}{\linewidth}{|p{3.3cm}|p{2cm}|p{2.3cm}|X|}
+\hline
+\textbf{Quan hệ} & \textbf{Cardinality} & \textbf{FK} & \textbf{Mô tả và ràng buộc} \\
+\hline
+ALARMS → ALARM\_TOPIC\_LINK & 1:N & alarmId (CASCADE) & Một báo thức chọn nhiều chủ đề; xóa báo thức sẽ xóa liên kết. \\
+\hline
+TOPICS → ALARM\_TOPIC\_LINK & 1:N & topicId (CASCADE) & Một chủ đề được nhiều báo thức dùng; xóa chủ đề xóa liên kết. \\
+\hline
+ALARMS → ALARM\_SELECTED\_QUESTIONS & 1:N & alarmId (CASCADE) & Một báo thức chọn nhiều câu hỏi lẻ; cho phép questionId âm cho câu mặc định. \\
+\hline
+ALARMS → ALARM\_QR\_LINK & 1:N & alarmId (CASCADE) & Một báo thức dùng nhiều QR (tối đa 3 theo nghiệp vụ). \\
+\hline
+QR\_CODES → ALARM\_QR\_LINK & 1:N & qrId (CASCADE) & Một QR có thể gắn với nhiều báo thức. \\
+\hline
+TOPICS → QUESTIONS & 1:N & ownerTopicId (CASCADE) & Một chủ đề chứa nhiều câu hỏi; xóa chủ đề sẽ xóa câu hỏi. \\
+\hline
+QUESTIONS → QUESTION\_PROGRESS & 1:1 & questionId (PK) & Mỗi câu hỏi có tối đa một bản ghi tiến độ. \\
+\hline
+QUESTIONS → HISTORY & 1:N & questionId (FK) & Mỗi câu hỏi có nhiều bản ghi lịch sử trả lời. \\
+\hline
+ALARMS → ALARM\_HISTORY & 1:N & alarmId (FK) & Một báo thức có nhiều lần reo được lưu lịch sử. \\
+\hline
+ALARM\_HISTORY → HISTORY & 1:N & alarmHistoryId (FK) & Một lần reo chứa nhiều câu trả lời quiz (liên kết qua alarmHistoryId). \\
+\hline
+TOPICS → TOPIC\_STATS & 1:1 & topicId (PK) & Mỗi chủ đề có một bản ghi ELO. \\
+\hline
+\end{tabularx}
+\end{table}
+
+ Việc sử dụng CASCADE DELETE đảm bảo tính toàn vẹn dữ liệu. Khi xóa báo thức, tất cả dữ liệu liên quan (liên kết, lịch sử) tự động bị xóa, tránh dữ liệu "ma". Tuy nhiên, hệ thống không xóa lịch sử báo thức khi xóa báo thức (không có ràng buộc CASCADE từ bảng lịch sử đến bảng báo thức), có thể để lại lịch sử của báo thức đã xóa. Đây có thể là thiết kế cố ý để giữ lại dữ liệu thống kê.
+
+\chapter{THIẾT KẾ}
+
+\section{Thiết kế Tổng thể}
+
+Hệ thống được thiết kế theo kiến trúc MVVM (Model-View-ViewModel) kết hợp Clean Architecture, phù hợp với best practices của phát triển ứng dụng Android.
+
+\textbf{Phân tầng:}
+\begin{itemize}
+    \item \textbf{Tầng Giao diện (Presentation):} Các màn hình được xây dựng bằng công nghệ giao diện hiện đại. Sử dụng luồng dữ liệu phản ứng để tự động cập nhật giao diện khi dữ liệu thay đổi.
+    \item \textbf{Tầng Điều phối (ViewModel):} Quản lý trạng thái giao diện, xử lý tương tác người dùng, gọi tầng logic nghiệp vụ.
+    \item \textbf{Tầng Logic Nghiệp vụ (Business Logic):} Bao gồm bộ lập lịch báo thức, bộ chọn câu hỏi SRS, bộ xử lý đáp án, receiver nhận sự kiện, dịch vụ nền phát nhạc.
+    \item \textbf{Tầng Dữ liệu (Repository/DAO):} Cơ sở dữ liệu với các truy vấn dữ liệu và truy vấn thống kê. Các thực thể dữ liệu được định nghĩa rõ ràng.
+\end{itemize}
+
+\textbf{Luồng dữ liệu:}
+\begin{itemize}
+    \item \textbf{Giao diện → Điều phối:} Hành động người dùng (nhấn, nhập) gọi các phương thức trong tầng điều phối.
+    \item \textbf{Điều phối → Logic:} Gọi logic nghiệp vụ (lập lịch báo thức, chọn câu hỏi, xử lý đáp án).
+    \item \textbf{Logic → Dữ liệu:} Các thao tác CRUD qua truy vấn dữ liệu.
+    \item \textbf{Dữ liệu → Điều phối:} Phát dữ liệu qua luồng phản ứng từ cơ sở dữ liệu.
+    \item \textbf{Điều phối → Giao diện:} Cập nhật trạng thái giao diện qua luồng phản ứng.
+\end{itemize}
+
+\textbf{Thành phần Android:}
+\begin{itemize}
+    \item \textbf{Activity:} Activity chính (điểm vào), Activity reo báo thức (toàn màn hình khi báo thức reo).
+    \item \textbf{BroadcastReceiver:} Receiver nhận sự kiện từ hệ thống lập lịch.
+    \item \textbf{Foreground Service:} Dịch vụ nền phát nhạc, hiển thị thông báo.
+    \item \textbf{Navigation:} Hệ thống điều hướng với màn hình chính làm điểm điều hướng.
+    \item \textbf{Database:} Cơ sở dữ liệu SQLite với phiên bản 2, có migration từ phiên bản 1.
+\end{itemize}
+
+ Kiến trúc MVVM giúp tách biệt giao diện và logic nghiệp vụ, dễ kiểm thử và bảo trì. Sử dụng luồng dữ liệu phản ứng giúp giao diện tự động cập nhật khi dữ liệu thay đổi, không cần làm mới thủ công. Việc sử dụng xử lý bất đồng bộ đảm bảo giao diện không bị chặn.
+
+\section{Giao diện}
+
+Giao diện được thiết kế bằng công nghệ giao diện hiện đại với Material Design 3. Hệ thống sử dụng kiến trúc điều hướng dựa trên ngăn xếp với thanh điều hướng dưới cho các màn hình chính và điều hướng ngăn xếp cho các màn hình chi tiết.
+
+\subsection{Sơ đồ Điều hướng}
+
+Hình \ref{fig:ui_nav_overview} mô tả tổng quan về điều hướng giữa các màn hình chính của hệ thống. Hệ thống khởi động với kiểm tra quyền, sau đó chuyển đến điều hướng chính với 3 tab: Báo thức, Chủ đề, và Thống kê.
+
+\StdFig{images/ui/ui_nav_overview.png}{Sơ đồ điều hướng tổng quan}{fig:ui_nav_overview}
+
+Hình \ref{fig:ui_nav_alarm} mô tả chi tiết luồng điều hướng trong module Báo thức, bao gồm màn hình danh sách báo thức, màn hình cấu hình, các hộp thoại chọn câu hỏi và QR, cũng như luồng khi báo thức reo.
+
+\StdFig{images/ui/ui_nav_alarm.png}{Sơ đồ điều hướng module Báo thức}{fig:ui_nav_alarm}
+
+Hình \ref{fig:ui_nav_topic} mô tả luồng điều hướng trong module Chủ đề, từ danh sách chủ đề đến màn hình chi tiết và các hộp thoại thêm/sửa câu hỏi.
+
+\StdFig{images/ui/ui_nav_topic.png}{Sơ đồ điều hướng module Chủ đề}{fig:ui_nav_topic}
+
+\subsection{Wireframe các Màn hình Chính}
+
+Hình \ref{fig:ui_wire_alarm} mô tả cấu trúc layout của màn hình Danh sách Báo thức, bao gồm thanh trên với menu sắp xếp, thông tin thời gian đổ chuông tiếp theo, danh sách các thẻ báo thức với công tắc bật/tắt, và nút thêm nổi.
+
+\StdFig{images/ui/ui_wire_alarm.png}{Wireframe màn hình Danh sách Báo thức}{fig:ui_wire_alarm}
+
+Hình \ref{fig:ui_wire_settings} mô tả cấu trúc layout của màn hình Cấu hình Báo thức, bao gồm các thành phần: bộ chọn thời gian, trường nhập nhãn, bộ chọn ngày lặp lại, các nút chọn câu hỏi và QR, phần cấu hình snooze, và nút lưu.
+
+\StdFig{images/ui/ui_wire_settings.png}{Wireframe màn hình Cấu hình Báo thức}{fig:ui_wire_settings}
+
+Hình \ref{fig:ui_wire_quiz} mô tả cấu trúc layout của màn hình Quiz, bao gồm thanh trên hiển thị tiến độ và bộ đếm ngược tròn, thanh tiến độ số câu đúng, thẻ câu hỏi với 4 đáp án đã xáo trộn, và phản hồi màu khi người dùng chọn đáp án.
+
+\StdFig{images/ui/ui_wire_quiz.png}{Wireframe màn hình Quiz}{fig:ui_wire_quiz}
+
+Hình \ref{fig:ui_wire_ringing} mô tả cấu trúc layout của màn hình Reo Báo thức, hiển thị toàn màn hình với phần đầu hiển thị ngày tháng và giờ hiện tại lớn, nhãn báo thức, và các nút điều khiển (Tắt, Snooze nếu được bật).
+
+\StdFig{images/ui/ui_wire_ringing.png}{Wireframe màn hình Reo Báo thức}{fig:ui_wire_ringing}
+
+\subsection{Biểu đồ Trạng thái Giao diện}
+
+Hình \ref{fig:ui_state_quiz} mô tả các trạng thái của màn hình Quiz, từ khởi tạo và tải câu hỏi, hiển thị câu hỏi, kiểm tra đáp án, đến hoàn thành quiz. Hệ thống xử lý các trường hợp hết giờ, đáp án đúng/sai, và điều kiện hoàn thành.
+
+\StdFig{images/ui/ui_state_quiz.png}{Biểu đồ trạng thái màn hình Quiz}{fig:ui_state_quiz}
+
+Hình \ref{fig:ui_state_ringing} mô tả các trạng thái của màn hình Reo Báo thức, từ khi báo thức reo, kiểm tra yêu cầu QR và Quiz, đến khi tắt báo thức hoặc snooze. Luồng xử lý bao gồm quét QR (nếu có), chuyển đến Quiz (nếu có), và hoàn thành để tắt báo thức.
+
+\StdFig{images/ui/ui_state_ringing.png}{Biểu đồ trạng thái màn hình Reo Báo thức}{fig:ui_state_ringing}
+
+\subsection{Mô tả Chi tiết}
+
+\textbf{Màn hình chính:}
+\begin{itemize}
+    \item \textbf{Màn hình Báo thức:} Danh sách báo thức với danh sách cuộn, nút thêm mới nổi, công tắc bật/tắt cho mỗi báo thức. Hiển thị thời gian đổ chuông tiếp theo.
+    \item \textbf{Màn hình Chủ đề:} Danh sách chủ đề với thanh tìm kiếm, thẻ hiển thị số câu hỏi. Sử dụng thanh tìm kiếm có thể tìm kiếm.
+    \item \textbf{Màn hình Thống kê:} Biểu đồ đường (7 ngày), biểu đồ tròn (phân phối SRS), thẻ điểm số. Sử dụng canvas để vẽ biểu đồ.
+\end{itemize}
+
+\textbf{Màn hình phụ:}
+\begin{itemize}
+    \item \textbf{Màn hình Cấu hình Báo thức:} Bộ chọn thời gian, trường nhập nhãn, bộ chọn chip (ngày), thanh trượt (snooze), nút chọn Câu hỏi/QR. Hiển thị "Đổ chuông sau X giờ Y phút" dựa trên tính toán thời gian.
+    \item \textbf{Màn hình Quiz:} Thanh tiến độ (số câu đúng/tổng), tiến độ đếm ngược (tròn), câu hỏi + 4 đáp án (thẻ). Sử dụng chỉ báo tiến độ tròn cho bộ đếm ngược.
+    \item \textbf{Màn hình Reo Báo thức:} Hiển thị nhãn, thời gian, nút "Tắt", nút "Snooze" (nếu được bật). Toàn màn hình, hiển thị ngay cả khi màn hình khóa.
+    \item \textbf{Màn hình Chi tiết Chủ đề:} Tên chủ đề, danh sách câu hỏi, nút thêm câu hỏi nổi.
+    \item \textbf{Màn hình Quét QR:} Xem trước camera, khung hình quét, hướng dẫn. Sử dụng công nghệ camera để quét.
+\end{itemize}
+
+\textbf{Điều hướng:}
+\begin{itemize}
+    \item Thanh điều hướng dưới: 3 tab (Báo thức, Chủ đề, Thống kê) trong màn hình chính.
+    \item Điều hướng ngăn xếp: Cấu hình → Hộp thoại Câu hỏi, Cấu hình → Hộp thoại QR, Chủ đề → Chi tiết Chủ đề.
+    \item Liên kết sâu: Có thể điều hướng đến màn hình Quiz từ intent bên ngoài.
+\end{itemize}
+
+Giao diện được thiết kế đơn giản, dễ sử dụng. Sử dụng Material Design 3 đảm bảo tính nhất quán và giao diện hiện đại. Việc sử dụng công nghệ giao diện hiện đại giúp mã giao diện ngắn gọn, dễ bảo trì hơn.
+
+\section{Database}
+
+Cơ sở dữ liệu được thiết kế bằng SQLite với lớp trừu tượng.
+
+\textbf{Cấu trúc:}
+\begin{itemize}
+    \item \textbf{Tên cơ sở dữ liệu:} cơ sở dữ liệu ứng dụng
+    \item \textbf{Phiên bản:} 2 (có migration từ phiên bản 1 sang 2 để thêm bảng mã QR)
+    \item \textbf{Bộ chuyển đổi kiểu:} Bộ chuyển đổi xử lý:
+    \begin{itemize}
+        \item Tập hợp chuỗi ↔ Chuỗi (ngày lặp lại: "T2,T3,T4")
+        \item Danh sách chuỗi ↔ JSON (đáp án sai: serialize/deserialize)
+        \item Ngày tháng ↔ Số nguyên dài (timestamp: chuyển đổi ngày tháng sang Unix timestamp)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Chỉ mục:} Hệ thống định nghĩa chỉ mục cho các cột thường xuyên được truy vấn:
+\begin{itemize}
+    \item Bảng liên kết báo thức–chủ đề: chỉ mục trên mã báo thức, chỉ mục trên mã chủ đề
+    \item Bảng liên kết báo thức–QR: chỉ mục trên mã báo thức, chỉ mục trên mã QR
+    \item Bảng câu hỏi: chỉ mục trên mã chủ đề
+    \item Bảng lịch sử: chỉ mục trên mã câu hỏi, chỉ mục trên mã lịch sử báo thức
+    \item Bảng lịch sử báo thức: chỉ mục trên mã báo thức
+\end{itemize}
+
+\textbf{Migration:} Hệ thống có migration từ phiên bản 1 sang 2:
+\begin{itemize}
+    \item Tạo bảng mã QR và bảng liên kết báo thức–QR
+    \item Tạo chỉ mục cho bảng liên kết báo thức–QR
+\end{itemize}
+
+ Việc sử dụng lớp trừu tượng giúp truy cập cơ sở dữ liệu an toàn kiểu, kiểm tra tại thời điểm biên dịch. Bộ chuyển đổi kiểu cho phép lưu trữ các kiểu dữ liệu phức tạp (tập hợp, danh sách, ngày tháng) trong SQLite. Chỉ mục giúp tối ưu hiệu suất cho các truy vấn thường xuyên (JOIN, WHERE).
+
+\textbf{Ràng buộc nghiệp vụ (không phải ràng buộc cơ sở dữ liệu):}
+\begin{itemize}
+    \item Tối đa 5 mã QR trong hệ thống (kiểm tra ở tầng ứng dụng)
+    \item Mỗi báo thức dùng tối đa 3 mã QR (kiểm tra ở tầng ứng dụng)
+    \item Số câu hỏi: 0-100 (kiểm tra trong giao diện thanh trượt)
+    \item Thời gian snooze: 1-60 phút (kiểm tra trong giao diện thanh trượt)
+\end{itemize}
+
+ Các ràng buộc này được kiểm tra ở tầng ứng dụng thay vì ràng buộc cơ sở dữ liệu. Điều này cho phép linh hoạt hơn (có thể thay đổi giới hạn mà không cần migration), nhưng đòi hỏi phải kiểm tra đầy đủ trong hệ thống.
+
+\end{document}

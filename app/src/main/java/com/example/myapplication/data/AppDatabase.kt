@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         QRCodeEntity::class, AlarmQRLinkEntity::class,
         UserStatsEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class) // Đăng ký Converter ở đây
@@ -70,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "app_database"
                 )
                     .addMigrations(MIGRATION_1_2)
+                    .fallbackToDestructiveMigration() // Reset database nếu migration fail
                     .build()
                 INSTANCE = instance
                 instance

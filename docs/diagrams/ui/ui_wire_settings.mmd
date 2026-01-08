@@ -1,0 +1,30 @@
+flowchart TB
+    TopBar[Thanh trên: Tiêu đề + Nút quay lại]
+    TimePicker[Bộ chọn Thời gian: Giờ và Phút]
+    LabelField[Trường nhập: Nhãn báo thức]
+    DaysSelector[Bộ chọn Ngày: Chip T2-T7, CN]
+    MissionBtn[Nút: Chọn Câu hỏi]
+    QRBtn[Nút: Chọn QR]
+    SnoozeSection[Phần Snooze: Công tắc + Thanh trượt]
+    InfoText[Thông tin: Đổ chuông sau X giờ Y phút]
+    SaveBtn[Nút Lưu]
+    
+    TopBar --> TimePicker
+    TimePicker --> LabelField
+    LabelField --> DaysSelector
+    DaysSelector --> MissionBtn
+    MissionBtn --> QRBtn
+    QRBtn --> SnoozeSection
+    SnoozeSection --> InfoText
+    InfoText --> SaveBtn
+    
+    style TopBar fill:#e3f2fd
+    style TimePicker fill:#fff9c4
+    style LabelField fill:#f3e5f5
+    style DaysSelector fill:#e8f5e9
+    style MissionBtn fill:#fff3e0
+    style QRBtn fill:#fff3e0
+    style SnoozeSection fill:#e0f2f1
+    style InfoText fill:#fce4ec
+    style SaveBtn fill:#4caf50
+

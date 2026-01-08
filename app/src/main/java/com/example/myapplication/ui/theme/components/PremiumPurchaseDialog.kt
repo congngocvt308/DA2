@@ -148,7 +148,7 @@ private fun InitialPurchaseContent(
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -235,7 +235,7 @@ private fun InitialPurchaseContent(
                 text = "Mua ngay",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
         
@@ -334,13 +334,13 @@ private fun SuccessContent() {
                 .size(80.dp)
                 .scale(scale)
                 .clip(CircleShape)
-                .background(Color(0xFF4CAF50)),
+                .background(MaterialTheme.colorScheme.secondary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onSecondary,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -351,7 +351,7 @@ private fun SuccessContent() {
             text = "Thành công!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50)
+            color = MaterialTheme.colorScheme.secondary
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -386,7 +386,7 @@ private fun FailedContent(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onError,
                 modifier = Modifier.size(40.dp)
             )
         }

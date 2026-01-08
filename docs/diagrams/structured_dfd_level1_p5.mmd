@@ -1,0 +1,65 @@
+%% DFD Level 1 - Phân rã tiến trình P5 (Thực thi Quiz)
+%% Đây là tiến trình quan trọng nhất với thuật toán SRS
+
+graph TB
+    %% External to P5
+    E1[E1 Người dùng]
+    DS2[(DS2<br/>Topics &<br/>Questions)]
+    DS4[(DS4<br/>Progress<br/>& History)]
+    DS5[(DS5<br/>User Stats)]
+    P4((P4<br/>Xử lý<br/>Báo thức<br/>Reo))
+    
+    %% Sub-processes of P5
+    P5_1((P5.1<br/>Chọn câu hỏi<br/>theo SRS))
+    P5_2((P5.2<br/>Hiển thị<br/>câu hỏi &<br/>Đếm giờ))
+    P5_3((P5.3<br/>Kiểm tra<br/>đáp án))
+    P5_4((P5.4<br/>Cập nhật<br/>tiến độ SRS))
+    P5_5((P5.5<br/>Tính điểm<br/>ELO Topic))
+    
+    %% Internal Data Store
+    DS_TEMP[(DS_TEMP<br/>Bộ câu hỏi<br/>Quiz hiện tại)]
+    
+    %% Flow from P4
+    P4 -->|Alarm ID & Số câu hỏi| P5_1
+    
+    %% P5.1 - Chọn câu hỏi theo SRS
+    P5_1 -->|Đọc câu hỏi được chọn| DS2
+    P5_1 -->|Đọc tiến độ SRS| DS4
+    P5_1 -->|Danh sách câu hỏi<br/>ưu tiên| DS_TEMP
+    
+    %% P5.2 - Hiển thị câu hỏi & Đếm giờ
+    DS_TEMP -->|Câu hỏi tiếp theo| P5_2
+    P5_2 -->|Câu hỏi & Timer| E1
+    
+    %% P5.3 - Kiểm tra đáp án
+    E1 -->|Đáp án người dùng| P5_3
+    DS_TEMP -->|Đáp án đúng| P5_3
+    P5_3 -->|Kết quả đúng/sai| E1
+    P5_3 -->|Kết quả & Thời gian| P5_4
+    
+    %% P5.4 - Cập nhật tiến độ SRS
+    P5_4 -->|Đọc tiến độ cũ| DS4
+    P5_4 -->|Ghi tiến độ mới| DS4
+    P5_4 -->|Ghi lịch sử trả lời| DS4
+    P5_4 -->|Question ID & Kết quả| P5_5
+    
+    %% P5.5 - Tính điểm ELO Topic
+    P5_5 -->|Đọc Topic Stats| DS5
+    P5_5 -->|Cập nhật điểm ELO| DS5
+    
+    %% Completion flow
+    P5_3 -->|Hoàn thành đủ câu| P4
+    
+    style E1 fill:#ffe6e6
+    style P4 fill:#ffccbc
+    style P5_1 fill:#c8e6c9
+    style P5_2 fill:#c8e6c9
+    style P5_3 fill:#c8e6c9
+    style P5_4 fill:#c8e6c9
+    style P5_5 fill:#c8e6c9
+    style DS2 fill:#fff9c4
+    style DS4 fill:#fff9c4
+    style DS5 fill:#fff9c4
+    style DS_TEMP fill:#ffe0b2
+
+

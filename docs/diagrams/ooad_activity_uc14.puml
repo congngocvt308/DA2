@@ -1,0 +1,94 @@
+@startuml
+'** Activity Diagram - UC14: Trả lời câu hỏi Quiz **
+
+title Activity Diagram: UC14 - Trả lời câu hỏi Quiz
+
+|Người dùng|
+start
+:Nhận thông báo\nbáo thức reo;
+
+|Hệ thống|
+:Đọc cấu hình báo thức\n(số câu hỏi);
+
+if (Số câu hỏi = 0?) then (yes)
+    :Tắt báo thức ngay;
+    stop
+else (no)
+    :Tạo AlarmHistory;
+    
+    :Đọc câu hỏi đã chọn\n(manual + topics);
+    
+    :Đọc tiến độ SRS\ncủa các câu hỏi;
+    
+    :Tính điểm ưu tiên\n(SRS algorithm);
+    note right
+        - Câu chưa học: 500 điểm
+        - Câu đến hạn ôn: 1000 + thời gian quá hạn
+        - Câu khác: dùng difficultyScore
+    end note
+    
+    :Sắp xếp và chọn\nTop N câu hỏi;
+    
+    :Khởi tạo bộ đếm\n(correctCount = 0);
+    
+    |Người dùng|
+    repeat
+        |Hệ thống|
+        :Hiển thị câu hỏi;
+        :Bắt đầu đếm ngược\n(15 giây);
+        
+        |Người dùng|
+        :Xem câu hỏi và\ncác đáp án;
+        
+        fork
+            :Chọn đáp án;
+        fork again
+            |Hệ thống|
+            :Hết giờ;
+            :Đánh dấu timeout;
+        end fork
+        
+        |Hệ thống|
+        :Dừng timer;
+        
+        if (Đáp án đúng?) then (yes)
+            :Hiển thị "Đúng" (xanh);
+            :correctCount++;
+            
+            :Cập nhật SRS:\n- Tăng correctStreak\n- Tăng easinessFactor\n- Tăng interval;
+            
+            :Tính điểm ELO\ncủa Topic (+10);
+        else (no)
+            :Hiển thị "Sai" (đỏ);
+            
+            :Cập nhật SRS:\n- Reset correctStreak = 0\n- Giảm easinessFactor\n- Reset interval = 1;
+            
+            :Tính điểm ELO\ncủa Topic (-5);
+        endif
+        
+        :Ghi vào History\n(questionId, isCorrect,\ntimeToAnswer);
+        
+        :Chờ 1 giây;
+        
+        |Người dùng|
+    repeat while (correctCount < targetCount?) is (yes)
+    -> no;
+    
+    |Hệ thống|
+    :Cập nhật AlarmHistory\n(dismissalTime, isDismissed);
+    
+    :Cập nhật UserStats\n(totalPoints, streak);
+    
+    :Dừng service phát nhạc;
+    
+    :Tắt báo thức;
+    
+    |Người dùng|
+    :Quay về màn hình chính;
+    
+    stop
+endif
+
+@enduml
+
+

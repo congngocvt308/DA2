@@ -1,0 +1,37 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {chapter}{\numberline {1}Phân tích hệ thống}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Phương pháp có cấu trúc}{2}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Biểu đồ phân cấp chức năng}{2}{subsection.1.1.1}%
+\contentsline {subsubsection}{Mô tả chung}{2}{section*.2}%
+\contentsline {subsubsection}{Sơ đồ FDD}{3}{section*.3}%
+\contentsline {subsubsection}{Phân tích các module chính}{4}{section*.4}%
+\contentsline {subsection}{\numberline {1.1.2}Biểu đồ luồng dữ liệu}{5}{subsection.1.1.2}%
+\contentsline {subsubsection}{DFD Context (Mức ngữ cảnh)}{5}{section*.5}%
+\contentsline {subsubsection}{DFD Level 0 (Mức tổng quát)}{6}{section*.6}%
+\contentsline {subsubsection}{DFD Level 1 - Phân rã P5 (Thực thi Quiz)}{8}{section*.7}%
+\contentsline {subsubsection}{DFD Level 1 - Phân rã P4 (Xử lý Báo thức Reo)}{10}{section*.8}%
+\contentsline {subsection}{\numberline {1.1.3}Đặc tả chức năng}{12}{subsection.1.1.3}%
+\contentsline {subsubsection}{Tiến trình P5.1 - Chọn câu hỏi theo SRS}{12}{section*.9}%
+\contentsline {subsubsection}{Tiến trình P5.4 - Cập nhật tiến độ SRS}{13}{section*.10}%
+\contentsline {subsubsection}{Tiến trình P3 - Lập lịch Báo thức}{14}{section*.11}%
+\contentsline {subsection}{\numberline {1.1.4}Phân tích hệ thống về mặt dữ liệu}{14}{subsection.1.1.4}%
+\contentsline {subsubsection}{Mô hình ER hạn chế}{14}{section*.12}%
+\contentsline {chapter}{\numberline {2}Thiết kế}{17}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Thiết kế tổng thể}{17}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Kiến trúc ứng dụng}{17}{subsection.2.1.1}%
+\contentsline {subsubsection}{Phân tầng}{17}{section*.13}%
+\contentsline {subsubsection}{Luồng dữ liệu và state management}{18}{section*.14}%
+\contentsline {subsection}{\numberline {2.1.2}Các module chính}{18}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Luồng xử lý tổng quát}{19}{subsection.2.1.3}%
+\contentsline {subsubsection}{Luồng tạo báo thức}{19}{section*.15}%
+\contentsline {subsubsection}{Luồng báo thức reo và Quiz}{19}{section*.16}%
+\contentsline {section}{\numberline {2.2}Giao diện}{19}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Nhóm màn hình và chức năng}{19}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Điều hướng (Navigation)}{20}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Trạng thái (State Management)}{21}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Validation}{21}{subsection.2.2.4}%
+\contentsline {section}{\numberline {2.3}Database}{22}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Thiết kế bảng và quan hệ}{22}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Ràng buộc toàn vẹn}{23}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}Mapping từ Entity/Room}{23}{subsection.2.3.3}%
+\contentsline {chapter}{Giả định/TBD}{24}{chapter*.17}%

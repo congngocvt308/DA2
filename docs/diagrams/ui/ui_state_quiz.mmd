@@ -1,0 +1,26 @@
+stateDiagram-v2
+    [*] --> Loading: Khởi tạo Quiz
+    Loading --> Empty: Không có câu hỏi
+    Loading --> Ready: Có câu hỏi
+    
+    Ready --> Showing: Hiển thị câu hỏi
+    Showing --> Checking: Người dùng chọn đáp án
+    Showing --> Timeout: Hết 15 giây
+    
+    Checking --> Correct: Đáp án đúng
+    Checking --> Wrong: Đáp án sai
+    Timeout --> Wrong
+    
+    Correct --> Feedback: Hiển thị phản hồi xanh
+    Wrong --> Feedback: Hiển thị phản hồi đỏ
+    
+    Feedback --> NextQuestion: Chuyển câu tiếp
+    Feedback --> Completed: Đủ số câu đúng
+    
+    NextQuestion --> Showing: Còn câu hỏi
+    NextQuestion --> Completed: Hết câu hỏi
+    
+    Completed --> [*]: Hoàn thành Quiz
+    Empty --> [*]: Tắt báo thức ngay
+
+

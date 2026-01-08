@@ -1,0 +1,160 @@
+@startuml
+'** Sequence Diagram - UC21: Xem thống kê tuần **
+
+title Sequence Diagram: UC21 - Xem thống kê tuần
+
+actor "Người dùng" as User
+participant "MainScreen" as MainScr
+participant "StatsScreen" as StatsScr
+participant "StatsViewModel" as StatsVM
+participant "StatisticsDao" as StatsDao
+
+User -> MainScr : Nhấn tab "Thống kê"
+activate MainScr
+
+MainScr -> StatsScr : navigate(Screen.STATS_TAB)
+activate StatsScr
+
+StatsScr -> StatsVM : init()
+activate StatsVM
+
+StatsVM -> StatsDao : initializeUserStats(defaultUser)
+activate StatsDao
+note right
+    Tạo UserStats mặc định
+    nếu chưa tồn tại (userId = 1)
+end note
+StatsDao --> StatsVM : OK
+deactivate StatsDao
+
+StatsVM -> StatsDao : getWeeklyAccuracy(sevenDaysAgo)
+activate StatsDao
+note right
+    Query SQL:
+    SELECT date, SUM(isCorrect), COUNT(*)
+    FROM history
+    WHERE answeredAt > sevenDaysAgo
+    GROUP BY date
+end note
+StatsDao --> StatsVM : Flow<List<DailyStat>>
+deactivate StatsDao
+
+StatsVM -> StatsVM : Xử lý dữ liệu
+note right
+    Tạo list 7 ngày:
+    - Nếu có data: tính accuracy
+    - Nếu không: để 0f
+    - Format nhãn: "Nay", "06", "05"...
+end note
+
+StatsVM --> StatsScr : weeklyAccuracy Flow
+deactivate StatsVM
+
+StatsScr -> StatsScr : Collect Flow
+StatsScr -> StatsScr : Vẽ LineChart
+note right
+    Sử dụng Canvas hoặc
+    thư viện Chart để vẽ
+    biểu đồ đường
+end note
+
+StatsScr --> User : Hiển thị biểu đồ\ntỷ lệ đúng 7 ngày
+deactivate StatsScr
+
+== Xem phân phối SRS ==
+
+User -> StatsScr : Cuộn xuống
+activate StatsScr
+
+StatsScr -> StatsVM : Observe srsDistribution
+activate StatsVM
+
+StatsVM -> StatsDao : getSrsDistribution()
+activate StatsDao
+note right
+    Query SQL:
+    SELECT 
+      CASE correctStreak
+        WHEN 0 THEN 'New'
+        WHEN 1-4 THEN 'Learning'
+        ELSE 'Mastered'
+      END as status,
+      COUNT(*) as count
+    FROM question_progress
+    GROUP BY status
+end note
+StatsDao --> StatsVM : Flow<List<SrsStat>>
+deactivate StatsDao
+
+StatsVM --> StatsScr : srsDistribution Flow
+deactivate StatsVM
+
+StatsScr -> StatsScr : Collect Flow
+StatsScr -> StatsScr : Vẽ PieChart
+note right
+    3 phần:
+    - New (màu xám)
+    - Learning (màu vàng)
+    - Mastered (màu xanh)
+end note
+
+StatsScr --> User : Hiển thị biểu đồ tròn\nphân phối trạng thái học tập
+deactivate StatsScr
+
+== Xem điểm Wake-up Score ==
+
+User -> StatsScr : Cuộn xuống
+activate StatsScr
+
+StatsScr -> StatsVM : calculateWakeUpPerformance()
+activate StatsVM
+
+StatsVM -> StatsDao : getRecentAlarmHistory()
+activate StatsDao
+note right
+    Query SQL:
+    SELECT * FROM alarm_history
+    ORDER BY firstRingTime DESC
+    LIMIT 5
+end note
+StatsDao --> StatsVM : List<AlarmHistoryEntity>
+deactivate StatsDao
+
+StatsVM -> StatsVM : Tính điểm trung bình
+note right
+    Công thức:
+    score = 100 - (snoozeCount * 10)
+            - (delayMinutes * 0.5)
+    Giới hạn [0, 100]
+end note
+
+StatsVM --> StatsScr : wakeUpScore = X.X
+deactivate StatsVM
+
+StatsScr --> User : Hiển thị điểm\nWake-up Score: X.X/100
+deactivate StatsScr
+
+== Xem User Stats ==
+
+User -> StatsScr : Cuộn xuống
+activate StatsScr
+
+StatsScr -> StatsVM : Observe userStats
+activate StatsVM
+
+StatsVM -> StatsDao : getUserStats()
+activate StatsDao
+StatsDao --> StatsVM : Flow<UserStatsEntity>
+deactivate StatsDao
+
+StatsVM --> StatsScr : userStats Flow
+deactivate StatsVM
+
+StatsScr -> StatsScr : Collect Flow
+
+StatsScr --> User : Hiển thị:\n- Tổng điểm\n- Streak hiện tại\n- Streak tốt nhất\n- Tổng báo thức đã tắt
+deactivate StatsScr
+
+@enduml
+
+

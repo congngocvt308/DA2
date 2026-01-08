@@ -625,7 +625,7 @@ private fun PremiumFeatureCard(
                     text = "PRO",
                     fontSize = 8.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                 )
             }
@@ -1100,7 +1100,7 @@ fun ResetPremiumDialog(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Reset", color = Color.White)
+                        Text("Reset", color = MaterialTheme.colorScheme.onError)
                     }
                 }
             }

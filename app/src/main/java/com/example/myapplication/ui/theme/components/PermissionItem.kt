@@ -33,13 +33,20 @@ fun PermissionItem(
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
-            // Cấp quyền: Xanh đậm nền đen | Chưa cấp: Xám đậm
-            containerColor = if (isGranted) Color(0xFF1B5E20).copy(alpha = 0.2f) else Color(0xFF212121)
+            containerColor = if (isGranted) {
+                MaterialTheme.colorScheme.surfaceVariant
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ),
         // Thêm viền để phân biệt rõ hơn trên nền đen
         border = BorderStroke(
             width = 1.dp,
-            color = if (isGranted) Color(0xFF4CAF50).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f)
+            color = if (isGranted) {
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+            } else {
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            }
         ),
         onClick = onClick
     ) {
@@ -48,26 +55,25 @@ fun PermissionItem(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                // Icon đổi màu theo trạng thái
-                tint = if (isGranted) Color(0xFF81C784) else Color.White.copy(alpha = 0.6f)
+                tint = if (isGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    color = if (isGranted) Color(0xFF81C784) else Color.White
+                    color = if (isGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (isGranted) {
-                Icon(Icons.Default.CheckCircle, "Done", tint = Color(0xFF4CAF50))
+                Icon(Icons.Default.CheckCircle, "Done", tint = MaterialTheme.colorScheme.secondary)
             } else {
                 // Thêm icon mũi tên hoặc cảnh báo nhỏ nếu chưa cấp quyền
-                Icon(Icons.Default.ChevronRight, null, tint = Color.White.copy(alpha = 0.3f))
+                Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

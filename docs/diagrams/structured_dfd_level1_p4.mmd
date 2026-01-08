@@ -1,0 +1,78 @@
+%% DFD Level 1 - Phân rã tiến trình P4 (Xử lý Báo thức Reo)
+%% Tiến trình xử lý khi báo thức đổ chuông
+
+graph TB
+    %% External to P4
+    E1[E1 Người dùng]
+    E2[E2 Android<br/>AlarmManager]
+    DS1[(DS1<br/>Alarms)]
+    DS3[(DS3<br/>QR Codes)]
+    DS4[(DS4<br/>Progress<br/>& History)]
+    P5((P5<br/>Thực thi<br/>Quiz))
+    
+    %% Sub-processes of P4
+    P4_1((P4.1<br/>Nhận sự kiện<br/>đổ chuông))
+    P4_2((P4.2<br/>Khởi chạy<br/>Alarm Service))
+    P4_3((P4.3<br/>Hiển thị<br/>màn hình reo))
+    P4_4((P4.4<br/>Xử lý<br/>Snooze))
+    P4_5((P4.5<br/>Kiểm tra<br/>điều kiện tắt))
+    P4_6((P4.6<br/>Lập lại lịch<br/>lặp lại))
+    P4_7((P4.7<br/>Ghi lịch sử<br/>báo thức))
+    
+    %% Flow from AlarmManager
+    E2 -->|Broadcast Intent| P4_1
+    
+    %% P4.1 - Nhận sự kiện đổ chuông
+    P4_1 -->|Alarm ID| P4_2
+    P4_1 -->|Đọc thông tin báo thức| DS1
+    
+    %% P4.2 - Khởi chạy Alarm Service
+    P4_2 -->|Phát nhạc chuông| P4_3
+    P4_2 -->|Tạo notification| E1
+    
+    %% P4.3 - Hiển thị màn hình reo
+    P4_3 -->|Giao diện báo thức| E1
+    P4_3 -->|Tạo Alarm History| P4_7
+    
+    %% Flows from User
+    E1 -->|Lệnh Snooze| P4_4
+    E1 -->|Lệnh Tắt| P4_5
+    
+    %% P4.4 - Xử lý Snooze
+    P4_4 -->|Cập nhật snooze count| DS4
+    P4_4 -->|Đặt lịch reo lại| E2
+    
+    %% P4.5 - Kiểm tra điều kiện tắt
+    P4_5 -->|Đọc cấu hình QR| DS3
+    P4_5 -.->|Yêu cầu quét QR| E1
+    P4_5 -->|Khởi động Quiz| P5
+    P5 -->|Kết quả hoàn thành| P4_5
+    
+    %% P4.5 flows
+    P4_5 -->|Điều kiện đủ| P4_6
+    P4_5 -->|Dừng service| P4_2
+    P4_5 -->|Cập nhật dismissal| P4_7
+    
+    %% P4.6 - Lập lại lịch lặp lại
+    P4_6 -->|Đọc daysOfWeek| DS1
+    P4_6 -->|Đặt lịch tiếp theo| E2
+    P4_6 -.->|Tắt nếu 1 lần| DS1
+    
+    %% P4.7 - Ghi lịch sử báo thức
+    P4_7 -->|Ghi AlarmHistory| DS4
+    
+    style E1 fill:#ffe6e6
+    style E2 fill:#ffe6e6
+    style P5 fill:#ffccbc
+    style P4_1 fill:#b3e5fc
+    style P4_2 fill:#b3e5fc
+    style P4_3 fill:#b3e5fc
+    style P4_4 fill:#b3e5fc
+    style P4_5 fill:#b3e5fc
+    style P4_6 fill:#b3e5fc
+    style P4_7 fill:#b3e5fc
+    style DS1 fill:#fff9c4
+    style DS3 fill:#fff9c4
+    style DS4 fill:#fff9c4
+
+

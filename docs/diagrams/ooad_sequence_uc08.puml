@@ -1,0 +1,119 @@
+@startuml
+'** Sequence Diagram - UC08: Thêm câu hỏi vào chủ đề **
+
+title Sequence Diagram: UC08 - Thêm câu hỏi vào chủ đề
+
+actor "Người dùng" as User
+participant "TopicScreen" as TopicScr
+participant "TopicDetailScreen" as DetailScr
+participant "TopicDetailViewModel" as DetailVM
+participant "AddQuestionDialog" as AddQDlg
+participant "AppDao" as Dao
+
+User -> TopicScr : Nhấn vào Topic
+activate TopicScr
+
+TopicScr -> DetailScr : navigate(topicId)
+activate DetailScr
+
+DetailScr -> DetailVM : init(topicId)
+activate DetailVM
+
+DetailVM -> Dao : getTopicNameById(topicId)
+activate Dao
+Dao --> DetailVM : topicName
+deactivate Dao
+
+DetailVM -> Dao : getQuestionsByTopic(topicId)
+activate Dao
+Dao --> DetailVM : Flow<List<QuestionEntity>>
+deactivate Dao
+
+DetailVM --> DetailScr : uiState (topicName, questions)
+deactivate DetailVM
+
+DetailScr --> User : Hiển thị tên chủ đề\nvà danh sách câu hỏi
+deactivate DetailScr
+
+User -> DetailScr : Nhấn "Thêm câu hỏi"
+activate DetailScr
+
+DetailScr -> AddQDlg : show()
+activate AddQDlg
+
+AddQDlg --> User : Hiển thị form nhập câu hỏi
+deactivate AddQDlg
+
+User -> AddQDlg : Nhập nội dung câu hỏi
+activate AddQDlg
+AddQDlg --> User : Hiển thị text đã nhập
+deactivate AddQDlg
+
+User -> AddQDlg : Nhập đáp án đúng
+activate AddQDlg
+AddQDlg --> User : Hiển thị đáp án đúng
+deactivate AddQDlg
+
+User -> AddQDlg : Nhập đáp án sai 1
+activate AddQDlg
+AddQDlg --> User : Hiển thị đáp án sai 1
+deactivate AddQDlg
+
+User -> AddQDlg : Nhập đáp án sai 2
+activate AddQDlg
+AddQDlg --> User : Hiển thị đáp án sai 2
+deactivate AddQDlg
+
+User -> AddQDlg : Nhập đáp án sai 3
+activate AddQDlg
+AddQDlg --> User : Hiển thị đáp án sai 3
+deactivate AddQDlg
+
+User -> AddQDlg : Nhấn "Lưu"
+activate AddQDlg
+
+AddQDlg -> AddQDlg : Validate form
+alt Form không hợp lệ
+    AddQDlg --> User : Hiển thị lỗi validation
+else Form hợp lệ
+    AddQDlg -> DetailVM : addQuestion(prompt, correctAnswer, wrongAnswers)
+    activate DetailVM
+    
+    DetailVM -> DetailVM : Tạo QuestionEntity
+    note right
+        QuestionEntity(
+            ownerTopicId = topicId,
+            prompt = prompt,
+            options = wrongAnswers,
+            correctAnswer = correctAnswer
+        )
+    end note
+    
+    DetailVM -> Dao : insertQuestion(questionEntity)
+    activate Dao
+    Dao -> Dao : Lưu vào SQLite
+    Dao --> DetailVM : newQuestionId
+    deactivate Dao
+    
+    DetailVM --> AddQDlg : onSuccess()
+    deactivate DetailVM
+    
+    AddQDlg --> User : "Đã thêm câu hỏi"
+    AddQDlg -> DetailScr : dismiss()
+    deactivate AddQDlg
+    
+    DetailScr -> DetailVM : Refresh questions
+    activate DetailVM
+    DetailVM -> Dao : getQuestionsByTopic(topicId)
+    activate Dao
+    Dao --> DetailVM : Flow updated
+    deactivate Dao
+    DetailVM --> DetailScr : questions updated
+    deactivate DetailVM
+    
+    DetailScr --> User : Hiển thị danh sách\n(có câu hỏi mới)
+end
+
+@enduml
+
+

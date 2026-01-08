@@ -1,0 +1,232 @@
+@startuml
+'** Design Class Diagram - Mô hình thiết kế chi tiết **
+
+title Design Class Diagram - Hệ thống Báo thức Thông minh
+
+skinparam classAttributeIconSize 0
+
+package "UI Layer" {
+    class AlarmScreen {
+        - viewModel: AlarmViewModel
+        + displayAlarmList()
+        + onToggleAlarm(id, enabled)
+        + onDeleteAlarm(id)
+    }
+    
+    class AlarmSettingsScreen {
+        - viewModel: AlarmSettingsViewModel
+        + displaySettings()
+        + onSaveAlarm()
+        + onSelectMission()
+        + onSelectQR()
+    }
+    
+    class QuizScreen {
+        - viewModel: QuizViewModel
+        + displayQuestion()
+        + onAnswerSelected(answerId)
+        + showTimer()
+    }
+    
+    class TopicScreen {
+        - viewModel: TopicViewModel
+        + displayTopicList()
+        + onAddTopic()
+        + onSearchTopic(query)
+    }
+    
+    class StatsScreen {
+        - viewModel: StatsViewModel
+        + displayWeeklyChart()
+        + displaySrsDistribution()
+        + displayWakeUpScore()
+    }
+}
+
+package "ViewModel Layer" {
+    class AlarmViewModel {
+        - alarmDao: AppDao
+        - alarmScheduler: AlarmScheduler
+        + alarms: StateFlow<List<AlarmData>>
+        + toggleAlarm(id, enabled)
+        + deleteAlarm(id)
+        + findNextAlarmTime()
+    }
+    
+    class AlarmSettingsViewModel {
+        - alarmDao: AppDao
+        + uiState: StateFlow<AlarmSettingData>
+        + loadAlarm()
+        + saveAlarm()
+        + updateMission()
+        + updateSelectedQRCodes()
+    }
+    
+    class QuizViewModel {
+        - dao: AppDao
+        - algorithmManager: QuestionAlgorithmManager
+        + uiState: StateFlow<QuizUiStateData>
+        + setAlarmId(id)
+        + loadQuestionsForQuiz()
+        + onOptionSelected(answerId)
+    }
+    
+    class TopicViewModel {
+        - topicDao: AppDao
+        + filteredTopics: StateFlow<List<TopicData>>
+        + addNewTopic(name)
+        + onSearchQueryChange(query)
+    }
+    
+    class StatsViewModel {
+        - statsDao: StatisticsDao
+        + weeklyAccuracy: Flow<List<DailyStat>>
+        + srsDistribution: Flow<List<SrsStat>>
+        + calculateWakeUpPerformance()
+    }
+    
+    class QRCodeViewModel {
+        - dao: AppDao
+        + allQRCodes: StateFlow<List<QRCodeEntity>>
+        + saveQRCode()
+        + deleteQRCode()
+        + validateQRForAlarm(alarmId, code)
+    }
+}
+
+package "Logic Layer" {
+    class AlarmScheduler {
+        - context: Context
+        - alarmManager: AlarmManager
+        + schedule(alarm: AlarmEntity)
+        + cancel(alarm: AlarmEntity)
+    }
+    
+    class AlarmReceiver {
+        + onReceive(context, intent)
+    }
+    
+    class AlarmService {
+        - mediaPlayer: MediaPlayer
+        + onStartCommand()
+        + playAlarmSound()
+        + createNotification()
+    }
+    
+    class QuestionAlgorithmManager {
+        - dao: AppDao
+        + generateMissionQuestions(alarmId, count): List<MissionQuestion>
+        + processAnswer(questionId, isCorrect, timeMs)
+        - calculateSRSPriority()
+        - updateEloScore()
+    }
+}
+
+package "Data Layer" {
+    interface AppDao {
+        + getAllAlarms(): Flow<List<AlarmEntity>>
+        + getAlarmById(id): AlarmEntity?
+        + insertAlarm(alarm): Long
+        + updateAlarm(alarm)
+        + deleteAlarm(alarm)
+        + getAllTopics(): Flow<List<TopicEntity>>
+        + getQuestionsByTopic(topicId): Flow<List<QuestionEntity>>
+        + insertQuestion(question): Long
+        + getQRCodesForAlarm(alarmId): Flow<List<QRCodeEntity>>
+        + isQRCodeValidForAlarm(alarmId, code): Boolean
+    }
+    
+    interface StatisticsDao {
+        + getWeeklyAccuracy(sevenDaysAgo): Flow<List<DailyStat>>
+        + getSrsDistribution(): Flow<List<SrsStat>>
+        + getRecentAlarmHistory(): List<AlarmHistoryEntity>
+        + getUserStats(): Flow<UserStatsEntity?>
+    }
+    
+    class AppDatabase {
+        + {static} getDatabase(context): AppDatabase
+        + appDao(): AppDao
+        + statisticsDao(): StatisticsDao
+    }
+    
+    class AlarmEntity {
+        + alarmId: Int
+        + hour: Int
+        + minute: Int
+        + label: String?
+        + daysOfWeek: Set<String>
+        + questionCount: Int
+        + isEnabled: Boolean
+        + ringtoneUri: String?
+    }
+    
+    class QuestionEntity {
+        + questionId: Int
+        + ownerTopicId: Int
+        + prompt: String
+        + options: List<String>
+        + correctAnswer: String
+    }
+    
+    class TopicEntity {
+        + topicId: Int
+        + topicName: String
+    }
+    
+    class QRCodeEntity {
+        + qrId: Int
+        + name: String
+        + codeValue: String
+        + codeType: String
+    }
+    
+    class QuestionProgressEntity {
+        + questionId: Int
+        + correctStreak: Int
+        + difficultyScore: Double
+        + easinessFactor: Double
+        + interval: Int
+    }
+}
+
+' Relationships UI -> ViewModel
+AlarmScreen --> AlarmViewModel
+AlarmSettingsScreen --> AlarmSettingsViewModel
+QuizScreen --> QuizViewModel
+TopicScreen --> TopicViewModel
+StatsScreen --> StatsViewModel
+
+' Relationships ViewModel -> Logic
+AlarmViewModel --> AlarmScheduler
+AlarmSettingsViewModel --> AlarmScheduler
+QuizViewModel --> QuestionAlgorithmManager
+
+' Relationships ViewModel -> Data
+AlarmViewModel --> AppDao
+AlarmSettingsViewModel --> AppDao
+QuizViewModel --> AppDao
+TopicViewModel --> AppDao
+StatsViewModel --> StatisticsDao
+QRCodeViewModel --> AppDao
+
+' Relationships Logic -> Data
+AlarmScheduler --> AlarmEntity
+QuestionAlgorithmManager --> AppDao
+
+' Relationships Logic
+AlarmReceiver --> AlarmScheduler
+AlarmReceiver --> AlarmService
+AlarmReceiver --> AppDao
+
+' Database
+AppDatabase ..> AppDao : provides
+AppDatabase ..> StatisticsDao : provides
+AppDao ..> AlarmEntity
+AppDao ..> QuestionEntity
+AppDao ..> TopicEntity
+AppDao ..> QRCodeEntity
+AppDao ..> QuestionProgressEntity
+
+@enduml
+
+

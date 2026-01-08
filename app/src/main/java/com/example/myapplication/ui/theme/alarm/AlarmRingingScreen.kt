@@ -45,7 +45,7 @@ fun AlarmRingingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .padding(vertical = 60.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -53,7 +53,7 @@ fun AlarmRingingScreen(
 
         Text(
             text = currentDate,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium
         )
@@ -62,7 +62,7 @@ fun AlarmRingingScreen(
 
         Text(
             text = currentTime,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 100.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
@@ -83,7 +83,7 @@ fun AlarmRingingScreen(
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = alarmLabel,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -96,13 +96,13 @@ fun AlarmRingingScreen(
                 onSnooze()
                 onFinish()
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2E)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .width(180.dp)
                 .height(56.dp)
         ) {
-            Text("Báo lại", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Báo lại", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -111,7 +111,7 @@ fun AlarmRingingScreen(
         if (hasQRCodes) {
             Button(
                 onClick = onNavigateToQRScan,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4)),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 shape = RoundedCornerShape(50),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,11 +120,11 @@ fun AlarmRingingScreen(
                 Icon(
                     Icons.Default.QrCode2,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Quét QR/Barcode", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Quét QR/Barcode", color = MaterialTheme.colorScheme.onSecondary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -132,13 +132,13 @@ fun AlarmRingingScreen(
 
         Button(
             onClick = onNavigateToQuiz,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE50043)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp)
         ) {
-            Text("Tắt báo thức", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Tắt báo thức", color = MaterialTheme.colorScheme.onPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -1,0 +1,35 @@
+%% DFD Context Diagram - Sơ đồ Luồng Dữ liệu Ngữ cảnh
+%% Hệ thống Báo thức Thông minh
+
+graph LR
+    %% External Entities
+    E1[E1<br/>Người dùng]
+    E2[E2<br/>Android<br/>AlarmManager]
+    
+    %% System
+    System((HỆ THỐNG<br/>BÁO THỨC<br/>THÔNG MINH))
+    
+    %% Data Flows from User to System
+    E1 -->|Thông tin báo thức| System
+    E1 -->|Chủ đề & Câu hỏi| System
+    E1 -->|Mã QR/Barcode| System
+    E1 -->|Lệnh bật/tắt/snooze| System
+    E1 -->|Đáp án quiz| System
+    
+    %% Data Flows from System to User
+    System -->|Danh sách báo thức| E1
+    System -->|Thông báo đổ chuông| E1
+    System -->|Câu hỏi quiz| E1
+    System -->|Kết quả quiz| E1
+    System -->|Báo cáo thống kê| E1
+    System -->|Yêu cầu quét QR| E1
+    
+    %% Data Flows with AlarmManager
+    System -->|Lịch hẹn báo thức| E2
+    E2 -->|Sự kiện đổ chuông| System
+    
+    style E1 fill:#ffe6e6
+    style E2 fill:#ffe6e6
+    style System fill:#e1f5ff
+
+

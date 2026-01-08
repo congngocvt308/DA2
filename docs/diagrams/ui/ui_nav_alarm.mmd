@@ -1,0 +1,39 @@
+flowchart TD
+    AlarmTab[Tab Báo thức] --> AlarmList[Màn hình Danh sách Báo thức]
+    
+    AlarmList -->|FAB Thêm mới| AlarmSettings[Màn hình Cấu hình<br/>alarmId = -1]
+    AlarmList -->|Nhấn vào báo thức| AlarmSettings2[Màn hình Cấu hình<br/>alarmId = id]
+    AlarmList -->|Toggle bật/tắt| UpdateState[Cập nhật trạng thái]
+    
+    AlarmSettings --> MissionDialog[Hộp thoại Chọn Câu hỏi]
+    AlarmSettings --> QRDialog[Hộp thoại Quản lý QR]
+    AlarmSettings --> SoundDialog[Hộp thoại Chọn Nhạc]
+    AlarmSettings -->|Lưu| SaveAlarm[Lưu báo thức]
+    AlarmSettings -->|Hủy| DiscardDialog[Hộp thoại Xác nhận Bỏ thay đổi]
+    DiscardDialog -->|Xác nhận| AlarmList
+    DiscardDialog -->|Hủy| AlarmSettings
+    
+    MissionDialog -->|Chọn Chủ đề| SelectTopic[Chọn toàn bộ chủ đề]
+    MissionDialog -->|Chọn Câu hỏi| SelectQuestion[Chọn câu hỏi lẻ]
+    MissionDialog --> AlarmSettings
+    
+    QRDialog -->|Quét mới| QRScanner[Màn hình Quét QR]
+    QRDialog -->|Chọn QR có sẵn| SelectQR[Chọn tối đa 3 QR]
+    QRScanner --> QRDialog
+    QRDialog --> AlarmSettings
+    
+    AlarmList -.->|Báo thức reo| AlarmRinging[Màn hình Reo Báo thức]
+    AlarmRinging -->|Có QR| QRDismiss[Màn hình Quét QR để tắt]
+    AlarmRinging -->|Có Quiz| QuizScreen[Màn hình Quiz]
+    QRDismiss --> QuizScreen
+    QuizScreen -->|Hoàn thành| AlarmList
+    
+    SaveAlarm --> AlarmList
+    AlarmSettings2 --> AlarmList
+    
+    style AlarmTab fill:#e1f5ff
+    style AlarmList fill:#e8f5e9
+    style AlarmRinging fill:#ffebee
+    style QuizScreen fill:#ffebee
+
+

@@ -49,24 +49,24 @@ fun QuizScreen(
         return Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(color = Color(0xFF42A5F5))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Đang chọn câu hỏi phù hợp...", color = Color.White)
+                Text("Đang chọn câu hỏi phù hợp...", color = MaterialTheme.colorScheme.onBackground)
             }
         }
     }
 
     val currentQuestion = uiState.questionPool.getOrNull(uiState.poolIndex)
     if (currentQuestion == null) {
-        return Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+        return Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
     }
 
     Scaffold(
-        containerColor = Color.Black,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             QuizTopBar(
                 timerProgress = uiState.timerProgress,
@@ -87,7 +87,7 @@ fun QuizScreen(
             if (uiState.isTimeOut) {
                 Text(
                     "HẾT GIỜ!",
-                    color = Color(0xFFE50043),
+                    color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -97,7 +97,7 @@ fun QuizScreen(
 
             Text(
                 text = currentQuestion.questionText,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -134,17 +134,17 @@ fun QuizTopBar(
         LinearProgressIndicator(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(4.dp),
-            color = if (timerProgress < 0.3f) Color(0xFFE50043) else Color(0xFF42A5F5),
-            trackColor = Color(0xFF2C2C2E),
+            color = if (timerProgress < 0.3f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) }
-            Text(text = "$currentIndex/$total", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = {}) { Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = Color.White) }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground) }
+            Text(text = "$currentIndex/$total", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = {}) { Icon(Icons.AutoMirrored.Filled.VolumeUp, null, tint = MaterialTheme.colorScheme.onBackground) }
         }
     }
 }
@@ -159,6 +159,11 @@ fun QuizOptionButton(
     val infiniteTransition = rememberInfiniteTransition(label = "Blink")
     val isCorrectAndAnswered = uiState.isAnswered && answer.isCorrect
 
+    val successColor = MaterialTheme.colorScheme.secondary
+    val errorColor = MaterialTheme.colorScheme.error
+    val selectedColor = MaterialTheme.colorScheme.surfaceVariant
+    val defaultColor = MaterialTheme.colorScheme.surface
+
     val blinkAlpha by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = if (isCorrectAndAnswered) 0.3f else 1f,
@@ -169,10 +174,17 @@ fun QuizOptionButton(
         label = "BlinkAlpha"
     )
     val targetColor = when {
-        uiState.isAnswered && answer.isCorrect -> Color(0xFF4CAF50)
-        uiState.isAnswered && isSelected && !answer.isCorrect -> Color(0xFFE50043) // Chọn sai màu Đỏ
-        isSelected -> Color(0xFF4C4C4E)
-        else -> Color(0xFF2C2C2E)
+        uiState.isAnswered && answer.isCorrect -> successColor
+        uiState.isAnswered && isSelected && !answer.isCorrect -> errorColor
+        isSelected -> selectedColor
+        else -> defaultColor
+    }
+
+    val usesPrimaryContentColor = uiState.isAnswered && (answer.isCorrect || (isSelected && !answer.isCorrect))
+    val contentColor = if (usesPrimaryContentColor) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface
     }
 
     val backgroundColor by animateColorAsState(
@@ -187,8 +199,8 @@ fun QuizOptionButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
             disabledContainerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
-            contentColor = Color.White,
-            disabledContentColor = Color.White
+            contentColor = contentColor,
+            disabledContentColor = contentColor
         ),
         shape = RoundedCornerShape(28.dp),
         modifier = Modifier

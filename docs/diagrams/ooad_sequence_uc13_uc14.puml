@@ -1,0 +1,210 @@
+@startuml
+'** Sequence Diagram - UC13 & UC14: Nhận báo thức reo và Trả lời Quiz **
+
+title Sequence Diagram: UC13+UC14 - Báo thức reo và Quiz
+
+actor "Người dùng" as User
+participant "AlarmManager" as SysAlarm
+participant "AlarmReceiver" as Receiver
+participant "AppDao" as Dao
+participant "AlarmScheduler" as Scheduler
+participant "AlarmService" as Service
+participant "AlarmRingingActivity" as RingingAct
+participant "QuizScreen" as QuizScr
+participant "QuizViewModel" as QuizVM
+participant "QuestionAlgorithmManager" as AlgoMgr
+participant "MediaPlayer" as Player
+
+== Kích hoạt Báo thức ==
+
+SysAlarm -> Receiver : onReceive(intent)
+activate Receiver
+
+Receiver -> Dao : getAlarmById(alarmId)
+activate Dao
+Dao --> Receiver : AlarmEntity
+deactivate Dao
+
+alt Báo thức lặp lại (có daysOfWeek)
+    Receiver -> Scheduler : schedule(alarm)
+    activate Scheduler
+    Scheduler -> SysAlarm : setAlarmClock(nextTime)
+    Scheduler --> Receiver : OK
+    deactivate Scheduler
+else Báo thức 1 lần
+    Receiver -> Dao : updateAlarmEnabledStatus(alarmId, false)
+    activate Dao
+    Dao --> Receiver : OK
+    deactivate Dao
+end
+
+Receiver -> Service : startForegroundService(intent)
+activate Service
+
+Service -> Service : createNotificationChannel()
+Service -> Service : playAlarmSound(ringtoneUri)
+activate Player
+Player --> Service : Đang phát nhạc
+deactivate Player
+
+Service -> Dao : getQRLinkCountForAlarm(alarmId)
+activate Dao
+Dao --> Service : qrCodeCount
+deactivate Dao
+
+Service -> Service : createNotification(hasQRCodes)
+
+Service -> RingingAct : startActivity(fullScreenIntent)
+activate RingingAct
+
+RingingAct --> User : Hiển thị màn hình\nbáo thức reo + phát nhạc
+deactivate RingingAct
+
+deactivate Service
+deactivate Receiver
+
+== Người dùng chọn tắt báo thức ==
+
+User -> RingingAct : Nhấn "Tắt"
+activate RingingAct
+
+alt Báo thức có QR Code
+    RingingAct --> User : Yêu cầu quét QR
+    User -> RingingAct : Quét QR thành công
+    RingingAct -> QuizScr : navigate()
+else Báo thức có Quiz
+    RingingAct -> QuizScr : navigate()
+end
+
+activate QuizScr
+
+QuizScr -> QuizVM : setAlarmId(alarmId)
+activate QuizVM
+
+QuizVM -> Dao : getAlarmById(alarmId)
+activate Dao
+Dao --> QuizVM : alarm (với questionCount)
+deactivate Dao
+
+QuizVM -> Dao : insertAlarmHistory(alarmHistory)
+activate Dao
+Dao --> QuizVM : alarmHistoryId
+deactivate Dao
+
+QuizVM -> AlgoMgr : generateMissionQuestions(alarmId, count)
+activate AlgoMgr
+
+AlgoMgr -> Dao : getSelectedQuestionsForAlarmOnce(alarmId)
+activate Dao
+Dao --> AlgoMgr : List<QuestionEntity>
+deactivate Dao
+
+AlgoMgr -> Dao : getQuestionsFromLinkedTopics(alarmId)
+activate Dao
+Dao --> AlgoMgr : List<QuestionEntity>
+deactivate Dao
+
+AlgoMgr -> Dao : getProgressForQuestions(questionIds)
+activate Dao
+Dao --> AlgoMgr : List<QuestionProgressEntity>
+deactivate Dao
+
+AlgoMgr -> AlgoMgr : Tính điểm ưu tiên SRS
+AlgoMgr -> AlgoMgr : Sắp xếp và chọn Top N
+
+AlgoMgr --> QuizVM : List<MissionQuestion>
+deactivate AlgoMgr
+
+QuizVM -> QuizVM : Chuyển đổi sang QuestionData
+QuizVM -> QuizVM : startTimer()
+
+QuizVM --> QuizScr : uiState (câu hỏi đầu tiên)
+deactivate QuizVM
+
+QuizScr --> User : Hiển thị câu hỏi + Timer
+deactivate QuizScr
+
+== Trả lời câu hỏi ==
+
+loop Cho đến khi đủ số câu đúng
+    User -> QuizScr : Chọn đáp án
+    activate QuizScr
+    
+    QuizScr -> QuizVM : onOptionSelected(answerId)
+    activate QuizVM
+    
+    QuizVM -> QuizVM : Kiểm tra đáp án
+    QuizVM -> QuizVM : Dừng timer
+    
+    QuizVM -> AlgoMgr : processAnswer(questionId, isCorrect, timeMs)
+    activate AlgoMgr
+    
+    AlgoMgr -> Dao : insertHistory(historyEntity)
+    activate Dao
+    Dao --> AlgoMgr : OK
+    deactivate Dao
+    
+    AlgoMgr -> Dao : getProgressForQuestions([questionId])
+    activate Dao
+    Dao --> AlgoMgr : QuestionProgressEntity
+    deactivate Dao
+    
+    AlgoMgr -> AlgoMgr : Cập nhật SRS\n(streak, easiness, interval)
+    
+    AlgoMgr -> Dao : updateQuestionProgress(progress)
+    activate Dao
+    Dao --> AlgoMgr : OK
+    deactivate Dao
+    
+    AlgoMgr -> Dao : getTopicIdByQuestionId(questionId)
+    activate Dao
+    Dao --> AlgoMgr : topicId
+    deactivate Dao
+    
+    AlgoMgr -> Dao : updateTopicStats(topicStats)
+    activate Dao
+    Dao --> AlgoMgr : OK
+    deactivate Dao
+    
+    AlgoMgr --> QuizVM : Cập nhật xong
+    deactivate AlgoMgr
+    
+    QuizVM -> QuizVM : nextQuestion(wasCorrect)
+    
+    alt Đã đủ số câu đúng
+        QuizVM -> QuizVM : isFinished = true
+        QuizVM -> Dao : updateAlarmHistory(dismissalTime)
+        activate Dao
+        Dao --> QuizVM : OK
+        deactivate Dao
+    else Chưa đủ
+        QuizVM -> QuizVM : Chuyển câu tiếp theo
+        QuizVM -> QuizVM : startTimer()
+    end
+    
+    QuizVM --> QuizScr : uiState updated
+    deactivate QuizVM
+    
+    QuizScr --> User : Hiển thị kết quả\n& câu tiếp theo
+    deactivate QuizScr
+end
+
+== Hoàn thành Quiz ==
+
+QuizScr -> Service : stopService()
+activate Service
+Service -> Player : stop()
+Service -> Player : release()
+Service --> QuizScr : Service đã dừng
+deactivate Service
+
+QuizScr -> RingingAct : finish()
+activate RingingAct
+RingingAct --> User : Đóng màn hình
+deactivate RingingAct
+
+QuizScr --> User : Quay về màn hình chính
+
+@enduml
+
+

@@ -1,0 +1,164 @@
+@startuml
+'** Sequence Diagram - UC18 & UC19: Quét và liên kết QR Code **
+
+title Sequence Diagram: UC18+UC19 - Quét và liên kết QR Code
+
+actor "Người dùng" as User
+participant "AlarmSettingsScreen" as SettingsScr
+participant "QRCodeManagementDialog" as QRMgmtDlg
+participant "QRCodeViewModel" as QRVM
+participant "QRCodeScannerScreen" as ScannerScr
+participant "CameraPreview" as Camera
+participant "BarcodeScanner\n(ML Kit)" as MLKit
+participant "AppDao" as Dao
+
+== Mở dialog quản lý QR ==
+
+User -> SettingsScr : Nhấn "Chọn QR Code"
+activate SettingsScr
+
+SettingsScr -> QRMgmtDlg : show()
+activate QRMgmtDlg
+
+QRMgmtDlg -> QRVM : Observe allQRCodes
+activate QRVM
+
+QRVM -> Dao : getAllQRCodes()
+activate Dao
+Dao --> QRVM : Flow<List<QRCodeEntity>>
+deactivate Dao
+
+QRVM --> QRMgmtDlg : List<QRCodeEntity>
+deactivate QRVM
+
+QRMgmtDlg --> User : Hiển thị danh sách QR đã lưu
+deactivate QRMgmtDlg
+
+== Trường hợp 1: Chọn QR có sẵn ==
+
+opt Có QR sẵn
+    User -> QRMgmtDlg : Tick chọn QR (tối đa 3)
+    activate QRMgmtDlg
+    QRMgmtDlg -> QRMgmtDlg : Cập nhật selectedQRIds
+    QRMgmtDlg --> User : Hiển thị đã chọn
+    
+    User -> QRMgmtDlg : Nhấn "Xong"
+    QRMgmtDlg -> SettingsScr : onQRSelected(selectedIds)
+    deactivate QRMgmtDlg
+    
+    SettingsScr -> SettingsScr : updateSelectedQRCodes(selectedIds)
+    SettingsScr --> User : Hiển thị số QR đã chọn
+end
+
+== Trường hợp 2: Quét QR mới ==
+
+alt Quét QR mới
+    User -> QRMgmtDlg : Nhấn "Quét mã mới"
+    activate QRMgmtDlg
+    
+    QRMgmtDlg -> ScannerScr : navigate()
+    activate ScannerScr
+    
+    ScannerScr -> Camera : Khởi động camera
+    activate Camera
+    Camera --> User : Hiển thị preview camera
+    
+    User -> Camera : Đưa mã QR/Barcode vào khung hình
+    
+    Camera -> MLKit : Phân tích frame
+    activate MLKit
+    MLKit -> MLKit : Phát hiện barcode
+    MLKit --> Camera : Barcode detected
+    deactivate MLKit
+    
+    Camera --> ScannerScr : onBarcodeDetected(barcode)
+    deactivate Camera
+    
+    ScannerScr -> QRVM : processScannedBarcode(barcode)
+    activate QRVM
+    QRVM -> QRVM : Trích xuất codeValue & codeType
+    QRVM --> ScannerScr : Pair(codeValue, codeType)
+    deactivate QRVM
+    
+    ScannerScr --> User : Hiển thị "Đã quét:\n[codeValue]"
+    
+    User -> ScannerScr : Nhập tên mã (VD: "Mã tủ lạnh")
+    
+    User -> ScannerScr : Nhấn "Lưu"
+    
+    ScannerScr -> QRVM : saveQRCode(name, codeValue, codeType)
+    activate QRVM
+    
+    QRVM -> Dao : getQRCodeCount()
+    activate Dao
+    Dao --> QRVM : currentCount
+    deactivate Dao
+    
+    alt currentCount >= 5
+        QRVM --> ScannerScr : onError("Đã đủ 5 mã")
+        ScannerScr --> User : Hiển thị lỗi
+    else currentCount < 5
+        QRVM -> Dao : getQRCodeByValue(codeValue)
+        activate Dao
+        Dao --> QRVM : existingQR?
+        deactivate Dao
+        
+        alt Mã đã tồn tại
+            QRVM --> ScannerScr : onError("Mã đã lưu")
+            ScannerScr --> User : Hiển thị lỗi
+        else Mã mới
+            QRVM -> Dao : insertQRCode(qrCodeEntity)
+            activate Dao
+            Dao -> Dao : Lưu vào SQLite
+            Dao --> QRVM : newQRId
+            deactivate Dao
+            
+            QRVM --> ScannerScr : onSuccess()
+            deactivate QRVM
+            
+            ScannerScr --> User : "Đã lưu mã thành công"
+            
+            ScannerScr -> QRMgmtDlg : popBackStack()
+            deactivate ScannerScr
+            
+            QRMgmtDlg --> User : Hiển thị danh sách\n(có mã mới)
+            
+            User -> QRMgmtDlg : Chọn mã vừa lưu
+            QRMgmtDlg -> QRMgmtDlg : selectedQRIds.add(newQRId)
+            
+            User -> QRMgmtDlg : Nhấn "Xong"
+            QRMgmtDlg -> SettingsScr : onQRSelected(selectedIds)
+            deactivate QRMgmtDlg
+            
+            SettingsScr -> SettingsScr : updateSelectedQRCodes(selectedIds)
+            SettingsScr --> User : Hiển thị số QR đã chọn
+        end
+    end
+end
+
+== Lưu liên kết khi Save Alarm ==
+
+User -> SettingsScr : Nhấn "Lưu báo thức"
+activate SettingsScr
+
+SettingsScr -> SettingsScr : saveAlarm()
+
+SettingsScr -> Dao : clearQRLinksForAlarm(alarmId)
+activate Dao
+Dao --> SettingsScr : OK
+deactivate Dao
+
+loop Cho mỗi qrId đã chọn
+    SettingsScr -> Dao : insertAlarmQRLink(alarmId, qrId)
+    activate Dao
+    Dao -> Dao : Lưu vào alarm_qr_link
+    Dao --> SettingsScr : OK
+    deactivate Dao
+end
+
+SettingsScr --> User : "Đã lưu báo thức"
+deactivate SettingsScr
+
+@enduml
+
+

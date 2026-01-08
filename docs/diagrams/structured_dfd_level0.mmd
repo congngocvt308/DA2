@@ -1,0 +1,90 @@
+%% DFD Level 0 - Sơ đồ Luồng Dữ liệu Mức 0
+%% Các tiến trình chính của hệ thống
+
+graph TB
+    %% External Entities
+    E1[E1 Người dùng]
+    E2[E2 Android<br/>AlarmManager]
+    
+    %% Processes
+    P1((P1<br/>Quản lý<br/>Báo thức))
+    P2((P2<br/>Quản lý<br/>Chủ đề &<br/>Câu hỏi))
+    P3((P3<br/>Lập lịch<br/>Báo thức))
+    P4((P4<br/>Xử lý<br/>Báo thức<br/>Reo))
+    P5((P5<br/>Thực thi<br/>Quiz))
+    P6((P6<br/>Quản lý<br/>QR Code))
+    P7((P7<br/>Tạo báo cáo<br/>Thống kê))
+    
+    %% Data Stores
+    DS1[(DS1<br/>Alarms)]
+    DS2[(DS2<br/>Topics &<br/>Questions)]
+    DS3[(DS3<br/>QR Codes)]
+    DS4[(DS4<br/>Progress<br/>& History)]
+    DS5[(DS5<br/>User Stats)]
+    
+    %% Flows from E1 (User)
+    E1 -->|Thông tin báo thức| P1
+    E1 -->|Chủ đề & Câu hỏi| P2
+    E1 -->|Mã QR| P6
+    E1 -->|Lệnh bật/tắt| P1
+    E1 -->|Đáp án quiz| P5
+    E1 -->|Yêu cầu thống kê| P7
+    
+    %% Flows to E1 (User)
+    P1 -->|Danh sách báo thức| E1
+    P4 -->|Thông báo reo| E1
+    P5 -->|Câu hỏi & Kết quả| E1
+    P6 -->|Danh sách QR| E1
+    P7 -->|Báo cáo thống kê| E1
+    
+    %% Flows with E2 (AlarmManager)
+    P3 -->|Lịch hẹn| E2
+    E2 -->|Sự kiện đổ chuông| P4
+    
+    %% P1 - Quản lý Báo thức
+    P1 <-->|Dữ liệu báo thức| DS1
+    P1 -->|Yêu cầu lập lịch| P3
+    
+    %% P2 - Quản lý Chủ đề & Câu hỏi
+    P2 <-->|Chủ đề & Câu hỏi| DS2
+    
+    %% P3 - Lập lịch Báo thức
+    P3 -->|Đọc cấu hình| DS1
+    
+    %% P4 - Xử lý Báo thức Reo
+    P4 -->|Đọc thông tin báo thức| DS1
+    P4 -->|Khởi động quiz| P5
+    P4 -->|Yêu cầu quét QR| P6
+    P4 -->|Ghi lịch sử| DS4
+    
+    %% P5 - Thực thi Quiz
+    P5 -->|Đọc câu hỏi| DS2
+    P5 -->|Đọc tiến độ SRS| DS4
+    P5 -->|Cập nhật tiến độ| DS4
+    P5 -->|Cập nhật stats| DS5
+    
+    %% P6 - Quản lý QR Code
+    P6 <-->|Dữ liệu QR| DS3
+    P6 -->|Liên kết QR-Alarm| DS1
+    P6 -->|Xác thực QR| P4
+    
+    %% P7 - Tạo báo cáo Thống kê
+    P7 -->|Đọc lịch sử| DS4
+    P7 -->|Đọc user stats| DS5
+    
+    style E1 fill:#ffe6e6
+    style E2 fill:#ffe6e6
+    style P1 fill:#e8f5e9
+    style P2 fill:#e8f5e9
+    style P3 fill:#e8f5e9
+    style P4 fill:#e8f5e9
+    style P5 fill:#e8f5e9
+    style P6 fill:#e8f5e9
+    style P7 fill:#e8f5e9
+    style DS1 fill:#fff9c4
+    style DS2 fill:#fff9c4
+    style DS3 fill:#fff9c4
+    style DS4 fill:#fff9c4
+    style DS5 fill:#fff9c4
+
+

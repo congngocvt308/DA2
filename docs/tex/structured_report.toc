@@ -1,0 +1,28 @@
+\contentsline {chapter}{\numberline {1}PHÂN TÍCH HỆ THỐNG (PHƯƠNG PHÁP CÓ CẤU TRÚC)}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Biểu đồ Phân cấp Chức năng (FDD)}{2}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Phân tích chi tiết các module}{5}{subsection.1.1.1}%
+\contentsline {subsubsection}{Module 1: Quản lý Báo thức}{5}{section*.8}%
+\contentsline {subsubsection}{Module 2: Quản lý Chủ đề và Câu hỏi}{6}{section*.9}%
+\contentsline {subsubsection}{Module 3: Thực thi Báo thức}{6}{section*.10}%
+\contentsline {subsubsection}{Module 4: Quản lý QR Code}{7}{section*.11}%
+\contentsline {subsubsection}{Module 5: Thống kê và Báo cáo}{8}{section*.12}%
+\contentsline {section}{\numberline {1.2}Biểu đồ Luồng Dữ liệu (DFD)}{8}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}DFD Context - Sơ đồ Luồng Dữ liệu Ngữ cảnh}{8}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}DFD Level 0 - Các tiến trình chính}{9}{subsection.1.2.2}%
+\contentsline {subsection}{\numberline {1.2.3}DFD Level 1 - Phân rã P4 (Xử lý Báo thức Reo)}{11}{subsection.1.2.3}%
+\contentsline {subsection}{\numberline {1.2.4}DFD Level 1 - Phân rã P5 (Thực thi Quiz)}{13}{subsection.1.2.4}%
+\contentsline {section}{\numberline {1.3}Đặc tả Chức năng}{16}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}Mini-spec P5.1: Chọn câu hỏi theo SRS}{16}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}Mini-spec P5.4: Cập nhật tiến độ SRS}{17}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}Mini-spec P4.5: Kiểm tra điều kiện tắt}{19}{subsection.1.3.3}%
+\contentsline {section}{\numberline {1.4}Phân tích Hệ thống về mặt Dữ liệu}{20}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Mô hình ER hạn chế}{20}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Quan hệ giữa các thực thể}{24}{subsection.1.4.2}%
+\contentsline {chapter}{\numberline {2}THIẾT KẾ}{25}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Thiết kế Tổng thể}{25}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Giao diện}{26}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Sơ đồ Điều hướng}{26}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Wireframe các Màn hình Chính}{27}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Biểu đồ Trạng thái Giao diện}{30}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Mô tả Chi tiết}{32}{subsection.2.2.4}%
+\contentsline {section}{\numberline {2.3}Database}{33}{section.2.3}%

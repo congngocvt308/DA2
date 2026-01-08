@@ -1,0 +1,1082 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{report}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Menlo}
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{caption}
+\usepackage[unicode]{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Báo cáo Phân tích Có cấu trúc},
+}
+
+\title{\textbf{BÁO CÁO PHÂN TÍCH - THIẾT KẾ HỆ THỐNG}\\[0.3cm]
+\large{PHƯƠNG PHÁP CÓ CẤU TRÚC (SA/SD)}\\[0.3cm]
+\normalsize{Hệ thống Báo thức Thông minh với Quiz và QR Code}}
+\author{Phân tích từ codebase Android/Kotlin}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\chapter{PHÂN TÍCH HỆ THỐNG (PHƯƠNG PHÁP CÓ CẤU TRÚC)}
+
+\section{Biểu đồ Phân cấp Chức năng (FDD)}
+
+Hệ thống Báo thức Thông minh được phân rã thành 5 module chính, mỗi module đảm nhiệm một nhóm chức năng cụ thể. Việc phân rã này dựa trên cấu trúc thực tế của codebase Android, bao gồm các package UI, logic xử lý, và data layer.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/structured_fdd.png}
+\caption{Biểu đồ Phân cấp Chức năng - Function Decomposition Diagram}
+\label{fig:fdd}
+\end{figure}
+
+\subsection{Phân tích chi tiết các module}
+
+\subsubsection{Module 1: Quản lý Báo thức}
+
+Module này được implement trong package \texttt{ui.theme.alarm} với \texttt{AlarmViewModel} và \texttt{AlarmSettingsViewModel} làm trung tâm điều phối. Các chức năng con bao gồm:
+
+\begin{itemize}
+\item \textbf{1.1 Tạo báo thức mới:} Người dùng nhập thông tin (giờ, phút, nhãn, ngày lặp lại, số câu hỏi, QR codes). \texttt{AlarmSettingsViewModel.saveAlarm()} tạo \texttt{AlarmEntity}, lưu vào Room DB thông qua \texttt{AppDao.insertAlarm()}, đồng thời lưu các liên kết (\texttt{alarm\_topic\_link}, \texttt{alarm\_selected\_questions}, \texttt{alarm\_qr\_link}). Sau đó gọi \texttt{AlarmScheduler.schedule()} để đặt lịch hẹn với Android \texttt{AlarmManager}.
+
+\item \textbf{1.2 Chỉnh sửa báo thức:} Tương tự 1.1 nhưng dùng \texttt{AppDao.updateAlarm()} thay vì insert. Trước khi lưu, hệ thống phải xóa các liên kết cũ (\texttt{clearAlarmTopicLinks()}, \texttt{clearSelectedQuestionsForAlarm()}, \texttt{clearQRLinksForAlarm()}) để tránh dữ liệu dư thừa.
+
+\item \textbf{1.3 Xóa báo thức:} \texttt{AlarmViewModel.deleteAlarm()} gọi \texttt{AlarmScheduler.cancel()} để hủy lịch hẹn hệ thống (quan trọng để tránh báo thức "ma"), sau đó gọi \texttt{AppDao.deleteAlarm()}. Nhờ Foreign Key CASCADE, các bản ghi liên kết cũng tự động bị xóa.
+
+\item \textbf{1.4 Bật/Tắt báo thức:} \texttt{AlarmViewModel.toggleAlarm()} cập nhật trường \texttt{isEnabled} trong DB. Nếu bật: gọi \texttt{schedule()}, nếu tắt: gọi \texttt{cancel()}. Đây là thao tác phổ biến nhất (hàng ngày) nên phải tối ưu performance.
+
+\item \textbf{1.5 Xem danh sách báo thức:} \texttt{AlarmViewModel.alarms} là \texttt{StateFlow<List<AlarmData>>} được tạo từ \texttt{AppDao.getAllAlarms()}. Sử dụng Flow giúp UI tự động cập nhật khi DB thay đổi (reactive pattern).
+
+\item \textbf{1.6 Tạo báo thức nhanh:} \texttt{AlarmSettingsViewModel.setupQuickAlarm(minutesToAdd)} tính giờ hiện tại cộng X phút, đặt các thuộc tính mặc định (không lặp lại, snooze enabled), và mở màn hình cấu hình sẵn để người dùng chỉ cần nhấn "Lưu".
+\end{itemize}
+
+\subsubsection{Module 2: Quản lý Chủ đề và Câu hỏi}
+
+Module này được implement trong \texttt{ui.theme.topic} với \texttt{TopicViewModel} và \texttt{TopicDetailViewModel}.
+
+\begin{itemize}
+\item \textbf{2.1 Quản lý chủ đề:} \texttt{TopicViewModel} cung cấp \texttt{filteredTopics} kết hợp giữa \texttt{getAllTopicsWithCount()} (trả về số câu hỏi của mỗi topic) và \texttt{searchQuery} (tìm kiếm theo tên). Sử dụng \texttt{combine} operator của Flow để merge 2 luồng dữ liệu.
+
+\item \textbf{2.2 Quản lý câu hỏi:} \texttt{TopicDetailViewModel} xử lý CRUD câu hỏi trong 1 topic cụ thể. Khi thêm câu hỏi mới, phải validate: prompt không rỗng, có ít nhất 1 đáp án đúng và 3 đáp án sai. \texttt{QuestionEntity.options} lưu dưới dạng \texttt{List<String>} và được convert sang JSON bởi Room \texttt{TypeConverter}.
+\end{itemize}
+
+\subsubsection{Module 3: Thực thi Báo thức}
+
+Đây là module phức tạp nhất, liên quan đến nhiều Android components:
+
+\begin{itemize}
+\item \textbf{3.1 Kích hoạt báo thức:} \texttt{AlarmReceiver.onReceive()} nhận broadcast từ \texttt{AlarmManager}. Trong \texttt{onReceive()}, sử dụng \texttt{goAsync()} để làm việc với coroutine (vì BroadcastReceiver có thời gian chạy giới hạn). Đọc \texttt{AlarmEntity} từ DB, kiểm tra \texttt{daysOfWeek}: nếu rỗng (1 lần) thì set \texttt{isEnabled=false}, nếu không thì đặt lại lịch cho ngày tiếp theo. Sau đó khởi chạy \texttt{AlarmService} (foreground service).
+
+\item \textbf{3.2 Hiển thị giao diện báo thức đang reo:} \texttt{AlarmService.onStartCommand()} tạo notification với \texttt{IMPORTANCE\_HIGH} và \texttt{setFullScreenIntent()} để hiển thị \texttt{AlarmRingingActivity} ngay cả khi màn hình khóa. Đồng thời khởi chạy \texttt{MediaPlayer} để phát nhạc chuông liên tục (\texttt{isLooping=true}).
+
+\item \textbf{3.3 Thực hiện Quiz:} Khi người dùng nhấn "Tắt", hệ thống kiểm tra xem báo thức có QR codes không. Nếu có thì yêu cầu quét QR trước. Sau đó chuyển đến \texttt{QuizScreen}. \texttt{QuizViewModel.loadQuestionsForQuiz()} gọi \texttt{QuestionAlgorithmManager.generateMissionQuestions()} để chọn câu hỏi theo thuật toán SRS (xem 3.3.1).
+
+\item \textbf{3.3.1 Chọn câu hỏi theo thuật toán SRS:} \texttt{QuestionAlgorithmManager} đọc danh sách câu hỏi đã chọn (manual + topics), đọc \texttt{QuestionProgressEntity} của mỗi câu. Tính điểm ưu tiên: câu chưa học = 500, câu đến hạn ôn = 1000 + (thời gian quá hạn), câu khác = \texttt{difficultyScore}. Sắp xếp giảm dần và lấy top N.
+
+\item \textbf{3.3.2 Hiển thị câu hỏi và đếm giờ:} \texttt{QuizViewModel.startTimer()} khởi chạy coroutine đếm ngược 15 giây, cập nhật \texttt{timerProgress} (0.0 - 1.0). UI vẽ circular progress bar dựa trên giá trị này.
+
+\item \textbf{3.3.3 Kiểm tra đáp án:} \texttt{QuizViewModel.onOptionSelected()} so sánh \texttt{answerId} với đáp án đúng. Hiển thị màu xanh (đúng) hoặc đỏ (sai) trong 1 giây trước khi chuyển câu tiếp.
+
+\item \textbf{3.3.4 Cập nhật tiến độ học tập SRS:} \texttt{QuestionAlgorithmManager.processAnswer()} cập nhật \texttt{QuestionProgressEntity}: nếu đúng thì tăng \texttt{correctStreak}, \texttt{easinessFactor}, \texttt{interval}; nếu sai thì reset \texttt{correctStreak=0}, giảm \texttt{easinessFactor}, \texttt{interval=1}. Đồng thời cập nhật \texttt{TopicStats.userEloScore} (±10 hoặc ±5).
+\end{itemize}
+
+\subsubsection{Module 4: Quản lý QR Code}
+
+\texttt{QRCodeViewModel} sử dụng ML Kit (Google) để quét QR/Barcode:
+
+\begin{itemize}
+\item \textbf{4.1 Quét QR/Barcode:} \texttt{QRCodeScannerScreen} khởi động camera (CameraX), phân tích từng frame bằng \texttt{BarcodeScanning.getClient()}. Khi phát hiện barcode, trích xuất \texttt{codeValue} và \texttt{codeType}.
+
+\item \textbf{4.2 Lưu mã QR:} Trước khi lưu, kiểm tra: (1) số lượng < 5 (\texttt{getQRCodeCount()}), (2) không trùng lặp (\texttt{getQRCodeByValue()}). Nếu pass, lưu \texttt{QRCodeEntity} vào DB.
+
+\item \textbf{4.3 Xóa mã QR:} \texttt{AppDao.deleteQRCode()}. Nếu mã này đang được dùng bởi báo thức nào, Foreign Key CASCADE sẽ tự động xóa bản ghi trong \texttt{alarm\_qr\_link}.
+
+\item \textbf{4.4 Liên kết QR với báo thức:} Trong \texttt{AlarmSettingsScreen}, người dùng chọn tối đa 3 mã QR. \texttt{AlarmSettingsViewModel.updateSelectedQRCodes()} lưu danh sách ID vào state. Khi save alarm, gọi \texttt{saveSelectedQRCodes()} để insert vào \texttt{alarm\_qr\_link}.
+
+\item \textbf{4.5 Xác thực mã QR khi tắt báo thức:} \texttt{QRCodeViewModel.validateQRForAlarm()} gọi \texttt{AppDao.isQRCodeValidForAlarm()} (query JOIN giữa \texttt{qr\_codes} và \texttt{alarm\_qr\_link}). Chỉ khi scan đúng mã, mới cho phép chuyển sang Quiz.
+\end{itemize}
+
+\subsubsection{Module 5: Thống kê và Báo cáo}
+
+\texttt{StatsViewModel} tính toán các chỉ số từ dữ liệu lịch sử:
+
+\begin{itemize}
+\item \textbf{5.1 Xem thống kê độ chính xác theo tuần:} \texttt{StatisticsDao.getWeeklyAccuracy()} thực thi SQL query GROUP BY ngày, tính \texttt{SUM(isCorrect)} và \texttt{COUNT(*)}. ViewModel xử lý để tạo list 7 ngày (từ 6 ngày trước đến hôm nay), điền accuracy = 0 nếu không có dữ liệu.
+
+\item \textbf{5.2 Xem phân phối trạng thái học tập:} \texttt{getSrsDistribution()} GROUP BY status (New/Learning/Mastered) dựa trên \texttt{correctStreak}. UI vẽ pie chart 3 phần.
+
+\item \textbf{5.3 Tính điểm Wake-up Score:} Lấy 5 lần \texttt{alarm\_history} gần nhất, tính điểm trung bình theo công thức: \texttt{100 - (snoozeCount * 10) - (delayMinutes * 0.5)}, giới hạn [0, 100].
+
+\item \textbf{5.4 Theo dõi streak và điểm số:} \texttt{UserStatsEntity} lưu \texttt{currentStreak}, \texttt{bestStreak}, \texttt{totalPoints}. Sau mỗi lần hoàn thành quiz, \texttt{updatePerformanceAfterAlarm()} tăng điểm và kiểm tra streak (so sánh \texttt{lastActiveDate} với hôm qua).
+
+\item \textbf{5.5 Xem lịch sử báo thức:} Query \texttt{alarm\_history} JOIN với \texttt{history} để xem chi tiết từng lần báo thức: thời gian reo, thời gian tắt, số lần snooze, danh sách câu hỏi đã trả lời.
+\end{itemize}
+
+\section{Biểu đồ Luồng Dữ liệu (DFD)}
+
+\subsection{DFD Context - Sơ đồ Luồng Dữ liệu Ngữ cảnh}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{images/structured_dfd_context.png}
+\caption{DFD Context - Luồng dữ liệu tổng quát giữa người dùng, hệ thống và AlarmManager}
+\label{fig:dfd_context}
+\end{figure}
+
+Ở mức ngữ cảnh, hệ thống được xem như một "hộp đen" tương tác với 2 tác nhân ngoài:
+
+\textbf{E1 - Người dùng:}
+\begin{itemize}
+\item \textit{Input:} Thông tin báo thức (giờ, phút, nhãn, ngày lặp), chủ đề \& câu hỏi, mã QR/Barcode, lệnh bật/tắt/snooze, đáp án quiz.
+\item \textit{Output:} Danh sách báo thức, thông báo đổ chuông (notification + full-screen), câu hỏi quiz, kết quả quiz (đúng/sai), báo cáo thống kê (biểu đồ, điểm số).
+\end{itemize}
+
+\textbf{E2 - Android AlarmManager:}
+\begin{itemize}
+\item \textit{Input:} Lịch hẹn báo thức (thời gian trigger, PendingIntent chứa alarmId).
+\item \textit{Output:} Sự kiện đổ chuông (broadcast intent) gửi đến \texttt{AlarmReceiver}.
+\end{itemize}
+
+\textit{Phân tích:} DFD Context giúp xác định ranh giới hệ thống. Hệ thống không tự kích hoạt báo thức mà phụ thuộc vào AlarmManager (hệ thống Android). Điều này kéo theo ràng buộc: phải có quyền SCHEDULE\_EXACT\_ALARM (Android 12+) và xử lý trường hợp bị từ chối quyền.
+
+\subsection{DFD Level 0 - Các tiến trình chính}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/structured_dfd_level0.png}
+\caption{DFD Level 0 - 7 tiến trình chính và 5 kho dữ liệu}
+\label{fig:dfd_level0}
+\end{figure}
+
+Bảng \ref{tab:processes_level0} mô tả chi tiết 7 tiến trình chính:
+
+\begin{table}[H]
+\centering
+\caption{Mô tả các tiến trình Level 0}
+\label{tab:processes_level0}
+\begin{tabular}{|p{1.5cm}|p{3cm}|p{9cm}|}
+\hline
+\textbf{Mã} & \textbf{Tiến trình} & \textbf{Chức năng chính} \\
+\hline
+P1 & Quản lý Báo thức & Nhận thông tin từ E1, validate, lưu/sửa/xóa vào DS1. Gửi yêu cầu lập lịch cho P3. \\
+\hline
+P2 & Quản lý Chủ đề \& Câu hỏi & Nhận chủ đề/câu hỏi từ E1, validate (unique topic name, question có đủ đáp án), lưu vào DS2. \\
+\hline
+P3 & Lập lịch Báo thức & Đọc AlarmEntity từ DS1, tính thời gian trigger (xử lý daysOfWeek, ngày mai nếu giờ đã qua), tạo PendingIntent với requestCode=alarmId, gọi AlarmManager.setAlarmClock(). \\
+\hline
+P4 & Xử lý Báo thức Reo & Nhận sự kiện từ E2, đọc alarm từ DS1, kiểm tra daysOfWeek để quyết định đặt lại lịch hoặc tắt. Khởi động P5 (Quiz) hoặc P6 (QR), ghi AlarmHistory vào DS4. \\
+\hline
+P5 & Thực thi Quiz & Đọc câu hỏi từ DS2, đọc tiến độ từ DS4, chọn câu theo SRS, hiển thị cho E1, nhận đáp án, cập nhật tiến độ SRS vào DS4, cập nhật ELO vào DS5. \\
+\hline
+P6 & Quản lý QR Code & Lưu/xóa mã QR vào DS3, liên kết với báo thức (DS1 via alarm\_qr\_link), xác thực mã khi tắt báo thức (trả kết quả cho P4). \\
+\hline
+P7 & Tạo báo cáo Thống kê & Đọc DS4 (history, alarm\_history) và DS5 (stats), tính toán weekly accuracy, SRS distribution, wake-up score, trả kết quả cho E1. \\
+\hline
+\end{tabular}
+\end{table}
+
+Bảng \ref{tab:datastores_level0} mô tả 5 kho dữ liệu:
+
+\begin{table}[H]
+\centering
+\caption{Mô tả các kho dữ liệu Level 0}
+\label{tab:datastores_level0}
+\begin{tabular}{|p{1.5cm}|p{4cm}|p{8.5cm}|}
+\hline
+\textbf{Mã} & \textbf{Kho dữ liệu} & \textbf{Nội dung chính} \\
+\hline
+DS1 & Alarms & AlarmEntity + 3 bảng liên kết (alarm\_topic\_link, alarm\_selected\_questions, alarm\_qr\_link). Lưu trữ cấu hình báo thức và quan hệ với Topics/Questions/QR. \\
+\hline
+DS2 & Topics \& Questions & TopicEntity, QuestionEntity. Mỗi Question có ownerTopicId (FK), prompt, options (JSON), correctAnswer. \\
+\hline
+DS3 & QR Codes & QRCodeEntity (name, codeValue, codeType, createdAt) + alarm\_qr\_link. Hỗ trợ cả QR và Barcode. \\
+\hline
+DS4 & Progress \& History & QuestionProgressEntity (SRS parameters), HistoryEntity (quiz history), AlarmHistoryEntity (alarm history). Lưu lịch sử chi tiết cho phân tích. \\
+\hline
+DS5 & User Stats & UserStatsEntity (totalPoints, streak, ...), TopicStatsEntity (userEloScore). Dùng cho gamification và phân tích learning progress. \\
+\hline
+\end{tabular}
+\end{table}
+
+\textit{Phân tích cân bằng luồng dữ liệu:} Mọi luồng dữ liệu đi vào từ E1 đều có luồng đi ra tương ứng (danh sách, kết quả, thông báo). Luồng từ E2 chỉ có 1 chiều (sự kiện đổ chuông) vì AlarmManager không nhận feedback từ app sau khi gửi broadcast.
+
+\subsection{DFD Level 1 - Phân rã P4 (Xử lý Báo thức Reo)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/structured_dfd_level1_p4.png}
+\caption{DFD Level 1 - Phân rã tiến trình P4}
+\label{fig:dfd_level1_p4}
+\end{figure}
+
+P4 được phân rã thành 7 tiến trình con:
+
+\begin{itemize}
+\item \textbf{P4.1 - Nhận sự kiện đổ chuông:} \texttt{AlarmReceiver.onReceive()} parse alarmId từ Intent, đọc AlarmEntity từ DS1. Sử dụng \texttt{goAsync()} để chuyển sang coroutine scope (vì BroadcastReceiver có giới hạn thời gian 10s).
+
+\item \textbf{P4.2 - Khởi chạy Alarm Service:} Tạo foreground service với notification priority HIGH. Khởi động MediaPlayer để phát nhạc chuông (\texttt{setUsage(USAGE\_ALARM)}, \texttt{isLooping=true}). Notification có \texttt{setFullScreenIntent()} để hiển thị Activity ngay cả khi màn hình khóa.
+
+\item \textbf{P4.3 - Hiển thị màn hình reo:} \texttt{AlarmRingingActivity} hiển thị nhãn, thời gian, nút "Tắt", nút "Snooze" (nếu enabled). Tạo AlarmHistoryEntity với \texttt{isDismissed=false}.
+
+\item \textbf{P4.4 - Xử lý Snooze:} Cập nhật \texttt{snoozeCount++} trong AlarmHistoryEntity (DS4), tính thời gian reo lại = now + snoozeDuration (phút), đặt lịch tạm thời với AlarmManager (sử dụng một-off alarm, không lưu vào DB).
+
+\item \textbf{P4.5 - Kiểm tra điều kiện tắt:} Đọc cấu hình QR từ DS3, nếu có QR thì yêu cầu quét (gọi P6.5 - Xác thực QR). Sau đó kiểm tra \texttt{questionCount}: nếu > 0 thì khởi động P5 (Quiz), nếu = 0 thì cho phép tắt ngay.
+
+\item \textbf{P4.6 - Lập lại lịch lặp lại:} Đọc \texttt{daysOfWeek} từ DS1. Nếu rỗng (báo thức 1 lần): \texttt{updateAlarmEnabledStatus(id, false)}. Nếu không rỗng: tính ngày tiếp theo trong tuần có trong \texttt{daysOfWeek}, gọi \texttt{AlarmScheduler.schedule()}.
+
+\item \textbf{P4.7 - Ghi lịch sử báo thức:} Cập nhật AlarmHistoryEntity: \texttt{dismissalTime = NOW()}, \texttt{isDismissed = true}. Lịch sử này dùng cho tính Wake-up Score và phân tích habit.
+\end{itemize}
+
+\textit{Điểm đáng chú ý:} P4.5 là "checkpoint" quan trọng. Nếu thiếu QR hoặc Quiz chưa hoàn thành, người dùng không thể tắt báo thức (nhạc tiếp tục phát). Đây là core feature giúp người dùng thức dậy.
+
+\subsection{DFD Level 1 - Phân rã P5 (Thực thi Quiz)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/structured_dfd_level1_p5.png}
+\caption{DFD Level 1 - Phân rã tiến trình P5 với thuật toán SRS}
+\label{fig:dfd_level1_p5}
+\end{figure}
+
+P5 được phân rã thành 5 tiến trình con, trong đó P5.1 và P5.4 là quan trọng nhất:
+
+\begin{itemize}
+\item \textbf{P5.1 - Chọn câu hỏi theo SRS:} Đây là trái tim của hệ thống học tập thông minh. \texttt{QuestionAlgorithmManager.generateMissionQuestions()} thực hiện:
+\begin{enumerate}
+\item Đọc danh sách câu hỏi đã chọn: query \texttt{alarm\_selected\_questions} và \texttt{alarm\_topic\_link}, lấy tất cả câu hỏi (manual + từ topics), loại trùng.
+\item Đọc tiến độ: với mỗi questionId, đọc QuestionProgressEntity từ DS4.
+\item Tính điểm ưu tiên theo công thức:
+\begin{itemize}
+\item Nếu progress = null (câu chưa học): priority = 500
+\item Nếu nextReviewDate $\leq$ now (đã đến hạn ôn): priority = 1000 + (now - nextReviewDate) milliseconds
+\item Còn lại: priority = difficultyScore
+\end{itemize}
+\item Sắp xếp giảm dần theo priority, thêm yếu tố random nhỏ (±10) để tránh lặp lại 100\%.
+\item Lấy top N câu hỏi, lưu vào DS\_TEMP (bộ nhớ tạm trong ViewModel).
+\end{enumerate}
+
+\item \textbf{P5.2 - Hiển thị câu hỏi và đếm giờ:} Lấy câu hỏi từ DS\_TEMP, hiển thị prompt + 4 đáp án (đã shuffle). Khởi chạy coroutine đếm ngược 15s, cập nhật timerProgress mỗi 50ms. Nếu hết giờ, tự động đánh dấu sai và chuyển câu tiếp.
+
+\item \textbf{P5.3 - Kiểm tra đáp án:} So sánh answerId với correctAnswer. Hiển thị kết quả (màu xanh/đỏ) trong 1 giây. Gửi (questionId, isCorrect, timeToAnswerMs) cho P5.4.
+
+\item \textbf{P5.4 - Cập nhật tiến độ SRS:} \texttt{QuestionAlgorithmManager.processAnswer()} thực hiện:
+\begin{enumerate}
+\item Ghi HistoryEntity vào DS4 (questionId, alarmHistoryId, isCorrect, answeredAt, timeToAnswerMs).
+\item Đọc QuestionProgressEntity cũ (hoặc tạo mới nếu chưa có).
+\item Cập nhật theo công thức SM-2 (SuperMemo 2):
+\begin{itemize}
+\item \textbf{Nếu đúng:} correctStreak++, easinessFactor += 0.1 (max 3.0), interval = interval * easinessFactor (hoặc 1 nếu lần đầu), difficultyScore -= 50.
+\item \textbf{Nếu sai:} correctStreak = 0, easinessFactor -= 0.2 (min 1.3), interval = 1, difficultyScore += 100.
+\end{itemize}
+\item Tính nextReviewDate = NOW() + interval (ngày), lastReviewedDate = NOW().
+\item Lưu QuestionProgressEntity vào DS4.
+\end{enumerate}
+
+\item \textbf{P5.5 - Tính điểm ELO Topic:} Đọc topicId từ questionId (JOIN với bảng questions), đọc TopicStatsEntity từ DS5. Cập nhật:
+\begin{itemize}
+\item Nếu đúng: userEloScore += 10
+\item Nếu sai: userEloScore -= 5 (min 0)
+\end{itemize}
+Điểm ELO phản ánh mức độ thành thạo của người dùng với topic đó.
+\end{itemize}
+
+\textit{Phân tích độ phức tạp:} P5 là tiến trình có độ phức tạp cao nhất. Thuật toán SRS đảm bảo người dùng ôn tập đúng lúc (không quá sớm lãng phí thời gian, không quá muộn quên hết). Việc lưu lịch sử chi tiết (timeToAnswerMs) cho phép phân tích sâu hơn trong tương lai (VD: nếu trả lời nhanh = nhớ tốt).
+
+\section{Đặc tả Chức năng}
+
+Phần này trình bày mini-spec (Process Specification) của các tiến trình quan trọng nhất.
+
+\subsection{P5.1 - Chọn câu hỏi theo SRS}
+
+\textbf{Mục tiêu:} Chọn N câu hỏi phù hợp nhất cho quiz session dựa trên thuật toán Spaced Repetition.
+
+\textbf{Input:}
+\begin{itemize}
+\item alarmId (Int): Mã báo thức
+\item countNeeded (Int): Số câu hỏi cần chọn
+\end{itemize}
+
+\textbf{Data sources:}
+\begin{itemize}
+\item DS2: QuestionEntity (ownerTopicId, prompt, options, correctAnswer)
+\item DS4: QuestionProgressEntity (correctStreak, nextReviewDate, difficultyScore, easinessFactor, interval)
+\item DS1 (indirect): alarm\_selected\_questions, alarm\_topic\_link
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+\item List<MissionQuestion>: Danh sách câu hỏi đã sắp xếp theo độ ưu tiên
+\end{itemize}
+
+\textbf{Quy tắc xử lý:}
+\begin{enumerate}
+\item Query \texttt{alarm\_selected\_questions WHERE alarmId = ?} $\rightarrow$ lấy danh sách questionId lẻ
+\item Query \texttt{alarm\_topic\_link WHERE alarmId = ?} $\rightarrow$ lấy danh sách topicId
+\item Với mỗi topicId: query \texttt{questions WHERE ownerTopicId = ?} $\rightarrow$ lấy tất cả câu hỏi trong topic
+\item Merge 2 danh sách, loại trùng (DISTINCT questionId)
+\item NẾU danh sách rỗng: RETURN empty list
+\item Query \texttt{question\_progress WHERE questionId IN (...)} $\rightarrow$ lấy tiến độ
+\item Với mỗi câu hỏi:
+\begin{itemize}
+\item NẾU progress = null: priority = 500
+\item NẾU progress.nextReviewDate $\leq$ NOW():
+\begin{itemize}
+\item overdueDays = (NOW() - nextReviewDate) / (24*3600*1000)
+\item priority = 1000 + overdueDays
+\end{itemize}
+\item NGƯỢC LẠI: priority = progress.difficultyScore
+\end{itemize}
+\item Sắp xếp theo priority GIẢM DẦN
+\item Thêm nhiễu random: priority += random(-10, +10)
+\item Lấy top countNeeded câu hỏi
+\item RETURN list
+\end{enumerate}
+
+\textbf{Validation:}
+\begin{itemize}
+\item countNeeded phải > 0 và $\leq$ 100
+\item Nếu số câu hỏi có sẵn < countNeeded, chỉ trả về số câu có sẵn
+\end{itemize}
+
+\textbf{Xử lý ngoại lệ:}
+\begin{itemize}
+\item Nếu không có câu hỏi nào: P5 sẽ tắt báo thức ngay (bypass quiz)
+\item Nếu DB error: log error, trả về empty list
+\end{itemize}
+
+\subsection{P5.4 - Cập nhật tiến độ SRS}
+
+\textbf{Mục tiêu:} Cập nhật trạng thái học tập của câu hỏi sau khi người dùng trả lời, dựa trên thuật toán SM-2.
+
+\textbf{Input:}
+\begin{itemize}
+\item questionId (Int)
+\item isCorrect (Boolean)
+\item timeSpentMs (Long)
+\item alarmHistoryId (Int?): nullable, null nếu là luyện tập tự do
+\end{itemize}
+
+\textbf{Data sources:}
+\begin{itemize}
+\item DS4: QuestionProgressEntity, HistoryEntity
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+\item Cập nhật QuestionProgressEntity trong DS4
+\item Insert HistoryEntity vào DS4
+\end{itemize}
+
+\textbf{Quy tắc xử lý:}
+\begin{enumerate}
+\item Insert HistoryEntity:
+\begin{verbatim}
+INSERT INTO history (questionId, alarmHistoryId, 
+isCorrect, answeredAt, timeToAnswerMs)
+VALUES (?, ?, ?, NOW(), ?)
+\end{verbatim}
+
+\item Query \texttt{question\_progress WHERE questionId = ?}
+\item NẾU không tồn tại: tạo mới với giá trị mặc định
+\begin{verbatim}
+progress = QuestionProgressEntity(
+    questionId = questionId,
+    correctStreak = 0,
+    easinessFactor = 2.5,
+    interval = 0,
+    difficultyScore = 1000.0
+)
+\end{verbatim}
+
+\item NẾU isCorrect = TRUE:
+\begin{verbatim}
+progress.correctStreak = progress.correctStreak + 1
+progress.easinessFactor = MIN(progress.easinessFactor + 0.1, 3.0)
+IF progress.interval == 0:
+    progress.interval = 1
+ELSE:
+    progress.interval = ROUND(progress.interval * progress.easinessFactor)
+progress.difficultyScore = progress.difficultyScore - 50
+\end{verbatim}
+
+\item NẾU isCorrect = FALSE:
+\begin{verbatim}
+progress.correctStreak = 0
+progress.easinessFactor = MAX(progress.easinessFactor - 0.2, 1.3)
+progress.interval = 1
+progress.difficultyScore = progress.difficultyScore + 100
+\end{verbatim}
+
+\item Tính thời gian ôn tập tiếp theo:
+\begin{verbatim}
+progress.nextReviewDate = NOW() + progress.interval * 24 * 3600 * 1000
+progress.lastReviewedDate = NOW()
+\end{verbatim}
+
+\item Update vào DB:
+\begin{verbatim}
+UPDATE question_progress SET ... WHERE questionId = ?
+\end{verbatim}
+\end{enumerate}
+
+\textbf{Validation:}
+\begin{itemize}
+\item questionId phải tồn tại trong bảng questions (trừ ID âm - câu mặc định)
+\item timeSpentMs phải $\geq$ 0
+\item easinessFactor luôn trong khoảng [1.3, 3.0]
+\item difficultyScore không âm
+\end{itemize}
+
+\textbf{Side effects:}
+\begin{itemize}
+\item Sau khi cập nhật progress, P5.5 sẽ cập nhật TopicStats (ELO score)
+\item Nếu correctStreak $\geq$ 5: câu hỏi được coi là "Mastered" (dùng cho thống kê)
+\end{itemize}
+
+\textbf{Xử lý ngoại lệ:}
+\begin{itemize}
+\item Nếu questionId < 0 (câu mặc định): bỏ qua cập nhật progress (vì không có trong DB)
+\item Nếu DB error: log error, nhưng không throw exception (để không làm gián đoạn quiz)
+\end{itemize}
+
+\subsection{P3 - Lập lịch Báo thức}
+
+\textbf{Mục tiêu:} Đặt lịch hẹn với Android AlarmManager để hệ thống kích hoạt báo thức đúng giờ.
+
+\textbf{Input:}
+\begin{itemize}
+\item AlarmEntity: toàn bộ thông tin báo thức
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+\item Lịch hẹn đã đặt trong AlarmManager
+\end{itemize}
+
+\textbf{Quy tắc xử lý:}
+\begin{enumerate}
+\item Tạo Calendar instance, set giờ/phút/giây/millisecond
+\item NẾU calendar.timeInMillis $\leq$ currentTimeMillis: calendar.add(DAY\_OF\_YEAR, 1)
+\item NẾU daysOfWeek.isEmpty(): sử dụng thời gian ở bước 2 (báo thức 1 lần)
+\item NGƯỢC LẠI:
+\begin{verbatim}
+FOR i FROM 0 TO 7:
+    candidate = calendar + i ngày
+    dayCode = getDayCode(candidate.dayOfWeek)  // "T2", "T3", ...
+    IF dayCode IN daysOfWeek AND candidate > NOW():
+        triggerTime = candidate
+        BREAK
+\end{verbatim}
+\item Tạo Intent target = AlarmReceiver, extras: ALARM\_ID, ALARM\_LABEL, RINGTONE\_URI
+\item Tạo PendingIntent với requestCode = alarmId (quan trọng để mỗi alarm có intent riêng)
+\item Gọi AlarmManager.setAlarmClock(triggerTime, pendingIntent)
+\end{enumerate}
+
+\textbf{Validation:}
+\begin{itemize}
+\item Kiểm tra quyền SCHEDULE\_EXACT\_ALARM (Android 12+)
+\item Nếu thiếu quyền: hiển thị dialog yêu cầu người dùng vào Settings
+\end{itemize}
+
+\textbf{Xử lý ngoại lệ:}
+\begin{itemize}
+\item Nếu SecurityException (thiếu quyền): throw lên UI layer để hiển thị dialog
+\item Nếu IllegalStateException: log error và thông báo người dùng
+\end{itemize}
+
+\textit{Lý do dùng setAlarmClock thay vì set/setExact:} \texttt{setAlarmClock} tự động đánh thức máy từ Doze mode, được ưu tiên cao nhất, và hiển thị icon alarm trên status bar. Đây là best practice cho alarm app.
+
+\section{Phân tích Hệ thống về mặt Dữ liệu}
+
+\subsection{Mô hình ER hạn chế}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/structured_erd.png}
+\caption{Mô hình ER - Entity Relationship Diagram}
+\label{fig:erd}
+\end{figure}
+
+Bảng \ref{tab:entities} mô tả chi tiết các thực thể chính:
+
+\begin{longtable}{|p{3cm}|p{4cm}|p{7cm}|}
+\caption{Mô tả các thực thể và thuộc tính chính} \label{tab:entities} \\
+\hline
+\textbf{Thực thể} & \textbf{Thuộc tính chính} & \textbf{Ràng buộc} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Thực thể} & \textbf{Thuộc tính chính} & \textbf{Ràng buộc} \\
+\hline
+\endhead
+\hline
+\endfoot
+
+ALARMS & alarmId (PK), hour, minute, label, daysOfWeek, questionCount, isEnabled, ringtoneUri, snoozeDuration, snoozeEnabled & hour: [0-23], minute: [0-59], daysOfWeek: Set<String> (Room TypeConverter), questionCount: [0-100], snoozeDuration: [1-60] \\
+\hline
+
+TOPICS & topicId (PK), topicName & topicName: NOT NULL, UNIQUE. Độ dài 1-100 ký tự. \\
+\hline
+
+QUESTIONS & questionId (PK), ownerTopicId (FK), prompt, options, correctAnswer & ownerTopicId: FK to TOPICS, ON DELETE CASCADE. options: List<String> lưu dạng JSON (TypeConverter). correctAnswer: NOT NULL. \\
+\hline
+
+QR\_CODES & qrId (PK), name, codeValue, codeType, createdAt & codeValue: UNIQUE, NOT NULL. codeType: ENUM ("QR", "BARCODE"). Giới hạn 5 mã trong hệ thống (logic trong code). \\
+\hline
+
+ALARM\_TOPIC\_LINK & alarmId (PK, FK), topicId (PK, FK) & Composite PK. FK to ALARMS và TOPICS, ON DELETE CASCADE. Index trên cả 2 cột. \\
+\hline
+
+ALARM\_SELECTED\_QUESTIONS & selectionId (PK), alarmId (FK), questionId, topicId & FK to ALARMS, ON DELETE CASCADE. questionId có thể âm (câu mặc định) nên không có FK constraint. \\
+\hline
+
+ALARM\_QR\_LINK & alarmId (PK, FK), qrId (PK, FK) & Composite PK. FK to ALARMS và QR\_CODES, ON DELETE CASCADE. Mỗi alarm tối đa 3 QR (logic trong code). \\
+\hline
+
+QUESTION\_PROGRESS & questionId (PK, FK), correctStreak, lastReviewedDate, nextReviewDate, difficultyScore, easinessFactor, interval & FK to QUESTIONS, ON DELETE CASCADE. easinessFactor: [1.3, 3.0], interval: >= 0 (ngày), difficultyScore: >= 0. \\
+\hline
+
+TOPIC\_STATS & topicId (PK, FK), userEloScore & FK to TOPICS, ON DELETE CASCADE. userEloScore: mặc định 1000.0, >= 0. \\
+\hline
+
+HISTORY & historyId (PK), questionId (FK), alarmHistoryId (FK), isCorrect, answeredAt, timeToAnswerMs & FK to QUESTIONS và ALARM\_HISTORY, ON DELETE CASCADE. timeToAnswerMs: >= 0 (milliseconds). \\
+\hline
+
+ALARM\_HISTORY & historyId (PK), alarmId (FK), snoozeCount, scheduledTime, firstRingTime, dismissalTime, isDismissed & FK to ALARMS, ON DELETE CASCADE. dismissalTime: nullable (null nếu chưa tắt). \\
+\hline
+
+USER\_STATS & userId (PK), totalPoints, currentStreak, bestStreak, totalAlarmsDismissed, lastActiveDate & userId luôn = 1 (single user app). totalPoints, streak: >= 0. lastActiveDate: Unix timestamp. \\
+\hline
+
+USER & userId (PK), name & Bảng placeholder, hiện tại chưa dùng. Dành cho tương lai multi-user. \\
+\hline
+\end{longtable}
+
+\subsection{Phân tích quan hệ}
+
+\textbf{Quan hệ N-N:}
+\begin{itemize}
+\item \textbf{ALARMS $\leftrightarrow$ TOPICS} (qua ALARM\_TOPIC\_LINK): Một báo thức có thể chọn nhiều topic (để dùng tất cả câu hỏi trong topic đó), một topic được dùng bởi nhiều báo thức. Ràng buộc: khi xóa ALARMS hoặc TOPICS, bản ghi trong ALARM\_TOPIC\_LINK tự động xóa (CASCADE).
+
+\item \textbf{ALARMS $\leftrightarrow$ QR\_CODES} (qua ALARM\_QR\_LINK): Một báo thức có thể dùng nhiều QR (tối đa 3), một QR được dùng bởi nhiều báo thức. Ràng buộc: không cho phép xóa QR đang được dùng (hoặc xóa cả liên kết).
+\end{itemize}
+
+\textbf{Quan hệ 1-N:}
+\begin{itemize}
+\item \textbf{ALARMS $\leftrightarrow$ ALARM\_SELECTED\_QUESTIONS:} Một báo thức có thể chọn nhiều câu hỏi lẻ. Không có FK constraint cho questionId vì câu mặc định có ID âm (không tồn tại trong QUESTIONS).
+
+\item \textbf{TOPICS $\leftrightarrow$ QUESTIONS:} Một topic chứa nhiều câu hỏi. Khi xóa topic, tất cả câu hỏi trong topic đó cũng bị xóa (CASCADE). Đây là ràng buộc nghiệp vụ quan trọng: người dùng phải cẩn thận khi xóa topic.
+
+\item \textbf{ALARMS $\leftrightarrow$ ALARM\_HISTORY:} Một báo thức tạo nhiều bản ghi lịch sử (mỗi lần reo = 1 bản ghi). Dữ liệu này dùng cho phân tích habit và tính Wake-up Score.
+
+\item \textbf{ALARM\_HISTORY $\leftrightarrow$ HISTORY:} Một lần reo báo thức chứa nhiều câu trả lời. Quan hệ này giúp truy vết: "Lần báo thức ngày X, người dùng trả lời những câu nào?".
+
+\item \textbf{QUESTIONS $\leftrightarrow$ HISTORY:} Một câu hỏi có nhiều lần trả lời (qua các lần quiz khác nhau). Dữ liệu này dùng cho phân tích: "Câu hỏi X được trả lời đúng bao nhiêu \% tổng số lần?".
+\end{itemize}
+
+\textbf{Quan hệ 1-1:}
+\begin{itemize}
+\item \textbf{QUESTIONS $\leftrightarrow$ QUESTION\_PROGRESS:} Mỗi câu hỏi có duy nhất 1 bản ghi tiến độ. Nếu chưa từng trả lời, bản ghi chưa tồn tại (lazy initialization).
+
+\item \textbf{TOPICS $\leftrightarrow$ TOPIC\_STATS:} Mỗi topic có duy nhất 1 bản ghi thống kê (điểm ELO). Tương tự lazy initialization.
+
+\item \textbf{USER $\leftrightarrow$ USER\_STATS:} Mỗi user có 1 bản ghi stats. Hiện tại userId luôn = 1 (single user).
+\end{itemize}
+
+\subsection{Ràng buộc toàn vẹn dữ liệu}
+
+\textbf{Khóa chính (Primary Key):}
+\begin{itemize}
+\item Tất cả bảng đều có PK: alarmId, topicId, questionId, qrId, historyId, userId, selectionId.
+\item Bảng liên kết dùng composite PK: (alarmId, topicId), (alarmId, qrId).
+\end{itemize}
+
+\textbf{Khóa ngoại (Foreign Key):}
+\begin{itemize}
+\item Tất cả FK đều có ON DELETE CASCADE (trừ một vài trường hợp đặc biệt).
+\item Ví dụ: xóa AlarmEntity $\rightarrow$ Room tự động xóa alarm\_topic\_link, alarm\_selected\_questions, alarm\_qr\_link, alarm\_history.
+\end{itemize}
+
+\textbf{Ràng buộc UNIQUE:}
+\begin{itemize}
+\item TOPICS.topicName: Không cho phép 2 topic trùng tên.
+\item QR\_CODES.codeValue: Không cho phép lưu 2 mã có giá trị giống nhau.
+\end{itemize}
+
+\textbf{Ràng buộc CHECK (logic trong code):}
+\begin{itemize}
+\item Số lượng QR trong hệ thống $\leq$ 5: kiểm tra bằng \texttt{getQRCodeCount()} trước khi insert.
+\item Số lượng QR cho mỗi alarm $\leq$ 3: kiểm tra bằng \texttt{getQRLinkCountForAlarm()} trước khi insert.
+\item hour: [0-23], minute: [0-59]: validate trong UI layer (TimePicker).
+\item easinessFactor: [1.3, 3.0]: đảm bảo bằng logic trong \texttt{processAnswer()}.
+\end{itemize}
+
+\chapter{THIẾT KẾ}
+
+\section{Thiết kế Tổng thể}
+
+\subsection{Kiến trúc hệ thống}
+
+Hệ thống sử dụng kiến trúc \textbf{MVVM (Model-View-ViewModel)} kết hợp \textbf{Clean Architecture}, phân tầng rõ ràng:
+
+\begin{figure}[H]
+\centering
+\begin{verbatim}
++---------------------------------------------+
+|  UI Layer (Jetpack Compose)                 |
+|  - Screens: AlarmScreen, QuizScreen, ...    |
+|  - Components: AlarmCard, QuestionCard, ... |
++----------------+----------------------------+
+                 | observes StateFlow
++----------------v----------------------------+
+|  ViewModel Layer                            |
+|  - AlarmViewModel, QuizViewModel, ...       |
+|  - Quan ly UI state, xu ly user interaction |
++----------------+----------------------------+
+                 | calls
++----------------v----------------------------+
+|  Logic Layer                                |
+|  - AlarmScheduler: Dat lich he thong        |
+|  - QuestionAlgorithmManager: SRS algorithm  |
+|  - AlarmReceiver, AlarmService              |
++----------------+----------------------------+
+                 | reads/writes
++----------------v----------------------------+
+|  Data Layer (Room Database)                 |
+|  - AppDao, StatisticsDao                    |
+|  - Entities: AlarmEntity, QuestionEntity, ..|
+|  - AppDatabase (Singleton)                  |
++---------------------------------------------+
+\end{verbatim}
+\caption{Kiến trúc phân tầng của hệ thống}
+\end{figure}
+
+\textbf{Luồng dữ liệu:}
+\begin{enumerate}
+\item \textbf{UI $\rightarrow$ ViewModel:} User actions (clicks, text inputs) được xử lý bởi composable functions, gọi methods của ViewModel.
+\item \textbf{ViewModel $\rightarrow$ Logic:} ViewModel không chứa business logic phức tạp, mà ủy thác cho các class trong Logic Layer.
+\item \textbf{Logic $\rightarrow$ Data:} Logic layer gọi Dao để đọc/ghi database, hoặc gọi Android system services (AlarmManager).
+\item \textbf{Data $\rightarrow$ ViewModel:} Room Dao trả về Flow/StateFlow, ViewModel collect và transform thành UI state.
+\item \textbf{ViewModel $\rightarrow$ UI:} UI observe StateFlow, tự động recompose khi state thay đổi.
+\end{enumerate}
+
+\textbf{Android Components sử dụng:}
+\begin{itemize}
+\item \textbf{Activity:} MainActivity (entry point), AlarmRingingActivity (full-screen khi báo thức reo).
+\item \textbf{BroadcastReceiver:} AlarmReceiver (nhận sự kiện từ AlarmManager).
+\item \textbf{Foreground Service:} AlarmService (phát nhạc, hiển thị notification).
+\item \textbf{Navigation:} Jetpack Navigation Compose với NavHost.
+\item \textbf{Database:} Room (SQLite wrapper) với TypeConverters cho kiểu dữ liệu phức tạp.
+\end{itemize}
+
+\subsection{Design patterns}
+
+\begin{itemize}
+\item \textbf{MVVM:} Tách biệt UI logic (ViewModel) và UI presentation (Composable).
+\item \textbf{Repository Pattern:} AppDao đóng vai trò repository, che giấu chi tiết implementation (Room).
+\item \textbf{Observer Pattern:} Flow/StateFlow cho phép UI observe data changes.
+\item \textbf{Singleton:} AppDatabase sử dụng singleton pattern để đảm bảo chỉ có 1 instance.
+\item \textbf{Strategy Pattern:} QuestionAlgorithmManager có thể dễ dàng thay đổi thuật toán chọn câu hỏi (hiện tại là SRS, có thể mở rộng sang Leitner, Anki, ...).
+\item \textbf{Factory Pattern:} StatsViewModelFactory để inject StatisticsDao vào StatsViewModel.
+\end{itemize}
+
+\subsection{Reactive Programming}
+
+Hệ thống sử dụng Kotlin Flow và Coroutine để xử lý bất đồng bộ:
+
+\begin{itemize}
+\item \textbf{Flow<T>:} Dùng cho data stream từ database. Ví dụ: \texttt{getAllAlarms(): Flow<List<AlarmEntity>>} tự động emit khi có alarm mới/sửa/xóa.
+\item \textbf{StateFlow<T>:} Dùng cho UI state trong ViewModel. Có giá trị khởi tạo và giữ giá trị hiện tại.
+\item \textbf{viewModelScope:} Coroutine scope gắn với lifecycle của ViewModel, tự động cancel khi ViewModel bị destroy.
+\item \textbf{Dispatchers.IO:} Dùng cho database operations và network calls.
+\item \textbf{Dispatchers.Main:} Dùng cho UI updates.
+\end{itemize}
+
+Ví dụ cụ thể:
+\begin{verbatim}
+val alarms: StateFlow<List<AlarmData>> = combine(
+    alarmDao.getAllAlarms(),  // Flow<List<AlarmEntity>>
+    _sortType                 // MutableStateFlow<SortType>
+) { entities, sortType ->
+    entities.map { it.toAlarmData() }
+        .sortedWith(sortType.comparator())
+}.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5000),
+    initialValue = emptyList()
+)
+\end{verbatim}
+
+Giải thích: \texttt{combine} merge 2 Flow, mỗi khi 1 trong 2 emit giá trị mới, lambda được gọi. \texttt{stateIn} convert Flow thành StateFlow với cơ chế cache 5 giây sau khi không có observer.
+
+\section{Giao diện}
+
+\subsection{Design principles}
+
+\begin{itemize}
+\item \textbf{Material Design 3:} Sử dụng Material 3 components (Button, Card, Scaffold, ...) để đảm bảo consistency với Android ecosystem.
+\item \textbf{Dark mode mặc định:} Vì app chủ yếu dùng buổi tối/sáng sớm (đặt báo thức trước khi ngủ, tắt báo thức khi thức dậy).
+\item \textbf{Accessibility:} Kích thước touch target $\geq$ 48dp, contrast ratio $\geq$ 4.5:1 (WCAG AA).
+\item \textbf{Performance:} Sử dụng LazyColumn cho danh sách dài (alarms, questions), tránh nested scrolling.
+\end{itemize}
+
+\subsection{Màn hình chính}
+
+\begin{enumerate}
+\item \textbf{AlarmScreen:}
+\begin{itemize}
+\item Bottom Navigation Bar: 3 tabs (Alarm, Topic, Stats)
+\item Danh sách báo thức: LazyColumn với AlarmCard
+\item Mỗi AlarmCard: giờ/phút lớn, nhãn, ngày lặp lại, switch bật/tắt
+\item FAB "+" để tạo báo thức mới
+\item Top bar: tiêu đề "Báo thức tiếp theo sau X giờ Y phút", nút sort
+\end{itemize}
+
+\item \textbf{TopicScreen:}
+\begin{itemize}
+\item Search bar ở top
+\item Danh sách chủ đề: LazyColumn với TopicCard
+\item Mỗi TopicCard: tên chủ đề, số câu hỏi, icon edit/delete
+\item FAB "+" để tạo chủ đề mới
+\end{itemize}
+
+\item \textbf{StatsScreen:}
+\begin{itemize}
+\item Line chart: Độ chính xác 7 ngày (Canvas hoặc thư viện chart)
+\item Pie chart: Phân phối SRS (New/Learning/Mastered)
+\item Card: Wake-up Score (circular progress + số)
+\item Card: Streak hiện tại, streak tốt nhất, tổng điểm
+\end{itemize}
+\end{enumerate}
+
+\subsection{Màn hình phụ}
+
+\begin{enumerate}
+\item \textbf{AlarmSettingsScreen:}
+\begin{itemize}
+\item TimePicker: chọn giờ/phút (wheel picker hoặc clock)
+\item TextField: nhập nhãn (optional)
+\item Chip group: chọn ngày lặp lại (T2, T3, ..., CN)
+\item Row: Số câu hỏi (Slider 0-10)
+\item Button: "Chọn câu hỏi" $\rightarrow$ MissionSelectionDialog
+\item Button: "Chọn QR Code" $\rightarrow$ QRCodeManagementDialog
+\item Row: Nhạc chuông (click để mở RingtonePickerDialog)
+\item Switch: Bật/tắt snooze
+\item Slider: Thời gian snooze (1-60 phút) - chỉ hiện khi snooze enabled
+\item Text: "Đổ chuông sau X giờ Y phút" (tính real-time)
+\item Bottom bar: Button "Lưu" và "Hủy"
+\end{itemize}
+
+\item \textbf{QuizScreen:}
+\begin{itemize}
+\item Top: Progress bar (số câu đúng / tổng số câu)
+\item Center: Circular timer progress (15s đếm ngược)
+\item Card: Câu hỏi (prompt)
+\item 4 Cards: Đáp án A, B, C, D (grid 2x2)
+\item Màu: xanh khi đúng, đỏ khi sai, xám khi chưa chọn
+\item Không có nút "Back" (buộc phải hoàn thành quiz)
+\end{itemize}
+
+\item \textbf{AlarmRingingScreen:}
+\begin{itemize}
+\item Full-screen, màu nổi bật (đỏ/cam)
+\item Giờ/phút lớn (48sp)
+\item Nhãn báo thức (24sp)
+\item Button "Tắt" (to, dễ nhấn)
+\item Button "Snooze" (nhỏ hơn, chỉ hiện nếu enabled)
+\item Animation: rung nhẹ hoặc pulse để thu hút attention
+\end{itemize}
+
+\item \textbf{TopicDetailScreen:}
+\begin{itemize}
+\item Top bar: tên chủ đề (editable), icon edit, icon delete
+\item Danh sách câu hỏi: LazyColumn với QuestionCard
+\item Mỗi QuestionCard: prompt, correctAnswer, icon edit/delete
+\item FAB "+" để thêm câu hỏi mới $\rightarrow$ AddQuestionDialog
+\end{itemize}
+
+\item \textbf{QRCodeScannerScreen:}
+\begin{itemize}
+\item Full-screen camera preview (CameraX)
+\item Overlay: khung hình chữ nhật (guiding box) ở giữa
+\item Text: "Đưa mã QR vào khung hình"
+\item Bottom bar: Button "Chọn từ thư viện" (scan từ ảnh)
+\item Button "Hủy" ở top-left
+\end{itemize}
+\end{enumerate}
+
+\subsection{Navigation flow}
+
+\begin{verbatim}
+MainActivity
++-- MainScreen (NavHost)
+|   +-- AlarmScreen (ALARM_TAB) - start destination
+|   |   +-- AlarmSettingsScreen (ALARM_SETTINGS)
+|   |       +-- MissionSelectionDialog
+|   |       +-- QRCodeManagementDialog
+|   |           +-- QRCodeScannerScreen
+|   |           +-- QRDismissScreen (khi tat bao thuc)
+|   +-- TopicScreen (TOPIC_TAB)
+|   |   +-- TopicDetailScreen (TOPIC_DETAIL)
+|   |       +-- AddQuestionDialog
+|   +-- StatsScreen (STATS_TAB)
+|
++-- AlarmRingingActivity (separate task)
+    +-- AlarmRingingScreen
+    +-- QuizScreen (QUIZ_SCREEN)
+        +-- QRDismissScreen (neu co QR)
+\end{verbatim}
+
+\textit{Lưu ý:} AlarmRingingActivity sử dụng flag \texttt{NEW\_TASK | CLEAR\_TASK} để tách khỏi MainActivity, đảm bảo hiển thị được ngay cả khi app không chạy.
+
+\section{Database}
+
+\subsection{Thiết kế bảng}
+
+Database sử dụng \textbf{Room Persistence Library} (wrapper của SQLite), tên database: \texttt{app\_database}, version: 2.
+
+Bảng \ref{tab:db_tables} tóm tắt tất cả bảng:
+
+\begin{table}[H]
+\centering
+\caption{Danh sách bảng trong database}
+\label{tab:db_tables}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Tên bảng} & \textbf{Số cột} & \textbf{PK} & \textbf{FK} \\
+\hline
+alarms & 10 & alarmId & - \\
+topics & 2 & topicId & - \\
+questions & 5 & questionId & ownerTopicId \\
+qr\_codes & 5 & qrId & - \\
+alarm\_topic\_link & 2 & alarmId+topicId & alarmId, topicId \\
+alarm\_selected\_questions & 4 & selectionId & alarmId \\
+alarm\_qr\_link & 2 & alarmId+qrId & alarmId, qrId \\
+question\_progress & 7 & questionId & questionId \\
+topic\_stats & 2 & topicId & topicId \\
+history & 6 & historyId & questionId, alarmHistoryId \\
+alarm\_history & 7 & historyId & alarmId \\
+UserStats & 6 & userId & - \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{TypeConverters}
+
+Room không hỗ trợ trực tiếp các kiểu dữ liệu phức tạp, cần TypeConverter:
+
+\textbf{1. Set<String> $\leftrightarrow$ String (daysOfWeek):}
+\begin{verbatim}
+@TypeConverter
+fun fromStringSet(value: Set<String>): String {
+    return value.joinToString(",")
+}
+
+@TypeConverter
+fun toStringSet(value: String): Set<String> {
+    return if (value.isEmpty()) emptySet() 
+           else value.split(",").toSet()
+}
+\end{verbatim}
+
+Ví dụ: Set("T2", "T3", "T4") $\rightarrow$ "T2,T3,T4" trong SQLite.
+
+\textbf{2. List<String> $\leftrightarrow$ String JSON (options):}
+\begin{verbatim}
+@TypeConverter
+fun fromStringList(value: List<String>): String {
+    return Gson().toJson(value)
+}
+
+@TypeConverter
+fun toStringList(value: String): List<String> {
+    return Gson().fromJson(value, 
+        object : TypeToken<List<String>>() {}.type)
+}
+\end{verbatim}
+
+Ví dụ: List("Đáp án A", "Đáp án B") $\rightarrow$ "[\"Đáp án A\",\"Đáp án B\"]".
+
+\textbf{3. Date $\leftrightarrow$ Long (timestamp):}
+\begin{verbatim}
+@TypeConverter
+fun fromDate(date: Date?): Long? {
+    return date?.time
+}
+
+@TypeConverter
+fun toDate(timestamp: Long?): Date? {
+    return timestamp?.let { Date(it) }
+}
+\end{verbatim}
+
+Ví dụ: Date(2024-01-07 10:30:00) $\rightarrow$ 1704611400000 (Unix timestamp).
+
+\subsection{Indexes}
+
+Index được tạo cho các cột thường xuyên query:
+
+\begin{itemize}
+\item \texttt{questions}: INDEX(ownerTopicId) - tăng tốc query "lấy tất cả câu hỏi trong topic X"
+\item \texttt{alarm\_topic\_link}: INDEX(alarmId), INDEX(topicId) - join tables
+\item \texttt{alarm\_qr\_link}: INDEX(alarmId), INDEX(qrId)
+\item \texttt{history}: INDEX(questionId), INDEX(alarmHistoryId) - truy vấn thống kê
+\item \texttt{alarm\_history}: INDEX(alarmId)
+\end{itemize}
+
+Index tự động được tạo bởi Room khi khai báo \texttt{@Index} annotation.
+
+\subsection{Migration}
+
+Version 1 $\rightarrow$ 2: Thêm bảng \texttt{qr\_codes} và \texttt{alarm\_qr\_link}.
+
+\begin{verbatim}
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS qr_codes (
+                qrId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                codeValue TEXT NOT NULL,
+                codeType TEXT NOT NULL,
+                createdAt INTEGER NOT NULL
+            )
+        """)
+        
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS alarm_qr_link (
+                alarmId INTEGER NOT NULL,
+                qrId INTEGER NOT NULL,
+                PRIMARY KEY(alarmId, qrId),
+                FOREIGN KEY(alarmId) REFERENCES alarms(alarmId) 
+                    ON DELETE CASCADE,
+                FOREIGN KEY(qrId) REFERENCES qr_codes(qrId) 
+                    ON DELETE CASCADE
+            )
+        """)
+        
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_alarm_qr_link_alarmId 
+             ON alarm_qr_link(alarmId)")
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_alarm_qr_link_qrId 
+             ON alarm_qr_link(qrId)")
+    }
+}
+\end{verbatim}
+
+Khi nâng cấp app lên version 2, Room tự động chạy migration này.
+
+\subsection{Query phức tạp}
+
+\textbf{1. Lấy danh sách topic kèm số câu hỏi:}
+\begin{verbatim}
+@Query("""
+    SELECT t.topicId, t.topicName, COUNT(q.questionId) AS questionCount 
+    FROM topics t 
+    LEFT JOIN questions q ON t.topicId = q.ownerTopicId 
+    GROUP BY t.topicId
+""")
+fun getAllTopicsWithCount(): Flow<List<TopicWithCountResult>>
+\end{verbatim}
+
+Sử dụng LEFT JOIN để đảm bảo topic không có câu hỏi vẫn xuất hiện (count = 0).
+
+\textbf{2. Kiểm tra mã QR có hợp lệ không:}
+\begin{verbatim}
+@Query("""
+    SELECT EXISTS(
+        SELECT 1 FROM qr_codes q
+        INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+        WHERE link.alarmId = :alarmId AND q.codeValue = :codeValue
+    )
+""")
+suspend fun isQRCodeValidForAlarm(alarmId: Int, codeValue: String): Boolean
+\end{verbatim}
+
+Sử dụng EXISTS để tối ưu performance (dừng ngay khi tìm thấy 1 bản ghi).
+
+\textbf{3. Lấy câu hỏi từ các topic đã chọn:}
+\begin{verbatim}
+@Query("""
+    SELECT q.* FROM questions q
+    INNER JOIN alarm_topic_link link ON q.ownerTopicId = link.topicId
+    WHERE link.alarmId = :alarmId
+""")
+suspend fun getQuestionsFromLinkedTopics(alarmId: Int): List<QuestionEntity>
+\end{verbatim}
+
+\textbf{4. Thống kê độ chính xác theo tuần:}
+\begin{verbatim}
+@Query("""
+    SELECT 
+        date(answeredAt/1000, 'unixepoch', 'localtime') as day,
+        SUM(CASE WHEN isCorrect = 1 THEN 1 ELSE 0 END) as correct,
+        COUNT(*) as total
+    FROM history
+    WHERE answeredAt > :sevenDaysAgo
+    GROUP BY day 
+    ORDER BY day ASC
+""")
+fun getWeeklyAccuracy(sevenDaysAgo: Long): Flow<List<DailyStat>>
+\end{verbatim}
+
+Sử dụng CASE WHEN để tính tổng số câu đúng, GROUP BY ngày.
+
+\subsection{Transaction và concurrency}
+
+\textbf{Transaction tự động:}
+\begin{itemize}
+\item Mỗi suspend function của Dao tự động chạy trong transaction.
+\item Ví dụ: \texttt{insertAlarm()} đảm bảo atomic - hoặc insert thành công hoàn toàn, hoặc rollback.
+\end{itemize}
+
+\textbf{Transaction thủ công:}
+\begin{verbatim}
+@Transaction
+suspend fun saveAlarmWithLinks(alarm: AlarmEntity, 
+                                topicIds: List<Int>, 
+                                qrIds: List<Int>) {
+    val alarmId = insertAlarm(alarm).toInt()
+    topicIds.forEach { topicId ->
+        insertAlarmTopicLink(AlarmTopicLink(alarmId, topicId))
+    }
+    qrIds.forEach { qrId ->
+        insertAlarmQRLink(AlarmQRLinkEntity(alarmId, qrId))
+    }
+}
+\end{verbatim}
+
+Nếu bất kỳ bước nào fail, toàn bộ transaction rollback.
+
+\textbf{Concurrency:}
+\begin{itemize}
+\item Room sử dụng \texttt{Dispatchers.IO} cho tất cả database operations.
+\item Multiple coroutines có thể đọc đồng thời (read lock).
+\item Chỉ 1 coroutine được ghi tại 1 thời điểm (write lock).
+\item Flow tự động emit khi có thay đổi (observe pattern).
+\end{itemize}
+
+\section*{Kết luận}
+
+Báo cáo đã trình bày chi tiết phân tích và thiết kế hệ thống Báo thức Thông minh theo phương pháp có cấu trúc (SA/SD). Hệ thống được phân rã thành 5 module chính, 7 tiến trình chủ chốt, và 5 kho dữ liệu. Thiết kế database với 12 bảng đảm bảo tính toàn vẹn dữ liệu thông qua Foreign Key Constraints và indexes. Kiến trúc MVVM kết hợp Flow/Coroutine giúp code dễ maintain và test. Thuật toán SRS được implement chi tiết trong P5, đảm bảo học tập hiệu quả.
+
+\end{document}

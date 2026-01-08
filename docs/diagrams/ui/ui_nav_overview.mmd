@@ -1,0 +1,36 @@
+flowchart TD
+    Start([Khởi động ứng dụng]) --> CheckPerm[Kiểm tra quyền]
+    CheckPerm -->|Thiếu quyền| PermDialog[Hộp thoại yêu cầu quyền]
+    CheckPerm -->|Đủ quyền| MainNav[Điều hướng chính]
+    PermDialog --> MainNav
+    
+    MainNav --> TabAlarm[Tab: Báo thức]
+    MainNav --> TabTopic[Tab: Chủ đề]
+    MainNav --> TabStats[Tab: Thống kê]
+    
+    TabAlarm --> AlarmList[Màn hình Danh sách Báo thức]
+    AlarmList -->|Nhấn Thêm| AlarmSettings[Màn hình Cấu hình Báo thức]
+    AlarmList -->|Nhấn Báo thức| AlarmSettings
+    AlarmSettings -->|Chọn Câu hỏi| MissionDialog[Hộp thoại Chọn Câu hỏi]
+    AlarmSettings -->|Chọn QR| QRDialog[Hộp thoại Quản lý QR]
+    
+    TabTopic --> TopicList[Màn hình Danh sách Chủ đề]
+    TopicList -->|Nhấn Chủ đề| TopicDetail[Màn hình Chi tiết Chủ đề]
+    
+    TabStats --> StatsView[Màn hình Thống kê]
+    
+    AlarmList -.->|Báo thức reo| AlarmRinging[Màn hình Reo Báo thức]
+    AlarmRinging -->|Có QR| QRScanner[Màn hình Quét QR]
+    AlarmRinging -->|Có Quiz| QuizScreen[Màn hình Quiz]
+    QRScanner --> QuizScreen
+    QuizScreen -->|Hoàn thành| AlarmList
+    
+    style Start fill:#e1f5ff
+    style MainNav fill:#fff4e1
+    style TabAlarm fill:#e8f5e9
+    style TabTopic fill:#e8f5e9
+    style TabStats fill:#e8f5e9
+    style AlarmRinging fill:#ffebee
+    style QuizScreen fill:#ffebee
+
+

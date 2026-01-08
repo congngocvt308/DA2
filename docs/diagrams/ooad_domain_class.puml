@@ -1,0 +1,117 @@
+@startuml
+'** Domain Class Diagram - Mô hình khái niệm **
+
+title Domain Class Diagram - Hệ thống Báo thức Thông minh
+
+skinparam classAttributeIconSize 0
+
+class "Báo thức\n(Alarm)" as Alarm {
+    + mã báo thức
+    + giờ
+    + phút
+    + nhãn
+    + các ngày lặp lại
+    + trạng thái bật/tắt
+    + số câu hỏi
+    + nhạc chuông
+    + cấu hình snooze
+}
+
+class "Chủ đề\n(Topic)" as Topic {
+    + mã chủ đề
+    + tên chủ đề
+}
+
+class "Câu hỏi\n(Question)" as Question {
+    + mã câu hỏi
+    + nội dung câu hỏi
+    + các đáp án
+    + đáp án đúng
+}
+
+class "Mã QR\n(QRCode)" as QRCode {
+    + mã QR
+    + tên mã
+    + giá trị mã
+    + loại (QR/Barcode)
+    + thời gian tạo
+}
+
+class "Tiến độ học tập\n(Progress)" as Progress {
+    + số lần đúng liên tiếp
+    + ngày ôn tập cuối
+    + ngày ôn tập tiếp theo
+    + điểm độ khó
+    + hệ số dễ dàng
+    + khoảng cách ôn tập
+}
+
+class "Lịch sử trả lời\n(History)" as History {
+    + thời gian trả lời
+    + kết quả đúng/sai
+    + thời gian suy nghĩ
+}
+
+class "Lịch sử báo thức\n(AlarmHistory)" as AlarmHistory {
+    + thời gian hẹn
+    + thời gian reo
+    + thời gian tắt
+    + số lần snooze
+    + trạng thái đã tắt
+}
+
+class "Thống kê người dùng\n(UserStats)" as UserStats {
+    + tổng điểm
+    + chuỗi ngày liên tiếp
+    + kỷ lục chuỗi ngày
+    + tổng báo thức đã tắt
+    + ngày hoạt động cuối
+}
+
+class "Thống kê chủ đề\n(TopicStats)" as TopicStats {
+    + điểm ELO của user
+}
+
+class "Người dùng\n(User)" as User {
+    + tên người dùng
+}
+
+' Relationships
+Alarm "1" -- "0..*" Topic : chọn toàn bộ >
+Alarm "1" -- "0..*" Question : chọn câu lẻ >
+Alarm "1" -- "0..3" QRCode : sử dụng để tắt >
+Alarm "1" -- "0..*" AlarmHistory : tạo lịch sử >
+
+Topic "1" -- "0..*" Question : chứa >
+Topic "1" -- "0..1" TopicStats : có thống kê >
+
+Question "1" -- "0..1" Progress : có tiến độ >
+Question "1" -- "0..*" History : tạo lịch sử >
+
+AlarmHistory "1" -- "0..*" History : chứa các câu trả lời >
+
+User "1" -- "1" UserStats : có thống kê >
+
+note right of Alarm
+    Báo thức có thể:
+    - Chọn toàn bộ câu hỏi từ Topic
+    - Chọn câu hỏi lẻ
+    - Yêu cầu quét QR để tắt
+    - Lặp lại theo lịch
+end note
+
+note right of Progress
+    Áp dụng thuật toán SRS
+    (Spaced Repetition System)
+    để tối ưu việc ôn tập
+end note
+
+note bottom of QRCode
+    Giới hạn:
+    - Tối đa 5 mã trong hệ thống
+    - Mỗi báo thức dùng tối đa 3 mã
+end note
+
+@enduml
+
+

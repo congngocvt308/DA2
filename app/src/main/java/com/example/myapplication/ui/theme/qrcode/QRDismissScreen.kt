@@ -92,7 +92,7 @@ private fun ScanResultScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         // Back button
@@ -103,12 +103,12 @@ private fun ScanResultScreen(
                 .padding(top = 48.dp, start = 16.dp)
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.2f))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
         ) {
             Icon(
                 Icons.Default.ArrowBack,
                 contentDescription = "Quay lại",
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onSurface
             )
         }
         
@@ -124,7 +124,7 @@ private fun ScanResultScreen(
                 )
             }
             null -> {
-                CircularProgressIndicator(color = Color.White)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -140,13 +140,13 @@ private fun SuccessContent() {
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF4CAF50)),
+                .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(60.dp)
             )
         }
@@ -157,7 +157,7 @@ private fun SuccessContent() {
             text = "Mã hợp lệ!",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50)
+            color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(12.dp))
@@ -165,7 +165,7 @@ private fun SuccessContent() {
         Text(
             text = "Đang tắt báo thức...",
             fontSize = 16.sp,
-            color = Color.White.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
         )
     }
 }
@@ -184,13 +184,13 @@ private fun InvalidContent(
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFE50043)),
+                .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(60.dp)
             )
         }
@@ -201,7 +201,7 @@ private fun InvalidContent(
             text = "Mã không hợp lệ!",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFE50043)
+            color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(12.dp))
@@ -209,7 +209,7 @@ private fun InvalidContent(
         Text(
             text = "Mã bạn quét không nằm trong\ndanh sách mã đã cài đặt",
             fontSize = 16.sp,
-            color = Color.White.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
         )
         
@@ -220,7 +220,7 @@ private fun InvalidContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.1f)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                 )
             ) {
                 Column(
@@ -230,7 +230,7 @@ private fun InvalidContent(
                         text = "Các mã đã cài đặt:",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -239,7 +239,7 @@ private fun InvalidContent(
                         Text(
                             text = "• $codeName",
                             fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                     }
@@ -252,7 +252,8 @@ private fun InvalidContent(
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ),
             shape = RoundedCornerShape(28.dp),
             modifier = Modifier
@@ -263,7 +264,7 @@ private fun InvalidContent(
                 text = "Quét lại",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }

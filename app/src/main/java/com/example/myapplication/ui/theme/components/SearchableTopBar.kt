@@ -98,7 +98,7 @@ fun SearchableTopBar(
                 ) {
                     if (onBackClick != null) {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
                         }
                     }
 

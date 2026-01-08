@@ -1,0 +1,23 @@
+flowchart TD
+    TopicTab[Tab Chủ đề] --> TopicList[Màn hình Danh sách Chủ đề]
+    
+    TopicList -->|FAB Thêm mới| QuickTopicDialog[Hộp thoại Tạo Chủ đề Nhanh]
+    TopicList -->|Nhấn vào chủ đề| TopicDetail[Màn hình Chi tiết Chủ đề]
+    TopicList -->|Tìm kiếm| SearchMode[Chế độ Tìm kiếm]
+    SearchMode --> TopicList
+    
+    TopicDetail --> AddQuestionDialog[Hộp thoại Thêm Câu hỏi]
+    TopicDetail -->|Nhấn câu hỏi| EditQuestion[Chỉnh sửa Câu hỏi]
+    TopicDetail -->|Xóa câu hỏi| DeleteQuestion[Xóa câu hỏi]
+    TopicDetail -->|Quay lại| TopicList
+    
+    AddQuestionDialog --> TopicDetail
+    EditQuestion --> TopicDetail
+    
+    QuickTopicDialog --> TopicList
+    
+    style TopicTab fill:#e1f5ff
+    style TopicList fill:#e8f5e9
+    style TopicDetail fill:#fff4e1
+
+

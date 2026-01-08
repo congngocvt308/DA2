@@ -1,0 +1,21 @@
+erDiagram
+    ALARMS ||--o{ ALARM_TOPIC_LINK : "có"
+    ALARMS ||--o{ ALARM_SELECTED_QUESTIONS : "chọn"
+    ALARMS ||--o{ ALARM_QR_LINK : "sử dụng"
+    ALARMS ||--o{ ALARM_HISTORY : "tạo ra"
+    
+    TOPICS ||--o{ ALARM_TOPIC_LINK : "được chọn bởi"
+    TOPICS ||--o{ QUESTIONS : "chứa"
+    TOPICS ||--o| TOPIC_STATS : "có"
+    
+    QUESTIONS ||--o{ ALARM_SELECTED_QUESTIONS : "được chọn"
+    QUESTIONS ||--o| QUESTION_PROGRESS : "có"
+    QUESTIONS ||--o{ HISTORY : "tạo lịch sử"
+    
+    QR_CODES ||--o{ ALARM_QR_LINK : "được dùng bởi"
+    
+    ALARM_HISTORY ||--o{ HISTORY : "chứa"
+    
+    USER_STATS ||--|| USER : "thuộc về"
+
+

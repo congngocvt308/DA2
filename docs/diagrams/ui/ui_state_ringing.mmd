@@ -1,0 +1,30 @@
+stateDiagram-v2
+    [*] --> Ringing: Báo thức reo
+    Ringing --> CheckingQR: Người dùng nhấn Tắt
+    Ringing --> Snoozing: Người dùng nhấn Snooze
+    
+    CheckingQR --> HasQR: Có mã QR
+    CheckingQR --> NoQR: Không có QR
+    
+    HasQR --> QRScanning: Yêu cầu quét QR
+    QRScanning --> QRValid: Quét đúng mã
+    QRScanning --> QRInvalid: Quét sai mã
+    QRInvalid --> QRScanning: Thử lại
+    
+    QRValid --> CheckingQuiz: Kiểm tra Quiz
+    NoQR --> CheckingQuiz: Kiểm tra Quiz
+    
+    CheckingQuiz --> HasQuiz: Có câu hỏi
+    CheckingQuiz --> NoQuiz: Không có câu hỏi
+    
+    HasQuiz --> QuizScreen: Chuyển đến Quiz
+    NoQuiz --> Dismissed: Tắt báo thức
+    
+    QuizScreen --> QuizCompleted: Hoàn thành Quiz
+    QuizCompleted --> Dismissed: Tắt báo thức
+    
+    Snoozing --> Ringing: Reo lại sau X phút
+    
+    Dismissed --> [*]: Kết thúc
+
+

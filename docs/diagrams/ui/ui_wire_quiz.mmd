@@ -1,0 +1,15 @@
+flowchart TB
+    TopBar[Thanh trên: Tiến độ đúng/tổng + Bộ đếm ngược tròn]
+    Progress[Thanh tiến độ: X/Y câu đúng]
+    Question[Thẻ câu hỏi<br/>- Nội dung câu hỏi<br/>- 4 đáp án đã xáo trộn]
+    Feedback[Phản hồi: Màu xanh/đỏ khi chọn]
+    
+    TopBar --> Progress
+    Progress --> Question
+    Question --> Feedback
+    
+    style TopBar fill:#e3f2fd
+    style Progress fill:#fff9c4
+    style Question fill:#e8f5e9
+    style Feedback fill:#ffebee
+

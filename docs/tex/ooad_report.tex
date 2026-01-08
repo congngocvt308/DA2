@@ -1,0 +1,675 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{report}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Menlo}
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{caption}
+\usepackage[unicode]{hyperref}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+%\usepackage{adjustbox}  % Tạm comment, có thể cài sau bằng tlmgr install adjustbox
+\usepackage{pdflscape}
+%\usepackage{xurl}  % Tạm comment, dùng url thay thế
+\usepackage{url}
+%\usepackage{seqsplit}  % Tạm comment, không dùng trong báo cáo
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Báo cáo Phân tích Hướng đối tượng},
+}
+
+\title{\textbf{BÁO CÁO PHÂN TÍCH - THIẾT KẾ HỆ THỐNG}\\[0.3cm]
+\large{PHƯƠNG PHÁP HƯỚNG ĐỐI TƯỢNG (OOAD/UML)}\\[0.3cm]
+\normalsize{Hệ thống Báo thức Thông minh với Quiz và QR Code}}
+\author{}
+\date{\today}
+
+% Macro chuẩn hóa hình ảnh
+\newcommand{\StdFig}[3]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+\newcommand{\WideFig}[3]{%
+  \begin{landscape}
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+  \end{landscape}
+  \clearpage
+}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{6pt}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\chapter{PHÂN TÍCH HỆ THỐNG (PHƯƠNG PHÁP HƯỚNG ĐỐI TƯỢNG)}
+
+\section{Biểu đồ Phân cấp Chức năng}
+
+Hệ thống được tổ chức theo kiến trúc MVVM với các module rõ ràng:
+\begin{itemize}
+    \item Module quản lý báo thức: Màn hình báo thức, màn hình cấu hình báo thức, màn hình quiz
+    \item Module quản lý chủ đề và câu hỏi: Màn hình chủ đề, màn hình chi tiết chủ đề
+    \item Module thống kê: Màn hình thống kê
+    \item Module quản lý QR code: Màn hình quét QR, hộp thoại quản lý QR
+    \item Module logic xử lý báo thức: Receiver nhận sự kiện, dịch vụ nền phát nhạc, bộ lập lịch
+    \item Module logic nghiệp vụ: Thuật toán SRS
+    \item Module dữ liệu: Cơ sở dữ liệu, truy vấn dữ liệu, thực thể
+\end{itemize}
+
+\textit{Đặc điểm:} Mỗi module có tầng điều phối riêng, quản lý trạng thái độc lập. Sử dụng luồng dữ liệu phản ứng để liên kết dữ liệu. Logic nghiệp vụ được tách biệt vào các thành phần riêng (bộ lập lịch, bộ chọn câu hỏi SRS), không nằm trong tầng điều phối.
+
+\textit{Ràng buộc:} Tầng điều phối phải có khả năng truy cập ngữ cảnh ứng dụng để truy cập cơ sở dữ liệu. Tất cả thao tác cơ sở dữ liệu phải chạy trong phạm vi xử lý bất đồng bộ.
+
+\section{Biểu đồ Use Case}
+
+\StdFig{images/ooad_usecase.png}{Biểu đồ Use Case tổng quan}{fig:usecase}
+
+Biểu đồ Use Case được chia thành 5 module chính dựa trên cấu trúc và chức năng nghiệp vụ. Bảng \ref{tab:usecase_list} liệt kê tất cả use case:
+
+\begin{table}[H]
+\caption{Danh sách Use Case}
+\label{tab:usecase_list}
+\small
+\begin{longtable}{|p{1.1cm}|p{4.3cm}|p{1.8cm}|p{7.8cm}|}
+\hline
+\textbf{Mã} & \textbf{Use Case} & \textbf{Actor} & \textbf{Mô tả} \\
+\hline
+\endfirsthead
+\multicolumn{4}{c}{{\bfseries \tablename\ \thetable{} -- tiếp tục từ trang trước}} \\\hline
+\textbf{Mã} & \textbf{Use Case} & \textbf{Actor} & \textbf{Mô tả} \\\hline
+\endhead
+\hline \multicolumn{4}{|r|}{{Tiếp tục ở trang sau}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
+UC01 & Tạo báo thức mới & A1 & Tạo báo thức với giờ/phút, nhãn, ngày lặp, nhạc, số câu hỏi, QR, snooze. \\
+\hline
+UC02 & Chỉnh sửa báo thức & A1 & Sửa đổi báo thức đã tạo. \\
+\hline
+UC03 & Xóa báo thức & A1 & Xóa báo thức và hủy lịch hệ thống. \\
+\hline
+UC04 & Bật/Tắt báo thức & A1 & Toggle trạng thái báo thức. \\
+\hline
+UC05 & Xem danh sách báo thức & A1 & Xem, sắp xếp, kiểm tra giờ đổ chuông tiếp theo. \\
+\hline
+UC06 & Tạo báo thức nhanh & A1 & Tạo báo thức đổ chuông sau X phút. \\
+\hline
+UC07 & Tạo chủ đề mới & A1 & Tạo chủ đề nhóm câu hỏi. \\
+\hline
+UC08 & Thêm câu hỏi vào chủ đề & A1 & Nhập câu hỏi, đáp án đúng, đáp án sai. \\
+\hline
+UC09 & Chỉnh sửa câu hỏi & A1 & Sửa nội dung/đáp án. \\
+\hline
+UC10 & Xóa câu hỏi & A1 & Xóa câu hỏi khỏi chủ đề. \\
+\hline
+UC11 & Xem chi tiết chủ đề & A1 & Xem danh sách câu hỏi trong chủ đề. \\
+\hline
+UC12 & Tìm kiếm chủ đề & A1 & Tìm theo tên. \\
+\hline
+UC13 & Nhận báo thức reo & A2 & Hệ thống gửi broadcast, app khởi động dịch vụ. \\
+\hline
+UC14 & Trả lời câu hỏi Quiz & A1 & Hiển thị câu hỏi, đếm giờ, kiểm tra đáp án, cập nhật SRS. \\
+\hline
+UC15 & Quét QR Code để tắt & A1 & Quét QR/Barcode, xác thực với mã đã chọn. \\
+\hline
+UC16 & Snooze báo thức & A1 & Đặt báo thức reo lại sau X phút. \\
+\hline
+UC17 & Tắt báo thức & A1 & Dừng nhạc, cập nhật lịch sử, lập lại lịch nếu lặp. \\
+\hline
+UC18 & Quét và lưu mã QR & A1 & Quét, đặt tên, lưu (tối đa 5). \\
+\hline
+UC19 & Liên kết QR với báo thức & A1 & Chọn tối đa 3 mã QR cho báo thức. \\
+\hline
+UC20 & Xóa mã QR & A1 & Xóa mã QR khỏi hệ thống. \\
+\hline
+UC21 & Xem thống kê tuần & A1 & Biểu đồ tỷ lệ đúng 7 ngày. \\
+\hline
+UC22 & Xem phân phối SRS & A1 & Biểu đồ tròn trạng thái New/Learning/Mastered. \\
+\hline
+UC23 & Xem điểm Wake-up Score & A1 & Điểm hiệu suất thức dậy (0-100). \\
+\hline
+UC24 & Theo dõi Streak & A1 & Xem chuỗi ngày liên tiếp, kỷ lục. \\
+\hline
+\end{longtable}
+\end{table}
+
+\textit{Phân tích:} Use case được nhóm theo module tương ứng với chức năng nghiệp vụ. Mỗi use case được thực hiện bởi một hoặc nhiều thành phần trong tầng điều phối/tầng logic. Use case nội bộ (Lập lịch hẹn hệ thống, Chọn câu hỏi theo SRS, Cập nhật tiến độ học tập, Xác thực mã QR) được bao gồm trong các use case chính.
+
+\section{Đặc tả Use Case}
+
+\subsection{UC01: Tạo báo thức mới}
+
+\textbf{Tên:} Tạo báo thức mới
+
+\textbf{Mô tả/Mục tiêu:} Người dùng tạo một báo thức mới với đầy đủ cấu hình (giờ, phút, nhãn, ngày lặp lại, nhạc chuông, số câu hỏi, QR codes, snooze) để hệ thống đổ chuông đúng giờ và yêu cầu hoàn thành quiz/QR để tắt.
+
+\textbf{Tác nhân:} A1 (Người dùng)
+
+\textbf{Tiền điều kiện:}
+\begin{itemize}
+    \item Ứng dụng đã được cài đặt và khởi động
+    \item Đã cấp quyền: SCHEDULE\_EXACT\_ALARM (Android 12+), POST\_NOTIFICATIONS (Android 13+)
+    \item Người dùng đang ở màn hình AlarmScreen hoặc AlarmSettingsScreen
+\end{itemize}
+
+\textbf{Hậu điều kiện:}
+\begin{itemize}
+    \item Báo thức mới được lưu vào cơ sở dữ liệu với trạng thái bật
+    \item Lịch hẹn đã được đặt trong Android AlarmManager
+    \item Người dùng thấy báo thức mới trong danh sách
+    \item Nếu có chọn topics/questions/QR, các liên kết đã được lưu vào bảng tương ứng
+\end{itemize}
+
+\textbf{Luồng chính:}
+\begin{enumerate}
+    \item Người dùng nhấn nút "Thêm báo thức mới" trên AlarmScreen
+    \item Hệ thống chuyển đến màn hình cấu hình báo thức với trạng thái tạo mới
+    \item Tầng điều phối khởi tạo với giá trị mặc định:
+    \begin{itemize}
+        \item Giờ/phút: thời gian hiện tại
+        \item Nhạc chuông: nhạc mặc định hệ thống
+        \item Snooze: tắt
+        \item Số câu hỏi: 0
+    \end{itemize}
+    \item Người dùng chỉnh sửa giờ/phút bằng bộ chọn thời gian
+    \item Tầng điều phối cập nhật trạng thái và tính toán "Đổ chuông sau X giờ Y phút"
+    \item [Tùy chọn] Người dùng nhập nhãn báo thức (Text Field)
+    \item [Tùy chọn] Người dùng chọn ngày lặp lại (Chip Selector: T2, T3, ..., hoặc không chọn = 1 lần)
+    \item [Tùy chọn] Người dùng chọn nhạc chuông (Ringtone Picker)
+    \item [Tùy chọn] Người dùng chọn số câu hỏi (Slider: 0-10, mặc định 3)
+    \item [Tùy chọn] Người dùng nhấn "Chọn câu hỏi" → Hiển thị hộp thoại chọn câu hỏi
+    \begin{itemize}
+        \item Người dùng có thể chọn toàn bộ chủ đề (checkbox) hoặc chọn câu hỏi lẻ
+        \item Tầng điều phối cập nhật danh sách câu hỏi và chủ đề đã chọn
+    \end{itemize}
+    \item [Tùy chọn] Người dùng nhấn "Chọn QR" → Hiển thị hộp thoại quản lý QR
+    \begin{itemize}
+        \item Người dùng chọn tối đa 3 mã QR đã lưu, hoặc quét mã mới (UC18)
+        \item Tầng điều phối cập nhật danh sách mã QR đã chọn
+    \end{itemize}
+    \item [Tùy chọn] Người dùng bật Snooze và chọn thời gian (Thanh trượt: 1-60 phút)
+    \item Hệ thống hiển thị "Đổ chuông sau X giờ Y phút" (tính toán từ thời gian hiện tại)
+    \item Người dùng nhấn "Lưu"
+    \item Tầng điều phối kiểm tra tính hợp lệ dữ liệu (giờ/phút hợp lệ, số câu hỏi $\geq$ 0)
+    \item Tầng điều phối thực hiện lưu báo thức:
+    \begin{enumerate}
+        \item Tạo bản ghi báo thức từ trạng thái giao diện
+        \item Tầng dữ liệu tạo bản ghi mới → nhận mã báo thức mới
+        \item Tầng dữ liệu lưu liên kết câu hỏi:
+        \begin{itemize}
+            \item Bảng liên kết báo thức–chủ đề (nếu chọn toàn bộ chủ đề)
+            \item Bảng câu hỏi đã chọn (nếu chọn câu hỏi lẻ)
+        \end{itemize}
+        \item Tầng dữ liệu lưu liên kết mã QR vào bảng liên kết báo thức–QR
+        \item Bộ lập lịch đặt lịch hẹn với hệ thống lập lịch Android
+    \end{enumerate}
+    \item Hệ thống hiển thị thông báo "Đã lưu báo thức"
+    \item Hệ thống chuyển về màn hình báo thức
+    \item Màn hình báo thức tự động cập nhật danh sách (nhờ luồng dữ liệu phản ứng)
+\end{enumerate}
+
+\textbf{Luồng thay thế:}
+
+\textbf{3a. Người dùng không thay đổi giờ/phút:} Hệ thống giữ giá trị mặc định (giờ hiện tại). Tầng điều phối chỉ đặt giá trị mặc định nếu đang ở trạng thái tạo mới.
+
+\textbf{10a. Người dùng chọn "Toàn bộ Chủ đề":} Hệ thống lưu liên kết vào bảng liên kết báo thức–chủ đề. Tầng dữ liệu kiểm tra danh sách chủ đề đã chọn toàn bộ và lưu vào bảng liên kết. Tất cả câu hỏi trong chủ đề sẽ được dùng cho Quiz.
+
+\textbf{10b. Người dùng chọn "Câu hỏi lẻ":} Hệ thống lưu vào bảng câu hỏi đã chọn. Hệ thống chỉ lưu câu hỏi lẻ nếu chủ đề cha của nó KHÔNG được chọn toàn bộ.
+
+\textbf{11a. Người dùng chưa có QR nào:} Hệ thống hiển thị "Chưa có mã QR. Quét ngay?" → Chuyển đến UC18 (Quét và lưu mã QR).
+
+\textbf{12a. Người dùng nhấn "Hủy":} 
+\begin{itemize}
+    \item Nếu có thay đổi: Hiển thị hộp thoại "Bỏ thay đổi?"
+    \begin{itemize}
+        \item Nếu xác nhận: Chuyển về màn hình báo thức, bỏ qua tất cả thay đổi
+        \item Nếu không: Tiếp tục chỉnh sửa
+    \end{itemize}
+    \item Nếu không có thay đổi: Chuyển về màn hình báo thức ngay
+\end{itemize}
+
+\textbf{14a. Kiểm tra hợp lệ lỗi:} Hiển thị thông báo lỗi (VD: "Giờ không hợp lệ"). Hệ thống không có kiểm tra hợp lệ rõ ràng trong quá trình lưu, nhưng bộ chọn thời gian trong giao diện đảm bảo giá trị hợp lệ.
+
+\textbf{15a. Thiếu quyền đặt báo thức chính xác (Android 12+):} 
+\begin{itemize}
+    \item Hiển thị hộp thoại "Ứng dụng cần quyền đặt báo thức chính xác"
+    \item Mở Cài đặt để người dùng cấp quyền
+    \item Sau khi quay lại, nếu đã cấp quyền → Thử lập lịch lại
+    \item Nếu vẫn không cấp → Báo thức vẫn được lưu vào cơ sở dữ liệu nhưng không đặt được lịch hẹn
+\end{itemize}
+
+\textbf{15b. Lỗi khi lưu cơ sở dữ liệu:} Ngoại lệ được xử lý trong xử lý bất đồng bộ, hiển thị thông báo lỗi. Báo thức không được lưu, người dùng có thể thử lại.
+
+\textbf{Ngoại lệ:}
+
+\textbf{E1. Người dùng force-close app giữa chừng:} Dữ liệu chưa lưu bị mất. Không có xử lý đặc biệt, người dùng phải nhập lại.
+
+\textbf{E2. Cơ sở dữ liệu bị khóa (nếu có transaction khác đang chạy):} Cơ sở dữ liệu tự động thử lại hoặc ném ngoại lệ. Hệ thống không có xử lý đặc biệt.
+
+\textbf{Dữ liệu sử dụng:}
+\begin{itemize}
+    \item \textbf{Input:} giờ, phút, nhãn, ngày lặp lại, số câu hỏi, chủ đề đã chọn, câu hỏi đã chọn, mã QR đã chọn, URI nhạc chuông, bật snooze, thời gian snooze
+    \item \textbf{Output:} Bản ghi báo thức (mã báo thức mới, trạng thái bật), các bản ghi trong bảng liên kết báo thức–chủ đề, bảng câu hỏi đã chọn, bảng liên kết báo thức–QR
+\end{itemize}
+
+\textbf{Tần suất sử dụng:} Trung bình (2-3 lần/tuần khi tạo báo thức mới)
+
+\subsection{UC14: Trả lời câu hỏi Quiz}
+
+\textbf{Tên:} Trả lời câu hỏi Quiz
+
+\textbf{Mô tả/Mục tiêu:} Người dùng trả lời đủ số câu hỏi đúng để tắt báo thức. Hệ thống sử dụng thuật toán SRS để chọn câu hỏi phù hợp, đảm bảo câu hỏi đến hạn ôn được ưu tiên.
+
+\textbf{Tác nhân:} A1 (Người dùng)
+
+\textbf{Tiền điều kiện:}
+\begin{itemize}
+    \item Báo thức đang reo (UC13 đã kích hoạt)
+    \item Báo thức có số câu hỏi lớn hơn 0
+    \item Đã có câu hỏi được chọn (Topics hoặc Questions)
+    \item Người dùng đã quét QR (nếu báo thức có QR codes)
+\end{itemize}
+
+\textbf{Hậu điều kiện:}
+\begin{itemize}
+    \item Báo thức đã tắt, nhạc dừng
+    \item Lịch sử báo thức có bản ghi đầy đủ (thời gian tắt, trạng thái đã tắt)
+    \item Tiến độ SRS của các câu hỏi đã trả lời được cập nhật
+    \item UserStats được cập nhật (điểm, streak)
+    \item TopicStats được cập nhật (ELO score)
+\end{itemize}
+
+\textbf{Luồng chính:}
+\begin{enumerate}
+    \item Người dùng nhấn "Tắt" trên AlarmRingingScreen
+    \item Hệ thống kiểm tra điều kiện: nếu có QR thì yêu cầu quét trước, sau đó chuyển đến QuizScreen
+    \item Màn hình Quiz khởi tạo tầng điều phối với mã báo thức
+    \item Tầng điều phối gọi quá trình tải câu hỏi:
+    \begin{enumerate}
+        \item Đọc cấu hình báo thức từ kho dữ liệu, lấy số câu hỏi cần trả lời
+        \item Nếu số câu hỏi = 0: Đặt trạng thái hoàn thành, tắt báo thức ngay
+        \item Tạo bản ghi lịch sử báo thức → nhận mã lịch sử báo thức
+        \item Gọi bộ chọn câu hỏi theo thuật toán SRS:
+        \begin{itemize}
+            \item Đọc danh sách câu hỏi đã chọn (chọn thủ công + từ chủ đề)
+            \item Đọc tiến độ học tập của từng câu
+            \item Tính điểm ưu tiên (câu chưa học: 500, câu đến hạn: 1000+, câu khác: điểm độ khó)
+            \item Sắp xếp và chọn Top N câu hỏi
+        \end{itemize}
+        \item Chuyển đổi sang định dạng câu hỏi quiz (với 4 đáp án đã xáo trộn)
+        \item Khởi tạo: số câu đúng = 0, số câu cần = số câu hỏi
+    \end{enumerate}
+    \item [Lặp] Cho đến khi số câu đúng >= số câu cần:
+    \begin{enumerate}
+        \item Hệ thống hiển thị câu hỏi hiện tại (prompt + 4 đáp án)
+        \item Hệ thống bắt đầu đếm ngược 15 giây (timer progress bar)
+        \item Người dùng xem câu hỏi và chọn 1 trong 4 đáp án
+        \item [Race condition]:
+        \begin{itemize}
+            \item \textbf{Nếu người dùng chọn đáp án trước khi hết giờ:} Hệ thống dừng timer, tiếp tục bước 5.4
+            \item \textbf{Nếu hết 15 giây:} Hệ thống đánh dấu hết giờ, kết quả = sai, tiếp tục bước 5.4
+        \end{itemize}
+        \item Hệ thống kiểm tra đáp án: so sánh đáp án người dùng chọn với đáp án đúng
+        \item \textbf{Nếu đúng:}
+        \begin{itemize}
+            \item Hiển thị "Đúng" (màu xanh)
+            \item Tăng số câu đúng
+            \item Gọi bộ xử lý đáp án:
+            \begin{itemize}
+                \item Cập nhật SRS: tăng số lần đúng liên tiếp, tăng hệ số dễ dàng, tăng khoảng cách
+                \item Cập nhật thống kê chủ đề: tăng điểm ELO người dùng 10
+            \end{itemize}
+        \end{itemize}
+        \item \textbf{Nếu sai:}
+        \begin{itemize}
+            \item Hiển thị "Sai" (màu đỏ)
+            \item Gọi bộ xử lý đáp án:
+            \begin{itemize}
+                \item Cập nhật SRS: đặt số lần đúng liên tiếp về 0, giảm hệ số dễ dàng, đặt khoảng cách về 1
+                \item Cập nhật thống kê chủ đề: giảm điểm ELO người dùng 5 (tối thiểu 0)
+            \end{itemize}
+        \end{itemize}
+        \item Hệ thống ghi lịch sử trả lời (mã câu hỏi, kết quả đúng/sai, thời điểm trả lời, thời gian trả lời)
+        \item Hệ thống chờ 1 giây (để người dùng thấy kết quả)
+        \item \textbf{Nếu số câu đúng < số câu cần:} Chuyển sang câu hỏi tiếp theo, quay lại bước 5.1
+    \end{enumerate}
+    \item [End Loop] Đã đủ số câu đúng
+    \item Tầng điều phối hoàn tất lịch sử báo thức:
+    \begin{itemize}
+        \item Cập nhật lịch sử báo thức: thời gian tắt = hiện tại, trạng thái đã tắt = đúng
+    \end{itemize}
+    \item Tầng điều phối cập nhật thống kê người dùng (tăng tổng điểm 10, cập nhật chuỗi ngày liên tiếp, tăng tổng báo thức đã tắt)
+    \item Màn hình Quiz gọi dừng dịch vụ nền (phát nhạc dừng)
+    \item Màn hình Quiz chuyển về màn hình báo thức
+    \item Màn hình báo thức hiển thị danh sách báo thức (có thể có báo thức mới nếu là báo thức lặp lại)
+\end{enumerate}
+
+\textbf{Luồng thay thế:}
+
+\textbf{4.1a. Số câu hỏi = 0:} Hệ thống bỏ qua Quiz, tắt báo thức ngay lập tức. Hệ thống kiểm tra nếu số câu hỏi = 0 và đặt trạng thái hoàn thành.
+
+\textbf{4.4a. Không có câu hỏi nào (danh sách rỗng):} Hệ thống hiển thị "Không có câu hỏi. Đặt lại cấu hình." và tắt báo thức ngay. Hệ thống kiểm tra nếu danh sách câu hỏi rỗng và có thể sử dụng câu hỏi mặc định hoặc tắt ngay.
+
+\textbf{5.3c. Người dùng không tương tác và hết 15 giây nhiều lần:} Số câu đúng không tăng → Quiz kéo dài vô hạn cho đến khi trả lời đúng đủ. Hệ thống tự động chuyển câu tiếp khi hết giờ, nhưng không tăng số câu đúng.
+
+\textbf{10a. Dịch vụ nền bị dừng bởi hệ thống (bộ nhớ thấp):} Nhạc sẽ tự dừng, thông báo biến mất. Người dùng vẫn hoàn thành Quiz, dữ liệu vẫn được lưu. Hệ thống không có xử lý đặc biệt cho trường hợp này.
+
+\textbf{Ngoại lệ:}
+
+\textbf{E1. Người dùng buộc dừng ứng dụng:} Dịch vụ nền bị dừng ngay lập tức. Lịch sử báo thức không được cập nhật (thời gian tắt = rỗng, trạng thái đã tắt = sai). Dữ liệu tiến độ đã lưu trước đó vẫn giữ nguyên.
+
+\textbf{E2. Máy tắt nguồn giữa chừng:} Tương tự E1, dữ liệu một phần bị mất.
+
+\textbf{E3. Database lỗi khi cập nhật Progress:} Exception được catch trong coroutine, không ảnh hưởng đến UI. Câu hỏi vẫn được chuyển tiếp, nhưng tiến độ không được lưu.
+
+\textbf{Dữ liệu sử dụng:}
+\begin{itemize}
+    \item \textbf{Input:} mã báo thức, số câu hỏi, danh sách câu hỏi, tiến độ học tập
+    \item \textbf{Output:} Lịch sử trả lời (N bản ghi), tiến độ học tập (N bản ghi cập nhật), lịch sử báo thức (1 bản ghi cập nhật), thống kê người dùng (cập nhật), thống kê chủ đề (cập nhật)
+\end{itemize}
+
+\textbf{Tần suất sử dụng:} Rất cao (mỗi lần báo thức reo)
+
+\textbf{Activity Diagram:} Xem Hình \ref{fig:activity_uc14}
+
+\WideFig{images/ooad_activity_uc14.png}{Activity Diagram - UC14: Trả lời câu hỏi Quiz}{fig:activity_uc14}
+
+\subsection{UC18: Quét và lưu mã QR}
+
+\textbf{Tên:} Quét và lưu mã QR
+
+\textbf{Mô tả/Mục tiêu:} Người dùng quét QR/Barcode bằng camera, đặt tên, và lưu vào hệ thống để sử dụng cho báo thức. Hệ thống giới hạn tối đa 5 mã QR.
+
+\textbf{Tác nhân:} A1 (Người dùng)
+
+\textbf{Tiền điều kiện:}
+\begin{itemize}
+    \item Đã cấp quyền CAMERA
+    \item Số lượng QR đã lưu < 5
+    \item Người dùng đang ở QRCodeManagementDialog hoặc QRCodeScannerScreen
+\end{itemize}
+
+\textbf{Hậu điều kiện:}
+\begin{itemize}
+    \item Mã QR mới được lưu vào bảng mã QR
+    \item Mã QR đã được chọn cho báo thức hiện tại (nếu đang trong flow tạo báo thức)
+    \item Danh sách QR được cập nhật (có mã mới)
+\end{itemize}
+
+\textbf{Luồng chính:}
+\begin{enumerate}
+    \item Người dùng nhấn "Quét mã mới" trong QRCodeManagementDialog
+    \item Hệ thống navigate đến QRCodeScannerScreen
+    \item Màn hình quét QR khởi động camera
+    \item Hệ thống hiển thị xem trước camera + khung hình quét + hướng dẫn
+    \item Người dùng đưa mã QR/Barcode vào khung hình
+    \item Hệ thống phân tích khung hình bằng công nghệ nhận dạng mã vạch
+    \item Công nghệ nhận dạng phát hiện mã vạch → trích xuất giá trị mã và loại mã (QR hoặc BARCODE)
+    \item Hệ thống dừng camera
+    \item Hệ thống hiển thị "Đã quét: [giá trị mã]"
+    \item Hệ thống yêu cầu người dùng đặt tên (Trường nhập)
+    \item Người dùng nhập tên (VD: "Mã tủ lạnh")
+    \item Người dùng nhấn "Lưu"
+    \item Tầng điều phối gọi lưu mã QR:
+    \begin{enumerate}
+        \item Kiểm tra số lượng: đếm số mã QR hiện có
+        \item Nếu số lượng >= 5: Hiển thị lỗi "Bạn chỉ có thể lưu tối đa 5 mã", dừng
+        \item Kiểm tra trùng lặp: tìm mã QR có cùng giá trị
+        \item Nếu đã tồn tại: Hiển thị lỗi "Mã này đã được lưu với tên [tên]", dừng
+        \item Tạo bản ghi mã QR: tên, giá trị mã, loại mã, thời gian tạo = hiện tại
+        \item Lưu vào kho dữ liệu
+    \end{enumerate}
+    \item Hệ thống hiển thị "Đã lưu mã thành công"
+    \item Hệ thống chuyển về hộp thoại quản lý QR
+    \item Hộp thoại quản lý QR tự động cập nhật danh sách (nhờ luồng dữ liệu phản ứng)
+    \item Người dùng đánh dấu chọn mã vừa lưu
+    \item Người dùng nhấn "Xong"
+    \item Hộp thoại quản lý QR gọi callback với danh sách mã đã chọn
+    \item Tầng điều phối cấu hình báo thức cập nhật danh sách mã QR đã chọn
+    \item Hệ thống chuyển về màn hình cấu hình báo thức
+    \item Màn hình cấu hình báo thức hiển thị số QR đã chọn
+\end{enumerate}
+
+\textbf{Luồng thay thế:}
+
+\textbf{6a. Không phát hiện được mã (ảnh mờ, góc nghiêng):} Hệ thống tiếp tục quét (lặp bước 5-6). Người dùng điều chỉnh vị trí/góc độ. Công nghệ nhận dạng tự động thử lại mỗi khung hình.
+
+\textbf{13.2a. Đã đủ 5 mã:} Hiển thị "Bạn chỉ có thể lưu tối đa 5 mã. Vui lòng xóa bớt mã cũ." Chuyển về hộp thoại quản lý QR. Người dùng có thể xóa mã cũ (UC20) rồi quét lại.
+
+\textbf{13.3a. Mã đã tồn tại:} Hiển thị "Mã này đã được lưu với tên \"[tên]\"". Người dùng có thể: (1) Nhấn "OK" → Quay về hộp thoại quản lý QR, (2) Chọn mã cũ đó thay vì quét mới.
+
+\textbf{12a. Người dùng nhấn "Hủy":} Hệ thống bỏ mã vừa quét, chuyển về hộp thoại quản lý QR. Hệ thống xử lý sự kiện quay lại hoặc đóng hộp thoại.
+
+\textbf{Ngoại lệ:}
+
+\textbf{E1. Thiếu quyền Camera:} Hiển thị "Ứng dụng cần quyền Camera để quét mã". Mở Cài đặt để người dùng cấp quyền. Hệ thống kiểm tra quyền khi khởi động.
+
+\textbf{E2. Camera không hoạt động (lỗi phần cứng):} Hiển thị "Không thể mở camera. Vui lòng kiểm tra thiết bị." Công nghệ camera tự động ném ngoại lệ nếu không mở được camera.
+
+\textbf{E3. Công nghệ nhận dạng lỗi khi phân tích:} Ngoại lệ được xử lý, hiển thị "Lỗi khi quét ảnh: [thông báo lỗi]". Hệ thống có xử lý lỗi trong quá trình quét.
+
+\textbf{Dữ liệu sử dụng:}
+\begin{itemize}
+    \item \textbf{Input:} giá trị mã (từ công nghệ nhận dạng), loại mã, tên (từ người dùng)
+    \item \textbf{Output:} Bản ghi mã QR (mã QR mới, tên, giá trị mã, loại mã, thời gian tạo)
+\end{itemize}
+
+\textbf{Tần suất sử dụng:} Trung bình (1-2 lần khi setup lần đầu)
+
+\section{Activity Diagram}
+
+Đã tạo Activity Diagram cho 2 use case phức tạp nhất:
+
+\StdFig{images/ooad_activity_uc01.png}{Activity Diagram - UC01: Tạo báo thức mới}{fig:activity_uc01}
+
+Activity Diagram cho UC01 mô tả chi tiết luồng tạo báo thức, bao gồm các bước tùy chọn (chọn Câu hỏi, chọn QR), kiểm tra hợp lệ, và lưu cơ sở dữ liệu. Hệ thống thực hiện đúng theo luồng này.
+
+\chapter{THIẾT KẾ HỆ THỐNG (PHƯƠNG PHÁP HƯỚNG ĐỐI TƯỢNG)}
+
+\section{Thiết kế Giao diện}
+
+Giao diện hệ thống được thiết kế theo kiến trúc điều hướng dựa trên ngăn xếp, với thanh điều hướng dưới cho các màn hình chính và điều hướng ngăn xếp cho các màn hình chi tiết. Hệ thống sử dụng Material Design 3 để đảm bảo tính nhất quán và trải nghiệm người dùng hiện đại.
+
+\subsection{Sơ đồ Điều hướng}
+
+Hình \ref{fig:ooad_ui_nav_overview} mô tả tổng quan về điều hướng giữa các màn hình chính của hệ thống. Hệ thống khởi động với kiểm tra quyền, sau đó chuyển đến điều hướng chính với 3 tab: Báo thức, Chủ đề, và Thống kê.
+
+\StdFig{images/ui/ui_nav_overview.png}{Sơ đồ điều hướng tổng quan}{fig:ooad_ui_nav_overview}
+
+Hình \ref{fig:ooad_ui_nav_alarm} mô tả chi tiết luồng điều hướng trong module Báo thức, bao gồm màn hình danh sách báo thức, màn hình cấu hình, các hộp thoại chọn câu hỏi và QR, cũng như luồng khi báo thức reo.
+
+\StdFig{images/ui/ui_nav_alarm.png}{Sơ đồ điều hướng module Báo thức}{fig:ooad_ui_nav_alarm}
+
+\subsection{Wireframe các Màn hình Chính}
+
+Hình \ref{fig:ooad_ui_wire_alarm} mô tả cấu trúc layout của màn hình Danh sách Báo thức, bao gồm thanh trên với menu sắp xếp, thông tin thời gian đổ chuông tiếp theo, danh sách các thẻ báo thức với công tắc bật/tắt, và nút thêm nổi.
+
+\StdFig{images/ui/ui_wire_alarm.png}{Wireframe màn hình Danh sách Báo thức}{fig:ooad_ui_wire_alarm}
+
+Hình \ref{fig:ooad_ui_wire_quiz} mô tả cấu trúc layout của màn hình Quiz, bao gồm thanh trên hiển thị tiến độ và bộ đếm ngược tròn, thanh tiến độ số câu đúng, thẻ câu hỏi với 4 đáp án đã xáo trộn, và phản hồi màu khi người dùng chọn đáp án.
+
+\StdFig{images/ui/ui_wire_quiz.png}{Wireframe màn hình Quiz}{fig:ooad_ui_wire_quiz}
+
+Hình \ref{fig:ooad_ui_wire_ringing} mô tả cấu trúc layout của màn hình Reo Báo thức, hiển thị toàn màn hình với phần đầu hiển thị ngày tháng và giờ hiện tại lớn, nhãn báo thức, và các nút điều khiển (Tắt, Snooze nếu được bật).
+
+\StdFig{images/ui/ui_wire_ringing.png}{Wireframe màn hình Reo Báo thức}{fig:ooad_ui_wire_ringing}
+
+\subsection{Biểu đồ Trạng thái Giao diện}
+
+Hình \ref{fig:ooad_ui_state_quiz} mô tả các trạng thái của màn hình Quiz, từ khởi tạo và tải câu hỏi, hiển thị câu hỏi, kiểm tra đáp án, đến hoàn thành quiz. Hệ thống xử lý các trường hợp hết giờ, đáp án đúng/sai, và điều kiện hoàn thành.
+
+\StdFig{images/ui/ui_state_quiz.png}{Biểu đồ trạng thái màn hình Quiz}{fig:ooad_ui_state_quiz}
+
+Hình \ref{fig:ooad_ui_state_ringing} mô tả các trạng thái của màn hình Reo Báo thức, từ khi báo thức reo, kiểm tra yêu cầu QR và Quiz, đến khi tắt báo thức hoặc snooze. Luồng xử lý bao gồm quét QR (nếu có), chuyển đến Quiz (nếu có), và hoàn thành để tắt báo thức.
+
+\StdFig{images/ui/ui_state_ringing.png}{Biểu đồ trạng thái màn hình Reo Báo thức}{fig:ooad_ui_state_ringing}
+
+\section{Thiết kế Use Case (Sequence Diagram)}
+
+Sequence Diagram mô tả chi tiết luồng tương tác giữa các đối tượng (Giao diện → Điều phối → Logic → Dữ liệu) cho các use case quan trọng.
+
+\subsection{UC01: Tạo báo thức mới}
+
+\WideFig{images/ooad_sequence_uc01.png}{Sequence Diagram - UC01: Tạo báo thức mới}{fig:sequence_uc01}
+
+Sequence Diagram cho UC01 mô tả:
+\begin{itemize}
+    \item Người dùng tương tác với màn hình báo thức → màn hình cấu hình báo thức
+    \item Tầng điều phối tải giá trị mặc định và cập nhật trạng thái
+    \item Người dùng nhập thông tin, chọn Câu hỏi/QR
+    \item Khi lưu: Tầng điều phối → Tầng dữ liệu (tạo báo thức, lưu liên kết) → Bộ lập lịch (lập lịch) → Hệ thống lập lịch Android (đặt lịch hẹn)
+    \item Sử dụng xử lý bất đồng bộ cho các thao tác không đồng bộ
+    \item Luồng dữ liệu phản ứng tự động phát để giao diện cập nhật
+\end{itemize}
+
+\textit{Phân tích:} Sequence cho thấy việc sử dụng xử lý bất đồng bộ đảm bảo giao diện không bị chặn. Tất cả thao tác cơ sở dữ liệu chạy trong phạm vi xử lý bất đồng bộ. Bộ lập lịch gọi hệ thống lập lịch Android đồng bộ (không cần xử lý bất đồng bộ vì thao tác nhanh).
+
+\subsection{UC04: Bật/Tắt báo thức}
+
+\StdFig{images/ooad_sequence_uc04.png}{Sequence Diagram - UC04: Bật/Tắt báo thức}{fig:sequence_uc04}
+
+Sequence Diagram cho UC04 mô tả luồng đơn giản nhưng quan trọng:
+\begin{itemize}
+    \item Người dùng bật/tắt công tắc → Tầng điều phối báo thức xử lý bật/tắt
+    \item Tầng điều phối đọc báo thức từ kho dữ liệu, cập nhật trạng thái bật/tắt
+    \item Nếu bật: gọi bộ lập lịch đặt lịch → Hệ thống lập lịch Android đặt lịch hẹn
+    \item Nếu tắt: gọi bộ lập lịch hủy lịch → Hệ thống lập lịch Android hủy lịch
+    \item Luồng dữ liệu phản ứng tự động phát → Giao diện cập nhật trạng thái công tắc
+\end{itemize}
+
+\textit{Phân tích:} Đây là thao tác phổ biến nhất (hàng ngày), nên phải tối ưu hiệu suất. Hệ thống sử dụng luồng dữ liệu phản ứng giúp giao diện tự động cập nhật mà không cần làm mới thủ công.
+
+\subsection{UC13+UC14: Báo thức reo và Quiz}
+
+\WideFig{images/ooad_sequence_uc13_uc14.png}{Sequence Diagram - UC13+UC14: Báo thức reo và Quiz}{fig:sequence_uc13_uc14}
+
+Sequence Diagram cho UC13+UC14 mô tả luồng phức tạp nhất:
+\begin{itemize}
+    \item Hệ thống lập lịch Android gửi broadcast → Receiver nhận sự kiện
+    \item Receiver đọc báo thức từ kho dữ liệu, kiểm tra ngày lặp lại, khởi động dịch vụ nền
+    \item Dịch vụ nền phát nhạc, tạo thông báo, hiển thị màn hình reo báo thức
+    \item Người dùng nhấn "Tắt" → Chuyển đến màn hình Quiz
+    \item Tầng điều phối quiz gọi bộ chọn câu hỏi theo thuật toán SRS
+    \item Lặp quiz: Người dùng chọn đáp án → Tầng điều phối kiểm tra → Bộ xử lý đáp án (cập nhật SRS)
+    \item Sau khi đủ số câu đúng: Cập nhật lịch sử báo thức, thống kê người dùng, dừng dịch vụ nền
+\end{itemize}
+
+\textit{Phân tích:} Sequence cho thấy việc sử dụng xử lý bất đồng bộ trong Receiver để làm việc với xử lý bất đồng bộ (vì Receiver có giới hạn thời gian). Bộ chọn câu hỏi SRS là trung tâm của logic SRS, được gọi từ tầng điều phối quiz.
+
+\subsection{UC18+UC19: Quét và liên kết QR Code}
+
+\WideFig{images/ooad_sequence_uc18_uc19.png}{Sequence Diagram - UC18+UC19: Quét và liên kết QR Code}{fig:sequence_uc18_uc19}
+
+Sequence Diagram cho UC18+UC19 mô tả:
+\begin{itemize}
+    \item Người dùng mở hộp thoại quản lý QR → Tầng điều phối QR quan sát tất cả mã QR (luồng dữ liệu)
+    \item Người dùng nhấn "Quét mã mới" → Chuyển đến màn hình quét QR
+    \item Màn hình quét QR khởi động camera → Công nghệ nhận dạng phân tích khung hình
+    \item Khi phát hiện mã vạch: Tầng điều phối QR xử lý mã đã quét → trích xuất giá trị mã, loại mã
+    \item Người dùng nhập tên → Tầng điều phối QR lưu mã QR → Tầng dữ liệu tạo bản ghi mã QR
+    \item Chuyển về hộp thoại quản lý QR → Người dùng chọn QR → Tầng điều phối cấu hình báo thức cập nhật mã QR đã chọn
+    \item Khi lưu báo thức: Tầng điều phối cấu hình báo thức lưu mã QR đã chọn → Tầng dữ liệu lưu liên kết báo thức–QR
+\end{itemize}
+
+\textit{Phân tích:} Sequence cho thấy việc sử dụng công nghệ nhận dạng mã vạch để quét QR/Barcode. Công nghệ camera được sử dụng để xem trước camera. Luồng dữ liệu phản ứng được sử dụng để tự động cập nhật danh sách QR.
+
+\subsection{UC21: Xem thống kê tuần}
+
+\StdFig{images/ooad_sequence_uc21.png}{Sequence Diagram - UC21: Xem thống kê tuần}{fig:sequence_uc21}
+
+Sequence Diagram cho UC21 mô tả:
+\begin{itemize}
+    \item Người dùng nhấn tab "Thống kê" → Chuyển đến màn hình thống kê
+    \item Màn hình thống kê quan sát độ chính xác tuần từ tầng điều phối thống kê (luồng dữ liệu)
+    \item Tầng điều phối thống kê gọi truy vấn thống kê lấy độ chính xác tuần → Truy vấn SQL nhóm theo ngày
+    \item Truy vấn thống kê trả về luồng dữ liệu danh sách thống kê ngày
+    \item Tầng điều phối thống kê xử lý dữ liệu (tạo danh sách 7 ngày, điền độ chính xác = 0 nếu không có dữ liệu)
+    \item Màn hình thống kê thu thập luồng dữ liệu → Vẽ biểu đồ đường
+    \item Đồng thời: Tầng điều phối thống kê quan sát phân phối SRS, điểm Wake-up Score, thống kê người dùng
+\end{itemize}
+
+\textit{Phân tích:} Sequence cho thấy việc sử dụng luồng dữ liệu phản ứng để dữ liệu tự động cập nhật. Truy vấn SQL phức tạp (nhóm theo, tổng, đếm) được thực thi trong truy vấn thống kê. Tầng điều phối xử lý dữ liệu để định dạng cho giao diện (biểu đồ).
+
+\section{Thiết kế Cơ sở Dữ liệu}
+
+Thiết kế database được mô tả chi tiết trong Bảng \ref{tab:class_db_mapping}:
+
+\begin{table}[H]
+\caption{Mapping dữ liệu ↔ bảng}
+\label{tab:class_db_mapping}
+\small
+\begin{longtable}{|p{3.2cm}|p{2.6cm}|p{2.1cm}|p{7.1cm}|}
+\hline
+\textbf{Dữ liệu/Thực thể} & \textbf{Bảng} & \textbf{Kiểu ánh xạ} & \textbf{Ghi chú} \\
+\hline
+\endfirsthead
+\multicolumn{4}{c}{{\bfseries \tablename\ \thetable{} -- tiếp tục từ trang trước}} \\\hline
+\textbf{Dữ liệu/Thực thể} & \textbf{Bảng} & \textbf{Kiểu ánh xạ} & \textbf{Ghi chú} \\\hline
+\endhead
+\hline \multicolumn{4}{|r|}{{Tiếp tục ở trang sau}} \\ \hline
+\endfoot
+\hline
+\endlastfoot
+Báo thức (Alarm) & alarms & 1:1 & daysOfWeek lưu Set chuỗi (TypeConverter), các thuộc tính khác lưu trực tiếp. \\
+\hline
+Chủ đề (Topic) & topics & 1:1 & Không cần converter. \\
+\hline
+Câu hỏi (Question) & questions & 1:1 & options lưu JSON (TypeConverter). \\
+\hline
+QR Code & qr\_codes & 1:1 & Lưu tên, giá trị mã, loại mã, thời gian tạo. \\
+\hline
+Tiến độ SRS & question\_progress & 1:1 & Date lưu dưới dạng timestamp (TypeConverter). \\
+\hline
+Thống kê chủ đề & topic\_stats & 1:1 & Lưu điểm ELO. \\
+\hline
+Lịch sử trả lời & history & 1:1 & Thời gian lưu timestamp. \\
+\hline
+Lịch sử báo thức & alarm\_history & 1:1 & scheduledTime/firstRingTime/dismissalTime lưu timestamp. \\
+\hline
+Thống kê người dùng & UserStats & 1:1 & lastActiveDate lưu timestamp; single-user (userId=1). \\
+\hline
+Liên kết báo thức–chủ đề & alarm\_topic\_link & Junction & PK kép (alarmId, topicId), CASCADE delete. \\
+\hline
+Liên kết báo thức–câu hỏi lẻ & alarm\_selected\_questions & Link & PK selectionId; chứa alarmId và questionId (có thể âm cho câu mặc định). \\
+\hline
+Liên kết báo thức–QR & alarm\_qr\_link & Junction & PK kép (alarmId, qrId), CASCADE delete. \\
+\hline
+\end{longtable}
+\end{table}
+
+\textit{Phân tích:} Cơ sở dữ liệu sử dụng bộ chuyển đổi kiểu để xử lý các kiểu dữ liệu phức tạp. Hệ thống định nghĩa bộ chuyển đổi kiểu và đăng ký trong cơ sở dữ liệu. Việc sử dụng JSON serialization là phổ biến trong phát triển ứng dụng.
+
+\textbf{Tầng điều phối không ánh xạ trực tiếp vào cơ sở dữ liệu:} Tầng điều phối chỉ giữ trạng thái giao diện (tạm thời), không phải thực thể. Khi lưu thì chuyển đổi sang thực thể dữ liệu.
+
+\textbf{Transaction và Tính nhất quán:} Hệ thống không sử dụng transaction rõ ràng cho các thao tác phức tạp (VD: lưu báo thức + liên kết). Mỗi thao tác riêng lẻ được đảm bảo tính nguyên tử bởi cơ sở dữ liệu. Nếu một thao tác thất bại, các thao tác khác vẫn có thể thành công. Điều này chấp nhận được vì mỗi thao tác độc lập, nhưng có thể dẫn đến trạng thái không nhất quán nếu có lỗi giữa chừng. Hệ thống không có cơ chế rollback.
+
+\textbf{Ràng buộc Khóa ngoại:} Hệ thống sử dụng CASCADE DELETE cho hầu hết các khóa ngoại để đảm bảo tính toàn vẹn dữ liệu. Khi xóa báo thức, tất cả liên kết tự động bị xóa. Khi xóa chủ đề, tất cả câu hỏi tự động bị xóa. Điều này đảm bảo không có dữ liệu "ma" trong cơ sở dữ liệu.
+
+\end{document}
+

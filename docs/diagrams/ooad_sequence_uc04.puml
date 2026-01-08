@@ -1,0 +1,84 @@
+@startuml
+'** Sequence Diagram - UC04: Bật/Tắt báo thức **
+
+title Sequence Diagram: UC04 - Bật/Tắt báo thức
+
+actor "Người dùng" as User
+participant "AlarmScreen" as Screen
+participant "AlarmViewModel" as VM
+participant "AppDao" as Dao
+participant "AlarmScheduler" as Scheduler
+participant "AlarmManager" as SysAlarm
+
+User -> Screen : Toggle switch của báo thức
+activate Screen
+
+Screen -> VM : toggleAlarm(alarmId, isEnabled)
+activate VM
+
+VM -> Dao : getAlarmById(alarmId)
+activate Dao
+Dao --> VM : AlarmEntity
+deactivate Dao
+
+VM -> VM : updatedAlarm = alarm.copy(isEnabled = isEnabled)
+
+VM -> Dao : updateAlarm(updatedAlarm)
+activate Dao
+Dao -> Dao : UPDATE alarms SET isEnabled = ?
+Dao --> VM : Success
+deactivate Dao
+
+alt isEnabled = true (Bật báo thức)
+    VM -> Scheduler : schedule(updatedAlarm)
+    activate Scheduler
+    
+    Scheduler -> Scheduler : Tính thời gian đổ chuông
+    note right
+        Nếu giờ/phút < hiện tại
+        thì đặt sang ngày mai
+    end note
+    
+    Scheduler -> SysAlarm : setAlarmClock(time, pendingIntent)
+    activate SysAlarm
+    note right
+        PendingIntent.requestCode = alarmId
+        Đảm bảo mỗi alarm có intent riêng
+    end note
+    SysAlarm --> Scheduler : Đã đặt lịch hẹn
+    deactivate SysAlarm
+    
+    Scheduler --> VM : Success
+    deactivate Scheduler
+    
+    VM --> Screen : uiState updated
+    Screen --> User : Switch bật (màu xanh)\n"Báo thức sẽ reo sau X giờ Y phút"
+    
+else isEnabled = false (Tắt báo thức)
+    VM -> Scheduler : cancel(updatedAlarm)
+    activate Scheduler
+    
+    Scheduler -> Scheduler : createPendingIntent(alarm)
+    note right
+        Tạo PendingIntent với
+        cùng requestCode = alarmId
+    end note
+    
+    Scheduler -> SysAlarm : cancel(pendingIntent)
+    activate SysAlarm
+    SysAlarm --> Scheduler : Đã hủy lịch hẹn
+    deactivate SysAlarm
+    
+    Scheduler --> VM : Success
+    deactivate Scheduler
+    
+    VM --> Screen : uiState updated
+    Screen --> User : Switch tắt (màu xám)
+end
+
+deactivate VM
+deactivate Screen
+
+@enduml
+
+

@@ -1,0 +1,26 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {chapter}{\numberline {1}Phân tích}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Biểu đồ phân cấp chức năng}{2}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Mô tả đặc điểm}{2}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Chia module}{2}{subsection.1.1.2}%
+\contentsline {section}{\numberline {1.2}Biểu đồ Use Case}{6}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Tổng quan}{6}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}Các Actor}{6}{subsection.1.2.2}%
+\contentsline {subsection}{\numberline {1.2.3}Sơ đồ Use Case tổng quát}{8}{subsection.1.2.3}%
+\contentsline {subsection}{\numberline {1.2.4}Chia theo module}{9}{subsection.1.2.4}%
+\contentsline {section}{\numberline {1.3}Đặc tả Use Case}{9}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}UC01: Tạo báo thức mới}{9}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}UC14: Trả lời câu hỏi Quiz}{13}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}UC04: Bật/Tắt báo thức}{16}{subsection.1.3.3}%
+\contentsline {subsection}{\numberline {1.3.4}UC18: Quét và lưu mã QR}{16}{subsection.1.3.4}%
+\contentsline {subsection}{\numberline {1.3.5}UC21: Xem thống kê tuần}{18}{subsection.1.3.5}%
+\contentsline {chapter}{\numberline {2}Thiết kế}{20}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Thiết kế Use Case}{20}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Sequence Diagram - UC01: Tạo báo thức mới}{20}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Sequence Diagram - UC13+UC14: Báo thức reo và Quiz}{23}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Sequence Diagram - UC04: Bật/Tắt báo thức}{26}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Tổng quan các Sequence Diagram khác}{28}{subsection.2.1.4}%
+\contentsline {section}{\numberline {2.2}Thiết kế cơ sở dữ liệu}{28}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Mô hình quan hệ}{28}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Mapping Class ↔ Bảng}{31}{subsection.2.2.2}%
+\contentsline {chapter}{Giả định/TBD}{35}{chapter*.2}%

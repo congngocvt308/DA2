@@ -1,0 +1,121 @@
+@startuml
+'** Activity Diagram - UC01: Tạo báo thức mới **
+
+title Activity Diagram: UC01 - Tạo báo thức mới
+
+|Người dùng|
+start
+:Nhấn nút "Thêm\nbáo thức mới";
+
+|Hệ thống|
+:Hiển thị màn hình\ncấu hình báo thức;
+
+:Điền giá trị mặc định:\n- Giờ/Phút hiện tại\n- Nhạc chuông mặc định\n- Snooze: tắt;
+
+|Người dùng|
+repeat
+    :Chỉnh sửa thông tin;
+    note right
+        - Giờ, Phút
+        - Nhãn (label)
+        - Ngày lặp lại
+        - Nhạc chuông
+        - Số câu hỏi
+        - Snooze
+    end note
+    
+    if (Chọn Mission?) then (yes)
+        |Hệ thống|
+        :Hiển thị dialog\nchọn câu hỏi;
+        
+        :Load danh sách\nTopics & Questions;
+        
+        |Người dùng|
+        fork
+            :Chọn toàn bộ Topic;
+        fork again
+            :Chọn câu hỏi lẻ;
+        fork again
+            :Chọn câu hỏi mặc định;
+        end fork
+        
+        |Hệ thống|
+        :Cập nhật danh sách\ncâu hỏi đã chọn;
+    endif
+    
+    if (Chọn QR Code?) then (yes)
+        |Hệ thống|
+        :Hiển thị dialog\nchọn QR;
+        
+        :Load danh sách\nQR đã lưu;
+        
+        |Người dùng|
+        if (Có QR sẵn?) then (yes)
+            :Chọn tối đa 3 QR;
+        else (no)
+            :Quét QR mới;
+            |Hệ thống|
+            :Mở camera;
+            |Người dùng|
+            :Quét mã QR/Barcode;
+            |Hệ thống|
+            :Lưu QR vào database;
+            :Chọn QR vừa lưu;
+        endif
+        
+        |Hệ thống|
+        :Cập nhật danh sách\nQR đã chọn;
+    endif
+    
+    |Hệ thống|
+    :Tính toán thời gian\nđổ chuông tiếp theo;
+    
+    :Hiển thị "Đổ chuông\nsau X giờ Y phút";
+    
+    |Người dùng|
+repeat while (Hài lòng với\ncấu hình?) is (no)
+-> yes;
+
+if (Nhấn "Lưu"?) then (yes)
+    |Hệ thống|
+    :Tạo AlarmEntity mới;
+    
+    :Lưu vào database\n(insertAlarm);
+    
+    :Nhận alarmId mới;
+    
+    :Lưu liên kết\nAlarm-Topic;
+    
+    :Lưu liên kết\nAlarm-Question;
+    
+    :Lưu liên kết\nAlarm-QR;
+    
+    :Đặt lịch hẹn với\nAndroid AlarmManager;
+    
+    :Hiển thị thông báo\n"Đã lưu báo thức";
+    
+    |Người dùng|
+    :Quay về danh sách\nbáo thức;
+    
+    stop
+else (no - Nhấn "Hủy")
+    if (Có thay đổi?) then (yes)
+        |Hệ thống|
+        :Hiển thị dialog\n"Bỏ thay đổi?";
+        |Người dùng|
+        if (Xác nhận bỏ?) then (yes)
+            :Quay về danh sách;
+            stop
+        else (no)
+            |Hệ thống|
+            :Tiếp tục chỉnh sửa;
+        endif
+    else (no)
+        :Quay về danh sách;
+        stop
+    endif
+endif
+
+@enduml
+
+

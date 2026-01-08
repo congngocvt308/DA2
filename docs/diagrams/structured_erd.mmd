@@ -1,0 +1,70 @@
+erDiagram
+    ALARMS ||--o{ ALARM_TOPIC_LINK : "có"
+    ALARMS ||--o{ ALARM_SELECTED_QUESTIONS : "chọn"
+    ALARMS ||--o{ ALARM_QR_LINK : "sử dụng"
+    ALARMS ||--o{ ALARM_HISTORY : "tạo ra"
+    
+    TOPICS ||--o{ ALARM_TOPIC_LINK : "được chọn bởi"
+    TOPICS ||--o{ QUESTIONS : "chứa"
+    TOPICS ||--o| TOPIC_STATS : "có"
+    
+    QUESTIONS ||--o{ ALARM_SELECTED_QUESTIONS : "được chọn"
+    QUESTIONS ||--o| QUESTION_PROGRESS : "có"
+    QUESTIONS ||--o{ HISTORY : "tạo lịch sử"
+    
+    QR_CODES ||--o{ ALARM_QR_LINK : "được dùng bởi"
+    
+    ALARM_HISTORY ||--o{ HISTORY : "chứa"
+    
+    ALARMS {
+        int alarmId PK
+        int hour
+        int minute
+        string label
+    }
+    
+    TOPICS {
+        int topicId PK
+        string topicName
+    }
+    
+    QUESTIONS {
+        int questionId PK
+        int ownerTopicId FK
+        string prompt
+    }
+    
+    QR_CODES {
+        int qrId PK
+        string name
+        string codeValue
+    }
+    
+    QUESTION_PROGRESS {
+        int questionId PK_FK
+        int correctStreak
+        double difficultyScore
+    }
+    
+    TOPIC_STATS {
+        int topicId PK_FK
+        double userEloScore
+    }
+    
+    HISTORY {
+        int historyId PK
+        int questionId FK
+        boolean isCorrect
+    }
+    
+    ALARM_HISTORY {
+        int historyId PK
+        int alarmId FK
+        boolean isDismissed
+    }
+    
+    USER_STATS {
+        int userId PK
+        int totalPoints
+        int currentStreak
+    }

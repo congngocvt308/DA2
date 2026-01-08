@@ -1,0 +1,139 @@
+@startuml
+'** Sequence Diagram - UC01: Tạo báo thức mới **
+
+title Sequence Diagram: UC01 - Tạo báo thức mới
+
+actor "Người dùng" as User
+participant "AlarmScreen" as Screen
+participant "AlarmSettingsScreen" as SettingsScreen
+participant "AlarmSettingsViewModel" as VM
+participant "AppDao" as Dao
+participant "AlarmScheduler" as Scheduler
+participant "AlarmManager" as SysAlarm
+
+User -> Screen : Nhấn "Thêm báo thức"
+activate Screen
+
+Screen -> SettingsScreen : navigate(alarmId = -1)
+activate SettingsScreen
+
+SettingsScreen -> VM : init()
+activate VM
+VM -> VM : Điền giá trị mặc định
+VM -> VM : updateTimeUntilAlarm()
+VM --> SettingsScreen : uiState
+deactivate VM
+
+SettingsScreen --> User : Hiển thị form cấu hình
+deactivate SettingsScreen
+
+User -> SettingsScreen : Nhập giờ/phút/nhãn
+activate SettingsScreen
+SettingsScreen -> VM : updateHour(hour)
+activate VM
+VM -> VM : updateTimeUntilAlarm()
+VM --> SettingsScreen : uiState updated
+deactivate VM
+deactivate SettingsScreen
+
+User -> SettingsScreen : Chọn ngày lặp lại
+activate SettingsScreen
+SettingsScreen -> VM : toggleDay(dayCode)
+activate VM
+VM --> SettingsScreen : uiState updated
+deactivate VM
+deactivate SettingsScreen
+
+opt Chọn Mission
+    User -> SettingsScreen : Nhấn "Chọn câu hỏi"
+    activate SettingsScreen
+    SettingsScreen -> VM : Hiển thị MissionDialog
+    User -> VM : Chọn topics/questions
+    VM -> VM : updateMission(count, questions, topics)
+    VM --> SettingsScreen : selectedQuestions updated
+    deactivate SettingsScreen
+end
+
+opt Chọn QR Code
+    User -> SettingsScreen : Nhấn "Chọn QR"
+    activate SettingsScreen
+    SettingsScreen -> VM : Hiển thị QRDialog
+    User -> VM : Chọn QR codes
+    VM -> VM : updateSelectedQRCodes(qrIds)
+    VM --> SettingsScreen : selectedQRCodeIds updated
+    deactivate SettingsScreen
+end
+
+User -> SettingsScreen : Nhấn "Lưu"
+activate SettingsScreen
+
+SettingsScreen -> VM : saveAlarm()
+activate VM
+
+VM -> Dao : insertAlarm(alarmEntity)
+activate Dao
+Dao -> Dao : Lưu vào SQLite
+Dao --> VM : newAlarmId
+deactivate Dao
+
+VM -> Dao : clearSelectedQuestionsForAlarm(alarmId)
+activate Dao
+Dao --> VM : OK
+deactivate Dao
+
+VM -> Dao : clearAlarmTopicLinks(alarmId)
+activate Dao
+Dao --> VM : OK
+deactivate Dao
+
+loop Cho mỗi topic đã chọn
+    VM -> Dao : insertAlarmTopicLink(alarmId, topicId)
+    activate Dao
+    Dao --> VM : OK
+    deactivate Dao
+end
+
+loop Cho mỗi question đã chọn lẻ
+    VM -> Dao : insertSelectedQuestion(alarmId, questionId)
+    activate Dao
+    Dao --> VM : OK
+    deactivate Dao
+end
+
+VM -> Dao : clearQRLinksForAlarm(alarmId)
+activate Dao
+Dao --> VM : OK
+deactivate Dao
+
+loop Cho mỗi QR đã chọn
+    VM -> Dao : insertAlarmQRLink(alarmId, qrId)
+    activate Dao
+    Dao --> VM : OK
+    deactivate Dao
+end
+
+VM -> Scheduler : schedule(alarmEntity)
+activate Scheduler
+
+Scheduler -> SysAlarm : setAlarmClock(time, pendingIntent)
+activate SysAlarm
+SysAlarm --> Scheduler : Lịch hẹn đã đặt
+deactivate SysAlarm
+
+Scheduler --> VM : Thành công
+deactivate Scheduler
+
+VM -> VM : isSaved = true
+VM --> SettingsScreen : uiState.isSaved = true
+deactivate VM
+
+SettingsScreen --> User : Hiển thị "Đã lưu"
+SettingsScreen -> Screen : popBackStack()
+deactivate SettingsScreen
+
+Screen --> User : Hiển thị danh sách (có báo thức mới)
+deactivate Screen
+
+@enduml
+
+

@@ -141,7 +141,8 @@ fun QRCodeScannerScreen(
         )
         
         // Overlay với khung quét
-        ScannerOverlay()
+        val colorScheme = MaterialTheme.colorScheme
+        ScannerOverlay(colorScheme = colorScheme)
         
         // Top bar
         Row(
@@ -156,12 +157,12 @@ fun QRCodeScannerScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "Đóng",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             
@@ -174,12 +175,12 @@ fun QRCodeScannerScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Icon(
                     if (isFlashOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
                     contentDescription = "Đèn flash",
-                    tint = if (isFlashOn) Color(0xFFFFD700) else Color.White
+                    tint = if (isFlashOn) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -196,7 +197,7 @@ fun QRCodeScannerScreen(
                 text = scannerTitle,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -204,7 +205,7 @@ fun QRCodeScannerScreen(
             Text(
                 text = scannerHint,
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
         }
@@ -217,13 +218,13 @@ fun QRCodeScannerScreen(
                 .padding(horizontal = 32.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.Black.copy(alpha = 0.7f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
             )
         ) {
             Text(
                 text = "Hỗ trợ QR Code và tất cả loại Barcode phổ biến",
                 modifier = Modifier.padding(16.dp),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
@@ -232,7 +233,7 @@ fun QRCodeScannerScreen(
 }
 
 @Composable
-private fun ScannerOverlay() {
+private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) {
     val infiniteTransition = rememberInfiniteTransition(label = "scanner_line")
     val scanLineY by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -268,15 +269,16 @@ private fun ScannerOverlay() {
             )
         }
         
+        // Sử dụng surface với alpha để tạo overlay tối
         drawPath(
             path = overlayPath,
-            color = Color.Black.copy(alpha = 0.6f),
+            color = colorScheme.surface.copy(alpha = 0.6f),
             blendMode = BlendMode.SrcOver
         )
         
         // Vẽ viền khung
         drawRoundRect(
-            color = Color.White,
+            color = colorScheme.onBackground,
             topLeft = Offset(frameLeft, frameTop),
             size = androidx.compose.ui.geometry.Size(frameSize, frameSize),
             cornerRadius = CornerRadius(24.dp.toPx()),
@@ -286,7 +288,7 @@ private fun ScannerOverlay() {
         // Vẽ góc highlight
         val cornerLength = 40.dp.toPx()
         val cornerStroke = 6.dp.toPx()
-        val highlightColor = Color(0xFFE50043)
+        val highlightColor = colorScheme.primary
         
         // Top-left corner
         drawLine(

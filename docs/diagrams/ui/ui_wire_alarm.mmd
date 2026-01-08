@@ -1,0 +1,19 @@
+flowchart TB
+    subgraph AlarmScreen["Màn hình Danh sách Báo thức"]
+        TopBar[Thanh trên: Tiêu đề + Menu sắp xếp]
+        Header[Thông tin: Đổ chuông sau X giờ Y phút]
+        List[Danh sách báo thức<br/>- Thẻ báo thức<br/>- Công tắc bật/tắt<br/>- Thời gian đổ chuông<br/>- Nút chỉnh sửa]
+        FAB[Nút thêm nổi: Thêm báo thức mới]
+    end
+    
+    TopBar --> Header
+    Header --> List
+    List --> FAB
+    
+    style AlarmScreen fill:#f5f5f5,stroke:#333
+    style TopBar fill:#e3f2fd
+    style Header fill:#fff9c4
+    style List fill:#e8f5e9
+    style FAB fill:#ff9800
+
+
