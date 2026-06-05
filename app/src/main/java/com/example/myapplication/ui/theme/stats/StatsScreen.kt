@@ -37,6 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,21 +59,20 @@ import com.example.myapplication.data.SrsStat
 @Composable
 fun StatsScreen() {
     val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
-
-    // 🚨 Lấy đúng Dao từ Database
-    val statsDao = database.statisticsDao()
+    val statsDao = remember(context) {
+        AppDatabase.getDatabase(context).statisticsDao()
+    }
 
     val viewModel: StatsViewModel = viewModel(
         factory = StatsViewModelFactory(statsDao)
     )
 
-    val score by viewModel.wakeUpScore.collectAsState()
-    val weeklyStats by viewModel.weeklyAccuracy.collectAsState(initial = emptyList())
-    val srsStats by viewModel.srsDistribution.collectAsState(initial = emptyList())
-    val selectedStatus by viewModel.selectedStatus.collectAsState()
-    val questions by viewModel.filteredQuestions.collectAsState()
-    val userStats by viewModel.userStats.collectAsState()
+    val score by viewModel.wakeUpScore.collectAsStateWithLifecycle()
+    val weeklyStats by viewModel.weeklyAccuracy.collectAsStateWithLifecycle(initialValue = emptyList())
+    val srsStats by viewModel.srsDistribution.collectAsStateWithLifecycle(initialValue = emptyList())
+    val selectedStatus by viewModel.selectedStatus.collectAsStateWithLifecycle()
+    val questions by viewModel.filteredQuestions.collectAsStateWithLifecycle()
+    val userStats by viewModel.userStats.collectAsStateWithLifecycle()
 
     if (selectedStatus != null) {
         ModalBottomSheet(onDismissRequest = { viewModel.selectSrsStatus(null) }) {

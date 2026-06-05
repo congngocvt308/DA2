@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -44,15 +45,18 @@ fun AlarmScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
-    val settingsUiState by settingsViewModel.uiState.collectAsState()
-    val alarmList by viewModel.alarms.collectAsState()
-    val currentSortType by viewModel.sortType.collectAsState()
-    val headerText by viewModel.timeUntilNextAlarms.collectAsState()
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val alarmList by viewModel.alarms.collectAsStateWithLifecycle()
+    val currentSortType by viewModel.sortType.collectAsStateWithLifecycle()
+    val headerText by viewModel.timeUntilNextAlarms.collectAsStateWithLifecycle()
     var isFabMenuOpen by remember { mutableStateOf(false) }
     var isMoreMenuOpen by remember { mutableStateOf(false) }
     var showQuickDialog by remember { mutableStateOf(false) }
     var showSoundDialog by remember { mutableStateOf(false) }
     val previewPlayer = remember { SoundPlayer(context) }
+    DisposableEffect(Unit) {
+        onDispose { previewPlayer.stop() }
+    }
 
     Box(
         modifier = Modifier
@@ -260,7 +264,7 @@ private fun AlarmTopBar(
                     text = { Text("Xóa báo thức không hoạt động", color = MaterialTheme.colorScheme.primary) },
                     onClick = {
                         onDeleteInactive()
-                        onDismissMenu
+                        onDismissMenu()
                     },
                     trailingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.primary )}
                 )
@@ -295,7 +299,7 @@ fun FabSpeedDial(
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shadowElevation = 4.dp
             ) {
                 Column(
@@ -356,10 +360,10 @@ fun FabMenuItem(
             .padding(horizontal = 20.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.background, modifier = Modifier.size(25.dp))
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(25.dp))
 
         Spacer(modifier = Modifier.width(15.dp))
 
-        Text(text, color = MaterialTheme.colorScheme.background, fontSize = 20.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp)
     }
 }

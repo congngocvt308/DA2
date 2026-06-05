@@ -133,12 +133,15 @@ fun AlarmSoundSection(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Âm thanh báo thức",
-                color = MaterialTheme.colorScheme.onSurface,
+
+
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
@@ -155,7 +158,7 @@ fun AlarmSoundSection(
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = currentSoundTitle,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -175,9 +178,9 @@ fun AlarmSoundSection(
                     valueRange = 0f..1f,
                     modifier = Modifier.weight(1f),
                     colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.onSurface,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        thumbColor = MaterialTheme.colorScheme.onBackground,
                     )
                 )
             }

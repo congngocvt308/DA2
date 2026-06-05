@@ -511,7 +511,7 @@ fun AlarmTaskSection(
                                 .background(MaterialTheme.colorScheme.secondary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground)
+                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                         }
                         Text(
                             text = if (questionCount > 0) "$questionCount câu" else "Thêm",
@@ -910,7 +910,7 @@ fun SnoozeSettingsSection(
                     checked = isSnoozeEnabled,
                     onCheckedChange = onSnoozeToggle,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onSurface,
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                         checkedTrackColor = MaterialTheme.colorScheme.secondary,
                         uncheckedThumbColor = MaterialTheme.colorScheme.tertiary,
                         uncheckedTrackColor = MaterialTheme.colorScheme.surface

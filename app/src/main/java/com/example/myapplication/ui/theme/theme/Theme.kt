@@ -24,17 +24,19 @@ private val AppDarkColorScheme = darkColorScheme(
 )
 
 private val AppLightColorScheme = lightColorScheme(
-    primary = Color(0xFFE50043),
+    primary = Color(0xFFE53935),
     onPrimary = Color.White,
-    background = Color.White,
-    onBackground = Color.Black,
-    surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFE5E5E5),
-    onSurface = Color.Black,
-    secondary = Color(0xFF42A5F5),
-    tertiary = Color.LightGray
-)
 
+    background = Color(0xFFF8F9FA),
+    onBackground = Color(0xFF1C1B1F),
+
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1C1B1F),
+    surfaceVariant = Color(0xFFEEEEEE),
+    onSurfaceVariant = Color(0xFF49454F),
+    secondary = Color(0xFF007AFF),
+    tertiary = Color(0xFF757575)
+)
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

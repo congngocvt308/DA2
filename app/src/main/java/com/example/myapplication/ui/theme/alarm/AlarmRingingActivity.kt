@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.alarm_logic.AlarmDismissHelper
 import com.example.myapplication.alarm_logic.AlarmReceiver
 import com.example.myapplication.alarm_logic.AlarmService
 import com.example.myapplication.data.AppDatabase
@@ -29,12 +30,14 @@ import kotlin.jvm.java
 
 class AlarmRingingActivity : ComponentActivity() {
 
+    private var alarmId: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         turnScreenOnAndKeyguard()
 
         val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
-        val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        alarmId = intent.getIntExtra("ALARM_ID", -1)
         val hasQRCodes = intent.getBooleanExtra("HAS_QR_CODES", false)
 
         setContent {
@@ -73,8 +76,7 @@ class AlarmRingingActivity : ComponentActivity() {
                                     // 3. Gọi hàm đặt lịch reo lại với đúng thời gian đã lấy từ DB
                                     scheduleSnoozeAlarm(alarmId, label, snoozeDuration)
 
-                                    stopRinging()
-                                    finish()
+                                    stopRingingAndClose()
                                 }
                             },
                             onNavigateToQuiz = {
@@ -82,13 +84,7 @@ class AlarmRingingActivity : ComponentActivity() {
                                 navController.navigate("quiz_screen")
                             },
                             onNavigateToQRScan = {
-                                // Chuyển sang màn hình quét QR
                                 navController.navigate("qr_dismiss_screen")
-                            },
-                            onFinish = {
-                                // Tắt hẳn (nếu người dùng không chọn quiz - tùy logic của bạn)
-                                stopRinging()
-                                finish()
                             }
                         )
                     }
@@ -102,10 +98,8 @@ class AlarmRingingActivity : ComponentActivity() {
                                 navController.popBackStack()
                             },
                             onQuizCompleted = {
-                                // Khi giải xong: Tắt nhạc và đóng Activity
                                 statsViewModel.updatePerformanceAfterAlarm()
-                                stopRinging()
-                                finish()
+                                completeAlarmDismiss()
                             }
                         )
                     }
@@ -119,8 +113,7 @@ class AlarmRingingActivity : ComponentActivity() {
                             },
                             onDismissSuccess = {
                                 statsViewModel.updatePerformanceAfterAlarm()
-                                stopRinging()
-                                finish()
+                                completeAlarmDismiss()
                             }
                         )
                     }
@@ -165,9 +158,16 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
-    private fun stopRinging() {
-        val intent = Intent(this, AlarmService::class.java)
-        stopService(intent)
+    private fun completeAlarmDismiss() {
+        lifecycleScope.launch {
+            AlarmDismissHelper.onAlarmDismissed(this@AlarmRingingActivity, alarmId)
+            stopRingingAndClose()
+        }
+    }
+
+    private fun stopRingingAndClose() {
+        AlarmDismissHelper.stopAlarmService(this)
+        finishAndRemoveTask()
     }
 
     // Cấu hình quan trọng để sáng màn hình khi điện thoại đang khóa

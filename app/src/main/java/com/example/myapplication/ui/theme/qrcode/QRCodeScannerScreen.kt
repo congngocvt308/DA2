@@ -24,9 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -36,10 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.example.myapplication.utils.BarcodeScannerProvider
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Màn hình quét mã QR/Barcode bằng camera
@@ -55,15 +56,16 @@ fun QRCodeScannerScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     
     var isFlashOn by remember { mutableStateOf(false) }
-    var hasScanned by remember { mutableStateOf(false) }
-    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    val hasScanned = remember { AtomicBoolean(false) }
     var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
-    
+    val barcodeScanner = remember { BarcodeScannerProvider.scanner }
+
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
-    
+
     DisposableEffect(Unit) {
         onDispose {
             cameraExecutor.shutdown()
+            hasScanned.set(false)
         }
     }
     
@@ -79,48 +81,40 @@ fun QRCodeScannerScreen(
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                 cameraProviderFuture.addListener({
                     val provider = cameraProviderFuture.get()
-                    cameraProvider = provider
-                    
+
                     val preview = Preview.Builder().build().also {
                         it.surfaceProvider = previewView.surfaceProvider
                     }
                     
                     val imageAnalysis = ImageAnalysis.Builder()
-                        .setTargetResolution(Size(1280, 720))
+                        .setTargetResolution(Size(640, 480))
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
-                    
+
                     imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                        if (!hasScanned) {
-                            @androidx.camera.core.ExperimentalGetImage
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val image = InputImage.fromMediaImage(
-                                    mediaImage,
-                                    imageProxy.imageInfo.rotationDegrees
-                                )
-                                
-                                val scanner = BarcodeScanning.getClient()
-                                scanner.process(image)
-                                    .addOnSuccessListener { barcodes ->
-                                        if (barcodes.isNotEmpty() && !hasScanned) {
-                                            val barcode = barcodes.first()
-                                            val codeValue = barcode.rawValue ?: return@addOnSuccessListener
-                                            val codeType = getCodeType(barcode.format)
-                                            
-                                            hasScanned = true
-                                            onCodeScanned(codeValue, codeType)
-                                        }
-                                    }
-                                    .addOnCompleteListener {
-                                        imageProxy.close()
-                                    }
-                            } else {
-                                imageProxy.close()
-                            }
-                        } else {
+                        if (hasScanned.get()) {
                             imageProxy.close()
+                            return@setAnalyzer
                         }
+                        @androidx.camera.core.ExperimentalGetImage
+                        val mediaImage = imageProxy.image
+                        if (mediaImage == null) {
+                            imageProxy.close()
+                            return@setAnalyzer
+                        }
+                        val image = InputImage.fromMediaImage(
+                            mediaImage,
+                            imageProxy.imageInfo.rotationDegrees
+                        )
+                        barcodeScanner.process(image)
+                            .addOnSuccessListener { barcodes ->
+                                if (barcodes.isNotEmpty() && hasScanned.compareAndSet(false, true)) {
+                                    val barcode = barcodes.first()
+                                    val codeValue = barcode.rawValue ?: return@addOnSuccessListener
+                                    onCodeScanned(codeValue, getCodeType(barcode.format))
+                                }
+                            }
+                            .addOnCompleteListener { imageProxy.close() }
                     }
                     
                     try {
@@ -258,9 +252,8 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
         
         // Vẽ overlay tối ngoài khung
         val overlayPath = Path().apply {
-            // Full screen rectangle
+            fillType = PathFillType.EvenOdd
             addRect(Rect(0f, 0f, canvasWidth, canvasHeight))
-            // Cut out the scanning frame
             addRoundRect(
                 androidx.compose.ui.geometry.RoundRect(
                     Rect(frameLeft, frameTop, frameRight, frameBottom),
@@ -268,12 +261,10 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
                 )
             )
         }
-        
-        // Sử dụng surface với alpha để tạo overlay tối
+
         drawPath(
             path = overlayPath,
-            color = colorScheme.surface.copy(alpha = 0.6f),
-            blendMode = BlendMode.SrcOver
+            color = colorScheme.surface.copy(alpha = 0.6f)
         )
         
         // Vẽ viền khung

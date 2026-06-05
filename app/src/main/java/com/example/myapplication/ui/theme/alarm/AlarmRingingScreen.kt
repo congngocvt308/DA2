@@ -26,8 +26,7 @@ fun AlarmRingingScreen(
     hasQRCodes: Boolean = false,
     onSnooze: () -> Unit,
     onNavigateToQuiz: () -> Unit,
-    onNavigateToQRScan: () -> Unit = {},
-    onFinish: () -> Unit
+    onNavigateToQRScan: () -> Unit = {}
 ) {
     var currentTime by remember { mutableStateOf("") }
     var currentDate by remember { mutableStateOf("") }
@@ -92,10 +91,7 @@ fun AlarmRingingScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {
-                onSnooze()
-                onFinish()
-            },
+            onClick = onSnooze,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             shape = RoundedCornerShape(50),
             modifier = Modifier

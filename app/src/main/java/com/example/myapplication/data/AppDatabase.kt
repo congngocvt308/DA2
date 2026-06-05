@@ -70,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "app_database"
                 )
                     .addMigrations(MIGRATION_1_2)
+                    .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                     .fallbackToDestructiveMigration() // Reset database nếu migration fail
                     .build()
                 INSTANCE = instance

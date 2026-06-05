@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
 import com.example.myapplication.ui.theme.components.SearchableTopBar
 
 @Composable
@@ -38,6 +37,7 @@ fun TopicScreen(
     var showAddTopicDialog by remember { mutableStateOf(false) }
 
     val topicList by viewModel.filteredTopics.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
 
     BackHandler(enabled = isSearching || isFabMenuOpen) {
@@ -58,7 +58,7 @@ fun TopicScreen(
             SearchableTopBar(
                 title = "Thư viện Chủ đề",
                 isSearching = isSearching,
-                searchQuery = viewModel.searchQuery.collectAsState().value,
+                searchQuery = searchQuery,
                 onSearchToggle = {
                     isSearching = !isSearching
                     if (!isSearching) {
@@ -192,7 +192,7 @@ private fun FabSpeedDial(
             Icon(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "Tạo mới",
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(32.dp).rotate(rotation)
             )
         }

@@ -72,11 +72,6 @@ fun MainScreen(initialExternalRoute: String? = null) {
     val navController = rememberNavController()
     LaunchedEffect(initialExternalRoute) {
         if (initialExternalRoute == Screen.QUIZ_SCREEN) {
-            // Đợi 1 nhịp nhỏ để NavHost kịp gắn Graph
-            while (navController.graph == null) {
-                kotlinx.coroutines.delay(10)
-            }
-
             navController.navigate(Screen.QUIZ_SCREEN) {
                 popUpTo(navController.graph.startDestinationId) { inclusive = false }
                 launchSingleTop = true
@@ -261,8 +256,6 @@ fun MainScreen(initialExternalRoute: String? = null) {
                     onSnooze = { /* Logic Snooze */ },
                     onNavigateToQuiz = {
                         navController.navigate(Screen.QUIZ_SCREEN)
-                    },
-                    onFinish = {
                     }
                 )
             }

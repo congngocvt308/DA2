@@ -56,7 +56,7 @@ class AlarmService : Service() {
 
         playAlarmSound(ringtoneUri, volume)
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun createNotificationChannel() {
@@ -140,9 +140,16 @@ class AlarmService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         mediaPlayer?.stop()
         mediaPlayer?.release()
+        mediaPlayer = null
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

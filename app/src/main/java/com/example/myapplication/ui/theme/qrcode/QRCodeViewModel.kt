@@ -1,15 +1,14 @@
 package com.example.myapplication.ui.theme.qrcode
 
 import android.app.Application
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.AlarmQRLinkEntity
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.QRCodeEntity
-import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.example.myapplication.utils.BarcodeScannerProvider
+import com.example.myapplication.utils.BitmapDecodeUtils
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -162,21 +161,21 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
             
             try {
                 val context = getApplication<Application>()
-                val inputStream = context.contentResolver.openInputStream(uri)
                 val bitmap = withContext(Dispatchers.IO) {
-                    BitmapFactory.decodeStream(inputStream)
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapDecodeUtils.decodeSampledBitmap(stream)
+                    }
                 }
-                inputStream?.close()
-                
+
                 if (bitmap == null) {
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     onError("Không thể đọc ảnh")
                     return@launch
                 }
-                
+
                 val image = InputImage.fromBitmap(bitmap, 0)
-                val scanner = BarcodeScanning.getClient()
-                
+                val scanner = BarcodeScannerProvider.scanner
+
                 scanner.process(image)
                     .addOnSuccessListener { barcodes ->
                         _uiState.value = _uiState.value.copy(isLoading = false)
@@ -199,6 +198,7 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
                         _uiState.value = _uiState.value.copy(isLoading = false)
                         onError("Lỗi khi quét ảnh: ${e.message}")
                     }
+                    .addOnCompleteListener { bitmap.recycle() }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 onError("Lỗi khi quét ảnh: ${e.message}")
