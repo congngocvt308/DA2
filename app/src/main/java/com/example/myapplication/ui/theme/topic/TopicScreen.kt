@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.data.AiMatrixConfig
 import com.example.myapplication.ui.theme.components.SearchableTopBar
+import kotlinx.coroutines.launch
 
 @Composable
 fun TopicScreen(
@@ -35,9 +37,14 @@ fun TopicScreen(
     var isSearching by remember { mutableStateOf(false) }
     var isFabMenuOpen by remember { mutableStateOf(false) }
     var showAddTopicDialog by remember { mutableStateOf(false) }
+    var showAiDialog by remember { mutableStateOf(false) }
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val matrixConfig by viewModel.matrixConfig.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
 
     val topicList by viewModel.filteredTopics.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedDocuments by viewModel.selectedDocuments.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
 
     BackHandler(enabled = isSearching || isFabMenuOpen) {
@@ -125,6 +132,10 @@ fun TopicScreen(
                 },
                 onQuickTopicClick = {
                     isFabMenuOpen = false
+                },
+                onAiClick = {
+                    isFabMenuOpen = false
+                    showAiDialog = true
                 }
                 // Bỏ modifier cũ ở đây vì đã đưa lên AnimatedVisibility
             )
@@ -140,6 +151,37 @@ fun TopicScreen(
                 }
             )
         }
+
+        if (showAiDialog) {
+            AiCreateQuestionBottomSheet(
+                isLoading = isLoading,
+                matrixConfig = matrixConfig,
+                selectedDocuments = selectedDocuments, // Đẩy danh sách hàng chờ xuống Sheet
+                onDismiss = {
+                    showAiDialog = false
+                    viewModel.clearState()
+                },
+                onAddDocument = { uri, name, isPdf ->
+                    viewModel.addDocumentToQueue(uri, name, isPdf)
+                },
+                onRemoveDocument = { id ->
+                    viewModel.removeDocumentFromQueue(id)
+                },
+                onUpdatePageConfig = { id, config ->
+                    viewModel.updateDocumentPageConfig(id, config)
+                },
+                onProcessAndCompress = {
+                    viewModel.processAndCompressQueue() // Gọi chạy tiến trình nén hàng loạt kiểm thử
+                },
+                onTopicNameChange = { newName -> viewModel.updateTopicName(newName) },
+                onPresetSelect = { isTryHard -> viewModel.applyPreset(isTryHard) },
+                onMatrixSliderChange = { ez, mid, hard -> viewModel.updateMatrixSliders(ez, mid, hard) },
+                onStartGenerationSuccess = {
+                    showAiDialog = false
+                    viewModel.clearState()
+                }
+            )
+        }
     }
 }
 
@@ -149,6 +191,7 @@ private fun FabSpeedDial(
     onToggleMenu: () -> Unit,
     onAddNewTopic: () -> Unit,
     onQuickTopicClick: () -> Unit,
+    onAiClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val rotation by animateFloatAsState(
@@ -178,6 +221,11 @@ private fun FabSpeedDial(
                         icon = Icons.Filled.Style,
                         text = "Thêm chủ đề mới",
                         onClick = onAddNewTopic
+                    )
+                    FabMenuItem(
+                        icon = Icons.Filled.AutoAwesome,
+                        text = "Tạo bằng AI",
+                        onClick = onAiClick
                     )
                 }
             }
