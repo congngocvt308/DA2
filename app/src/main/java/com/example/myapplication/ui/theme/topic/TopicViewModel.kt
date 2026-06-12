@@ -6,41 +6,50 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.AiApiService
 import com.example.myapplication.data.AiMatrixConfig
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.TopicData
 import com.example.myapplication.data.TopicEntity
 import com.example.myapplication.data.SelectedDocument
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 
 class TopicViewModel(application: Application) : AndroidViewModel(application) {
 
     private val topicDao = AppDatabase.getDatabase(application).appDao()
-
-    val searchQuery = MutableStateFlow("")
-
     private val context = application.applicationContext
     private val documentCompressor = DocumentCompressor(context)
 
-    // --- TRẠNG THÁI UI TRUYỀN XUỐNG BOTTOM SHEET ---
+    val searchQuery = MutableStateFlow("")
+
+    // --- CÁC TRẠNG THÁI UI QUẢN LÝ TẬP TRUNG (STATE HOISTING) ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _matrixConfig = MutableStateFlow<AiMatrixConfig?>(null)
     val matrixConfig: StateFlow<AiMatrixConfig?> = _matrixConfig.asStateFlow()
 
-    // 🌟 Quản lý danh sách hàng chờ tài liệu người dùng chọn (State Hoisting)
     private val _selectedDocuments = MutableStateFlow<List<SelectedDocument>>(emptyList())
     val selectedDocuments: StateFlow<List<SelectedDocument>> = _selectedDocuments.asStateFlow()
 
+    // Cache lưu trữ chuỗi văn bản toán học LaTeX tạm thời do Backend trả về sau Bước 1
+    private val _extractedTextCache = MutableStateFlow("")
+
+    // --- LUỒNG TÌM KIẾM CHỦ ĐỀ TRÊN THƯ VIỆN CÓ SẴN ---
     val filteredTopics: StateFlow<List<TopicData>> = combine(
         topicDao.getAllTopicsWithCount(),
         searchQuery
@@ -52,12 +61,8 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                 questionCount = entity.questionCount
             )
         }
-        if (query.isBlank()) {
-            mappedTopics
-        } else {
-            mappedTopics.filter { topic ->
-                topic.name.contains(query, ignoreCase = true)
-            }
+        if (query.isBlank()) { mappedTopics } else {
+            mappedTopics.filter { topic -> topic.name.contains(query, ignoreCase = true) }
         }
     }.stateIn(
         scope = viewModelScope,
@@ -69,51 +74,34 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         searchQuery.value = newQuery
     }
 
-    fun addNewTopic(name: String) {
-        viewModelScope.launch {
-            val newTopic = TopicEntity(topicName = name)
-            topicDao.insertTopic(newTopic)
-        }
-    }
-
-    // 🌟 Thêm tài liệu vào hàng chờ và tự động phân loại thông minh (PDF Text vs PDF Scan)
+    // --- HÀNG CHỜ: THÊM TÀI LIỆU CÓ SÀNG LỌC GUARDRAIL ---
     fun addDocumentToQueue(uri: Uri, name: String, isPdf: Boolean) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             var count = 1
             var isTextPdf = false
 
             if (isPdf) {
                 try {
-                    // 1. Dùng bộ Renderer mặc định siêu nhẹ để lấy ra tổng số trang thực tế
                     context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                         val renderer = PdfRenderer(pfd)
                         count = renderer.pageCount
-                        renderer.close() // Đóng ngay sau khi lấy thông tin xong
+                        renderer.close()
                     }
 
-                    // 2. Lấy tổng dung lượng file gốc (Bytes)
                     val totalFileSize = getFileSize(uri)
-
-                    // 3. THUẬT TOÁN ĐÚNG LOGIC: Tính dung lượng trung bình trên mỗi trang (Bytes/Trang)
                     val averagePageSize = totalFileSize.toFloat() / count.toFloat()
+                    val maxTextPageSizeThreshold = 500 * 1024 // 500KB Guardrail Threshold [cite: 123]
 
-                    // Ngưỡng bảo vệ: 500 KB tính theo Bytes (500 * 1024)
-                    val maxTextPageSizeThreshold = 500 * 1024
-
-                    // Nếu 1 trang trung bình nhỏ hơn 300KB -> Khẳng định 100% là PDF Text chứa chữ
                     if (averagePageSize < maxTextPageSizeThreshold) {
                         isTextPdf = true
                     }
 
-                    Log.d("MultiCompressTest", "📊 KIỂM TRA PHÂN LOẠI PDF:")
-                    Log.d("MultiCompressTest", "   ➔ Tổng số trang: $count trang")
-                    Log.d("MultiCompressTest", "   ➔ Tổng dung lượng: ${String.format("%.2f", totalFileSize / (1024.0 * 1024.0))} MB")
-                    Log.d("MultiCompressTest", "   ➔ Trung bình 1 trang: ${String.format("%.2f", averagePageSize / 1024.0)} KB/Trang")
-                    Log.d("MultiCompressTest", "   ➔ Kết luận -> Là PDF Chữ Thô: $isTextPdf")
-
+                    Log.d("AiOcrTest", "📊 HÀNG CHỜ - ĐO THÔNG SỐ FILE:")
+                    Log.d("AiOcrTest", "   ➔ Tên: $name | Tổng số trang: $count trang")
+                    Log.d("AiOcrTest", "   ➔ Kích thước trung bình trang: ${String.format("%.2f", averagePageSize / 1024.0)} KB/Trang")
+                    Log.d("AiOcrTest", "   ➔ Phân loại -> PDF Text: $isTextPdf")
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    Log.e("MultiCompressTest", "❌ Lỗi khi đọc cấu trúc phân loại PDF: ${e.message}")
+                    Log.e("AiOcrTest", "❌ Lỗi đọc cấu trúc phân loại PDF: ${e.message}")
                 }
             }
 
@@ -122,58 +110,118 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                 uri = uri,
                 name = name,
                 isPdf = isPdf,
-                isPdfText = isTextPdf, // Nhãn phân loại chính xác tuyệt đối dù file ngắn hay dài
-                totalPages = count
+                isPdfText = isTextPdf,
+                totalPages = count,
+                pageConfig = "Tất cả"
             )
             _selectedDocuments.update { it + newDoc }
         }
     }
 
-    // Xóa tài liệu khỏi hàng chờ bằng định danh ID
     fun removeDocumentFromQueue(id: String) {
         _selectedDocuments.update { list -> list.filter { it.id != id } }
-        Log.d("MultiCompressTest", "❌ Đã xóa tài liệu khỏi danh sách chờ.")
+        Log.d("AiOcrTest", "❌ Đã xóa tài liệu khỏi danh sách chờ.")
     }
 
-    // Cập nhật cấu hình trang cho tài liệu dạng PDF
     fun updateDocumentPageConfig(id: String, newPageConfig: String) {
         _selectedDocuments.update { list ->
-            list.map { doc ->
-                if (doc.id == id) doc.copy(pageConfig = newPageConfig) else doc
-            }
+            list.map { doc -> if (doc.id == id) doc.copy(pageConfig = newPageConfig) else doc }
         }
     }
 
-    // 🌟 Thực thi tiến trình nén hàng loạt phân nhánh đúng logic thiết kế
+    // ================= 🌟 THỰC THI TIẾN TRÌNH KIỂM THỬ BƯỚC 1 (WORKFLOW MỚI) =================
     fun processAndCompressQueue() {
-        viewModelScope.launch {
-            val currentDocs = _selectedDocuments.value
-            if (currentDocs.isEmpty()) return@launch
+        val currentDocs = _selectedDocuments.value
+        if (currentDocs.isEmpty()) return
 
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1. Kích hoạt hiệu ứng loading xoay vòng ProcessingOcrLayout trên giao diện [cite: 587]
             _isLoading.value = true
-            Log.d("MultiCompressTest", "============== KHỞI CHẠY TIẾN TRÌNH XỬ LÝ PHÂN NHÁNH HÀNG LOẠT ==============")
 
-            // Gọi tầng Compressor thực thi tác vụ I/O ngầm
-            val outputFiles = documentCompressor.compressMultipleDocuments(currentDocs)
+            Log.d("AiOcrTest", "=========================================================================")
+            Log.d("AiOcrTest", "⚡ KÍCH HOẠT TIẾN TRÌNH XỬ LÝ NÉN PHÂN NHÁNH VÀ KIỂM THỬ BƯỚC 1")
+            Log.d("AiOcrTest", "Số lượng tài liệu trong hàng chờ chuẩn bị đẩy đi: ${currentDocs.size}")
 
-            Log.d("MultiCompressTest", "✅ ĐỒNG BỘ THÀNH CÔNG! Số tệp kết xuất lưu trữ: ${outputFiles.size}")
-            outputFiles.forEachIndexed { index, file ->
-                val ext = file.extension.uppercase()
-                Log.d("MultiCompressTest", "   ➔ [Tệp ${index + 1}] Định dạng: $ext | Tên: ${file.name}")
-                Log.d("MultiCompressTest", "   ➔ Dung lượng thực tế: ${String.format("%.2f", file.length() / 1024.0)} KB")
-                Log.d("MultiCompressTest", "   ➔ Thư mục lưu trữ công khai: ${file.absolutePath}")
+            // 2. Chạy nén ngầm chuyển đổi sang mảng byte trực tiếp tại Memory (Không sinh file rác) [cite: 588]
+            val startTime = System.currentTimeMillis()
+            val compressedDataList = documentCompressor.compressMultipleDocuments(currentDocs)
+            val endTime = System.currentTimeMillis()
+
+            // 3. IN BẢNG BÁO CÁO NGHIỆM THU NÉN TRỰC QUAN RA LOGCAT [cite: 588]
+            Log.d("AiOcrTest", "----------- BẢNG TỔNG HỢP KẾT QUẢ NÉN TẠI MEMORY -----------")
+            Log.d("AiOcrTest", "Thời gian thực thi nén bất đồng bộ: ${endTime - startTime} ms")
+            var totalBytesToSend = 0L
+
+            compressedDataList.forEachIndexed { index, fileData ->
+                val sizeInKb = fileData.bytes.size / 1024
+                totalBytesToSend += fileData.bytes.size
+                Log.d("AiOcrTest", "📍 Mảnh [${index + 1}]: ${fileData.fileName} | Dung lượng Memory gửi: ${sizeInKb} KB | Định dạng gốc PDF Text: ${fileData.isRawPdf}")
             }
-            Log.d("MultiCompressTest", "=========================================================================")
+            Log.d("AiOcrTest", "Tổng băng thông truyền dữ liệu mạng Multipart dự kiến: ${totalBytesToSend / 1024} KB")
+            Log.d("AiOcrTest", "------------------------------------------------------------")
 
-            // Giả lập sau khi nén hoàn tất, hiển thị cấu hình ma trận câu hỏi (Mô phỏng bước tiếp theo của luồng)
-            _matrixConfig.value = AiMatrixConfig(
-                suggestedTopic = "Chủ đề tổng hợp từ ${currentDocs.size} tài liệu"
-            )
-            _selectedDocuments.value = emptyList() // Dọn dẹp danh sách chờ sau khi xử lý thành công
-            _isLoading.value = false
+            // 4. Giả lập 2 giây truyền tải mạng gửi gói tin Multipart lên Server & Chờ Gemini Flash xử lý [cite: 589]
+            Log.d("AiOcrTest", "📡 3G/4G/Wifi: Đang truyền tải gói tin Multipart Stream lên Server...")
+
+            try {
+                // Chuyển đổi danh sách CompressedFileData (RAM) thành MultipartBody.Part
+                val multipartParts = compressedDataList.map { fileData ->
+                    val requestBody = okhttp3.RequestBody.create(
+                        okhttp3.MediaType.parse(if (fileData.isRawPdf) "application/pdf" else "image/jpeg"),
+                        fileData.bytes
+                    )
+                    MultipartBody.Part.createFormData("files", fileData.fileName, requestBody)
+                }
+
+                val okHttpClient = OkHttpClient.Builder()
+                    .connectTimeout(60, TimeUnit.SECONDS) // Thời gian kết nối tối đa
+                    .readTimeout(60, TimeUnit.SECONDS)    // Thời gian đợi Server đọc và trả dữ liệu về
+                    .writeTimeout(60, TimeUnit.SECONDS)   // Thời gian đẩy mảng byte lên RAM Server
+                    .build()
+
+                // Khởi tạo Retrofit Instance (Bạn thay URL bằng IP máy tính/Server của bạn)
+                val retrofit = retrofit2.Retrofit.Builder()
+                    .baseUrl("http://192.168.1.219:3000/") // IP 10.0.2.2 trỏ về localhost của máy tính khi chạy máy ảo Android
+                    .client(okHttpClient)
+                    .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
+                    .build()
+
+                val aiApiService = retrofit.create(AiApiService::class.java)
+
+                // Thực hiện bắn Request mạng bất đồng bộ
+                val response = aiApiService.uploadDocuments(multipartParts)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val ocrResult = response.body()!!
+
+                    Log.d("AiOcrTest", "✅ Backend Server phản hồi chuỗi cấu trúc JSON thành công!")
+                    Log.d("AiOcrTest", "🤖 Tên chủ đề Gemini bóc tách xịn: -> '${ocrResult.suggestedTopic}'")
+
+                    // 5. Trả dữ liệu thật về cho Main Thread để hiển thị lên Form gộp
+                    withContext(Dispatchers.Main) {
+                        _isLoading.value = false
+                        _extractedTextCache.value = ocrResult.extractedLatexContent // Giữ lại chuỗi LaTeX cho Bước 3
+
+                        _matrixConfig.value = AiMatrixConfig(
+                            suggestedTopic = ocrResult.suggestedTopic, // Điền tên thông minh do AI trả về
+                            easyCount = 1f,
+                            midCount = 3f,
+                            hardCount = 2f
+                        )
+                    }
+                } else {
+                    Log.e("AiOcrTest", "❌ Server báo lỗi: ${response.code()} - ${response.errorBody()?.string()}")
+                    withContext(Dispatchers.Main) { _isLoading.value = false }
+                }
+
+            } catch (e: Exception) {
+                Log.e("AiOcrTest", "❌ Lỗi kết nối API mạng: ${e.localizedMessage}")
+                withContext(Dispatchers.Main) { _isLoading.value = false }
+            }
         }
     }
 
+    // --- CÁC SỰ KIỆN TƯƠNG TÁC FORM CẤU HÌNH GỘP (BƯỚC 2) ---
     fun updateTopicName(newName: String) {
         _matrixConfig.update { it?.copy(suggestedTopic = newName) }
     }
@@ -188,14 +236,71 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addNewTopic(name: String) {
+        viewModelScope.launch {
+            val newTopic = TopicEntity(topicName = name)
+            topicDao.insertTopic(newTopic)
+        }
+    }
+
     fun updateMatrixSliders(easy: Float, mid: Float, hard: Float) {
         _matrixConfig.update { it?.copy(easyCount = easy, midCount = mid, hardCount = hard) }
+    }
+
+    fun finalizeAndGenerateQuestions(onSuccess: (Int) -> Unit) { // 🌟 SỬA TẠI ĐÂY: Thêm (Int) vào lambda
+        val config = _matrixConfig.value ?: return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            Log.d("AiOcrTest", "🚀 NGƯỜI DÙNG BẤM 'BẮT ĐẦU TẠO CÂU HỎI' -> CHÍNH THỨC TÁC ĐỘNG CSDL")
+            Log.d("AiOcrTest", "🔥 KIỂM TRA & XỬ LÝ CƠ SỞ DỮ LIỆU NGẦM:")
+
+            val cleanTopicName = config.suggestedTopic.trim()
+
+            try {
+                val currentTopicsList = topicDao.getAllTopicsWithCount().first()
+
+                val existingTopic = currentTopicsList.find {
+                    it.topicName.equals(cleanTopicName, ignoreCase = true)
+                }
+
+                val finalTopicId = if (existingTopic != null) {
+                    Log.d("AiOcrTest", "   ➔ Kết quả: Chủ đề '$cleanTopicName' đã tồn tại. Sử dụng TopicId cũ: ${existingTopic.topicId}")
+                    existingTopic.topicId
+                } else {
+                    val newEntity = TopicEntity(topicName = cleanTopicName)
+                    val newId = topicDao.insertTopic(newEntity)
+                    Log.d("AiOcrTest", "   ➔ Kết quả: Chủ đề mới hoàn toàn. Tiến hành 'INSERT' thành công dòng mới với RowID: $newId")
+                    newId.toInt()
+                }
+
+                Log.d("AiOcrTest", "📊 BẢN CHÈN TIẾN TRÌNH MA TRẬN YÊU CẦU ĐỂ CHUYỂN BƯỚC THƯỢNG NGUỒN:")
+                Log.d("AiOcrTest", "   ➔ Tổng số câu: ${(config.easyCount + config.midCount + config.hardCount).toInt()} câu")
+                Log.d("AiOcrTest", "   ➔ Chi tiết ma trận -> Dễ: ${config.easyCount.toInt()} | Trung bình: ${config.midCount.toInt()} | Khó: ${config.hardCount.toInt()}")
+                Log.d("AiOcrTest", "   ➔ Chuỗi đệm văn bản bóc tách mang theo: ${_extractedTextCache.value}")
+
+                delay(400)
+
+                withContext(Dispatchers.Main) {
+                    _matrixConfig.value = null
+                    _selectedDocuments.value = emptyList()
+                    _extractedTextCache.value = ""
+
+                    // 🚀 BẮN ID THỰC TẾ RA NGOÀI: Truyền finalTopicId độc nhất vừa tạo/tìm được vào callback
+                    onSuccess(finalTopicId)
+                }
+
+            } catch (e: Exception) {
+                Log.e("AiOcrTest", "❌ Lỗi tương tác CSDL gác cổng: ${e.localizedMessage}")
+            }
+        }
     }
 
     fun clearState() {
         _matrixConfig.value = null
         _selectedDocuments.value = emptyList()
         _isLoading.value = false
+        _extractedTextCache.value = ""
+        Log.d("AiOcrTest", "🔄 Trạng thái luồng AI đã được đặt lại hoàn toàn sạch sẽ.")
     }
 
     private fun getFileSize(uri: Uri): Long {
@@ -205,4 +310,5 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
             1L
         }
     }
+
 }

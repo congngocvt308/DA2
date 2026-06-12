@@ -43,7 +43,7 @@ fun AiCreateQuestionBottomSheet(
     onTopicNameChange: (String) -> Unit,
     onPresetSelect: (isTryHard: Boolean) -> Unit,
     onMatrixSliderChange: (easy: Float, mid: Float, hard: Float) -> Unit,
-    onStartGenerationSuccess: () -> Unit
+    onStartGenerationSuccess: (Int) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -143,7 +143,7 @@ fun AiCreateQuestionBottomSheet(
                             Icon(imageVector = Icons.Filled.Compress, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Nén và kiểm thử ${selectedDocuments.size} tài liệu",
+                                text = "Gửi AI phân tích",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
@@ -156,7 +156,9 @@ fun AiCreateQuestionBottomSheet(
                         onTopicChange = onTopicNameChange,
                         onPresetSelect = onPresetSelect,
                         onSliderChange = onMatrixSliderChange,
-                        onGenerateClick = onStartGenerationSuccess
+                        onGenerateClick = {
+                            onStartGenerationSuccess(0)
+                        }
                     )
                 }
             }
@@ -192,10 +194,10 @@ private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = if (isCompact) Alignment.Start else Alignment.CenterHorizontally
             ) {
-                Text(text = "Tải thêm tài liệu Toán học", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(text = "Tải thêm tài liệu", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 if (!isCompact) {
                     Text(
-                        text = "Hỗ trợ nén hàng loạt nhiều file Ảnh hoặc PDF cùng lúc",
+                        text = "Có thể tải nhiều file Ảnh và PDF cùng lúc",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,

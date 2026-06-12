@@ -177,8 +177,10 @@ fun TopicScreen(
                 onPresetSelect = { isTryHard -> viewModel.applyPreset(isTryHard) },
                 onMatrixSliderChange = { ez, mid, hard -> viewModel.updateMatrixSliders(ez, mid, hard) },
                 onStartGenerationSuccess = {
-                    showAiDialog = false
-                    viewModel.clearState()
+                    viewModel.finalizeAndGenerateQuestions(onSuccess = { actualTopicId: Int ->
+                        showAiDialog = false
+                        onNavigateToDetail(actualTopicId) // 🚀 ĐIỀU HƯỚNG CHUẨN ĐỘNG THEO ID THỰC TẾ
+                    })
                 }
             )
         }
