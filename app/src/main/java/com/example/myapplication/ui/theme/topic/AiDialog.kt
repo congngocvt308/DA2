@@ -43,7 +43,7 @@ fun AiCreateQuestionBottomSheet(
     onTopicNameChange: (String) -> Unit,
     onPresetSelect: (isTryHard: Boolean) -> Unit,
     onMatrixSliderChange: (easy: Float, mid: Float, hard: Float) -> Unit,
-    onStartGenerationSuccess: (Int) -> Unit
+    onStartGenerationSuccess: (Int) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current

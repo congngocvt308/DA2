@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.AiApiService
 import com.example.myapplication.data.AiMatrixConfig
 import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.data.GenerateQuestionsRequest
 import com.example.myapplication.data.TopicData
 import com.example.myapplication.data.TopicEntity
 import com.example.myapplication.data.SelectedDocument
@@ -33,6 +34,9 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
     private val topicDao = AppDatabase.getDatabase(application).appDao()
     private val context = application.applicationContext
     private val documentCompressor = DocumentCompressor(context)
+
+    private val _streamingQuestions = MutableStateFlow<List<String>>(emptyList())
+    val streamingQuestions: StateFlow<List<String>> = _streamingQuestions.asStateFlow()
 
     val searchQuery = MutableStateFlow("")
 
@@ -200,7 +204,8 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                     // 5. Trả dữ liệu thật về cho Main Thread để hiển thị lên Form gộp
                     withContext(Dispatchers.Main) {
                         _isLoading.value = false
-                        _extractedTextCache.value = ocrResult.extractedLatexContent // Giữ lại chuỗi LaTeX cho Bước 3
+                        _extractedTextCache.value = ocrResult.extractedLatexContent ?: ""
+                        Log.d("AiOcrTest", "📝 _extractedTextCache sau gán: '${_extractedTextCache.value}' (len=${_extractedTextCache.value.length})")
 
                         _matrixConfig.value = AiMatrixConfig(
                             suggestedTopic = ocrResult.suggestedTopic, // Điền tên thông minh do AI trả về
@@ -249,6 +254,12 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
 
     fun finalizeAndGenerateQuestions(onSuccess: (Int) -> Unit) { // 🌟 SỬA TẠI ĐÂY: Thêm (Int) vào lambda
         val config = _matrixConfig.value ?: return
+        val textToStream = _extractedTextCache.value ?: ""
+        Log.d("AiOcrTest", "🔍 _extractedTextCache tại finalize: '$textToStream' (len=${textToStream.length})")
+        if (textToStream.isBlank()) {
+            Log.e("AiOcrTest", "❌ Lỗi: Chuỗi đệm LaTeX rỗng, không thể sinh câu hỏi.")
+            return
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.d("AiOcrTest", "🚀 NGƯỜI DÙNG BẤM 'BẮT ĐẦU TẠO CÂU HỎI' -> CHÍNH THỨC TÁC ĐỘNG CSDL")
@@ -278,7 +289,48 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d("AiOcrTest", "   ➔ Chi tiết ma trận -> Dễ: ${config.easyCount.toInt()} | Trung bình: ${config.midCount.toInt()} | Khó: ${config.hardCount.toInt()}")
                 Log.d("AiOcrTest", "   ➔ Chuỗi đệm văn bản bóc tách mang theo: ${_extractedTextCache.value}")
 
-                delay(400)
+                Log.d("AiOcrTest", "📡 Bắn ma trận Slider lên endpoint hạ nguồn...")
+                val okHttpClient = OkHttpClient.Builder()
+                    .connectTimeout(60, TimeUnit.SECONDS) // Thời gian kết nối tối đa
+                    .readTimeout(60, TimeUnit.SECONDS)    // Thời gian đợi Server đọc và trả dữ liệu về
+                    .writeTimeout(60, TimeUnit.SECONDS)   // Thời gian đẩy mảng byte lên RAM Server
+                    .build()
+
+                // Khởi tạo Retrofit Instance (Bạn thay URL bằng IP máy tính/Server của bạn)
+                val retrofit = retrofit2.Retrofit.Builder()
+                    .baseUrl("http://192.168.1.219:3000/") // IP 10.0.2.2 trỏ về localhost của máy tính khi chạy máy ảo Android
+                    .client(okHttpClient)
+                    .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
+                    .build()
+                val aiApiService = retrofit.create(AiApiService::class.java)
+                val response = aiApiService.generateQuestionsStream(
+                    GenerateQuestionsRequest(
+                        extractedText = textToStream,
+                        easyCount = config.easyCount.toInt(),
+                        midCount = config.midCount.toInt(),
+                        hardCount = config.hardCount.toInt()
+                    )
+                )
+
+                if (response.isSuccessful && response.body() != null) {
+                    val inputStream = response.body()!!.byteStream()
+                    val reader = inputStream.bufferedReader()
+
+                    // Lắng nghe liên tục từng dòng dữ liệu (SSE Protocol "data: ...") đổ về qua mạng
+                    reader.useLines { lines ->
+                        lines.forEach { line ->
+                            if (line.startsWith("data:")) {
+                                val dataContent = line.substring(5).trim()
+                                if (dataContent == "[DONE]") {
+                                    Log.d("AiOcrTest", "✅ AI đã truyền tải xong 100% bộ đề.")
+                                } else {
+                                    // Parse token nhị phân hoặc chuỗi câu hỏi JSON đập thẳng vào màn hình UI
+                                    Log.d("AiOcrTest", "🤖 Token cập bến mạng: $dataContent")
+                                }
+                            }
+                        }
+                    }
+                }
 
                 withContext(Dispatchers.Main) {
                     _matrixConfig.value = null
@@ -299,6 +351,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         _matrixConfig.value = null
         _selectedDocuments.value = emptyList()
         _isLoading.value = false
+        Log.d("AiOcrTest", "⚠️ clearState được gọi! _extractedTextCache cũ: '${_extractedTextCache.value}'")
         _extractedTextCache.value = ""
         Log.d("AiOcrTest", "🔄 Trạng thái luồng AI đã được đặt lại hoàn toàn sạch sẽ.")
     }

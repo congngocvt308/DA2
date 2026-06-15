@@ -6,6 +6,6 @@ data class OcrResponse(
     @SerializedName("suggested_topic")
     val suggestedTopic: String,
 
-    @SerializedName("extracted_latex_content")
+    @SerializedName("extracted_text")
     val extractedLatexContent: String
 )
