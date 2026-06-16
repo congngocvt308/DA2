@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.AiMatrixConfig
 import com.example.myapplication.ui.theme.components.SearchableTopBar
 import kotlinx.coroutines.launch
+
+import android.view.ViewGroup
+import android.webkit.WebView
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun TopicScreen(
@@ -79,8 +85,7 @@ fun TopicScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-
-
+            MathTestScreen()
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 26.dp),
