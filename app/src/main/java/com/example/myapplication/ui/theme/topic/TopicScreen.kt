@@ -85,7 +85,6 @@ fun TopicScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            MathTestScreen()
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 26.dp),
@@ -182,10 +181,16 @@ fun TopicScreen(
                 onPresetSelect = { isTryHard -> viewModel.applyPreset(isTryHard) },
                 onMatrixSliderChange = { ez, mid, hard -> viewModel.updateMatrixSliders(ez, mid, hard) },
                 onStartGenerationSuccess = {
-                    viewModel.finalizeAndGenerateQuestions(onSuccess = { actualTopicId: Int ->
-                        showAiDialog = false
-                        onNavigateToDetail(actualTopicId) // 🚀 ĐIỀU HƯỚNG CHUẨN ĐỘNG THEO ID THỰC TẾ
-                    })
+                    viewModel.finalizeAndGenerateQuestions(
+                        onSuccess = { actualTopicId, extractedText, easy, mid, hard ->
+                            showAiDialog = false
+                            TopicStreamBuffer.pendingRequest = TopicStreamBuffer.StreamRequest(
+                                actualTopicId, extractedText, easy, mid, hard
+                            )
+                            onNavigateToDetail(actualTopicId)
+                            // topicDetailViewModel.startQuestionsStreaming(extractedText, easy, mid, hard)
+                        }
+                    )
                 }
             )
         }

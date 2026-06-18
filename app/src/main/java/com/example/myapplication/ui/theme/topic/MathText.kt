@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import android.view.MotionEvent
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -33,14 +34,19 @@ fun MathText(
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
-        word-break: break-all; /* Tránh tràn ngang làm mất dấu 3 chấm */
-        line-height: 1.4em;
-        max-height: ${maxLines * 1.4}em; /* Giới hạn chiều cao cứng */
+        line-height: 1.5em;
+        max-height: ${maxLines * 1.5}em; /* Giới hạn chiều cao cứng theo số dòng */
     """.trimIndent() else ""
 
     AndroidView(
         factory = { context ->
-            WebView(context).apply {
+            // Ghi đè onTouchEvent để chặn WebView nuốt sự kiện click
+            object : WebView(context) {
+                @SuppressLint("ClickableViewAccessibility")
+                override fun onTouchEvent(event: MotionEvent?): Boolean {
+                    return false // Trả về false để nhường sự kiện chạm lại cho Compose Layout cha
+                }
+            }.apply {
                 scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
@@ -65,7 +71,7 @@ fun MathText(
 
             val htmlData = """
                 <!DOCTYPE html>
-                <html style="margin: 0; padding: 0;">
+                <html style="margin: 0; padding: 0; overflow: hidden;">
                 <head>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
                     <link rel="stylesheet" href="file:///android_asset/katex/katex.min.css">
@@ -80,9 +86,12 @@ fun MathText(
                             margin: 0; 
                             padding: 0;
                             background-color: transparent;
+                            overflow: hidden;
+                        }
+                        #math { 
+                            width: 100%; 
                             $maxLinesStyle
                         }
-                        #math { width: 100%; }
                         /* Thu nhỏ công thức một chút nếu nó quá cao trong chế độ 1 dòng */
                         .katex { font-size: 1em; }
                         .katex-display { margin: 0.2em 0; }

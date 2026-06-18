@@ -252,97 +252,54 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         _matrixConfig.update { it?.copy(easyCount = easy, midCount = mid, hardCount = hard) }
     }
 
-    fun finalizeAndGenerateQuestions(onSuccess: (Int) -> Unit) { // 🌟 SỬA TẠI ĐÂY: Thêm (Int) vào lambda
+    fun finalizeAndGenerateQuestions(
+        onSuccess: (topicId: Int, extractedText: String, easy: Int, mid: Int, hard: Int) -> Unit
+    ) {
         val config = _matrixConfig.value ?: return
-        val textToStream = _extractedTextCache.value ?: ""
-        Log.d("AiOcrTest", "🔍 _extractedTextCache tại finalize: '$textToStream' (len=${textToStream.length})")
+        val textToStream = _extractedTextCache.value.orEmpty() // Vá lỗi phòng vệ chống Null [cite: 3065]
+
         if (textToStream.isBlank()) {
-            Log.e("AiOcrTest", "❌ Lỗi: Chuỗi đệm LaTeX rỗng, không thể sinh câu hỏi.")
+            Log.e("AiOcrTest", "❌ Lỗi rào gác: Chuỗi đệm LaTeX rỗng, không thể sinh câu hỏi.")
             return
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            Log.d("AiOcrTest", "🚀 NGƯỜI DÙNG BẤM 'BẮT ĐẦU TẠO CÂU HỎI' -> CHÍNH THỨC TÁC ĐỘNG CSDL")
-            Log.d("AiOcrTest", "🔥 KIỂM TRA & XỬ LÝ CƠ SỞ DỮ LIỆU NGẦM:")
-
+            Log.d("AiOcrTest", "🚀 KHỞI ĐỘNG TIẾN TRÌNH TÁC ĐỘNG CSDL GÁC CỔNG")
             val cleanTopicName = config.suggestedTopic.trim()
 
             try {
                 val currentTopicsList = topicDao.getAllTopicsWithCount().first()
-
                 val existingTopic = currentTopicsList.find {
                     it.topicName.equals(cleanTopicName, ignoreCase = true)
                 }
 
+                // Kiểm tra trùng lặp để lấy ID cũ hoặc chèn mới chống rác hệ thống [cite: 3367, 3368]
                 val finalTopicId = if (existingTopic != null) {
-                    Log.d("AiOcrTest", "   ➔ Kết quả: Chủ đề '$cleanTopicName' đã tồn tại. Sử dụng TopicId cũ: ${existingTopic.topicId}")
+                    Log.d("AiOcrTest", "   ➔ Chủ đề cũ tồn tại. Sử dụng ID: ${existingTopic.topicId}")
                     existingTopic.topicId
                 } else {
                     val newEntity = TopicEntity(topicName = cleanTopicName)
                     val newId = topicDao.insertTopic(newEntity)
-                    Log.d("AiOcrTest", "   ➔ Kết quả: Chủ đề mới hoàn toàn. Tiến hành 'INSERT' thành công dòng mới với RowID: $newId")
+                    Log.d("AiOcrTest", "   ➔ Khởi tạo chủ đề mới. INSERT thành công dòng với ID: $newId")
                     newId.toInt()
                 }
 
-                Log.d("AiOcrTest", "📊 BẢN CHÈN TIẾN TRÌNH MA TRẬN YÊU CẦU ĐỂ CHUYỂN BƯỚC THƯỢNG NGUỒN:")
-                Log.d("AiOcrTest", "   ➔ Tổng số câu: ${(config.easyCount + config.midCount + config.hardCount).toInt()} câu")
-                Log.d("AiOcrTest", "   ➔ Chi tiết ma trận -> Dễ: ${config.easyCount.toInt()} | Trung bình: ${config.midCount.toInt()} | Khó: ${config.hardCount.toInt()}")
-                Log.d("AiOcrTest", "   ➔ Chuỗi đệm văn bản bóc tách mang theo: ${_extractedTextCache.value}")
-
-                Log.d("AiOcrTest", "📡 Bắn ma trận Slider lên endpoint hạ nguồn...")
-                val okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS) // Thời gian kết nối tối đa
-                    .readTimeout(60, TimeUnit.SECONDS)    // Thời gian đợi Server đọc và trả dữ liệu về
-                    .writeTimeout(60, TimeUnit.SECONDS)   // Thời gian đẩy mảng byte lên RAM Server
-                    .build()
-
-                // Khởi tạo Retrofit Instance (Bạn thay URL bằng IP máy tính/Server của bạn)
-                val retrofit = retrofit2.Retrofit.Builder()
-                    .baseUrl("http://192.168.1.219:3000/") // IP 10.0.2.2 trỏ về localhost của máy tính khi chạy máy ảo Android
-                    .client(okHttpClient)
-                    .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
-                    .build()
-                val aiApiService = retrofit.create(AiApiService::class.java)
-                val response = aiApiService.generateQuestionsStream(
-                    GenerateQuestionsRequest(
-                        extractedText = textToStream,
-                        easyCount = config.easyCount.toInt(),
-                        midCount = config.midCount.toInt(),
-                        hardCount = config.hardCount.toInt()
-                    )
-                )
-
-                if (response.isSuccessful && response.body() != null) {
-                    val inputStream = response.body()!!.byteStream()
-                    val reader = inputStream.bufferedReader()
-
-                    // Lắng nghe liên tục từng dòng dữ liệu (SSE Protocol "data: ...") đổ về qua mạng
-                    reader.useLines { lines ->
-                        lines.forEach { line ->
-                            if (line.startsWith("data:")) {
-                                val dataContent = line.substring(5).trim()
-                                if (dataContent == "[DONE]") {
-                                    Log.d("AiOcrTest", "✅ AI đã truyền tải xong 100% bộ đề.")
-                                } else {
-                                    // Parse token nhị phân hoặc chuỗi câu hỏi JSON đập thẳng vào màn hình UI
-                                    Log.d("AiOcrTest", "🤖 Token cập bến mạng: $dataContent")
-                                }
-                            }
-                        }
-                    }
-                }
+                val easy = config.easyCount.toInt()
+                val mid = config.midCount.toInt()
+                val hard = config.hardCount.toInt()
 
                 withContext(Dispatchers.Main) {
+                    // Giải phóng dọn sạch bộ đệm hàng chờ tại màn hình chính [cite: 2311]
                     _matrixConfig.value = null
                     _selectedDocuments.value = emptyList()
                     _extractedTextCache.value = ""
 
-                    // 🚀 BẮN ID THỰC TẾ RA NGOÀI: Truyền finalTopicId độc nhất vừa tạo/tìm được vào callback
-                    onSuccess(finalTopicId)
+                    // 🚀 BẮN TOÀN BỘ DATA RA NGOÀI: Để màn hình chính thực hiện điều hướng lập tức
+                    onSuccess(finalTopicId, textToStream, easy, mid, hard)
                 }
 
             } catch (e: Exception) {
-                Log.e("AiOcrTest", "❌ Lỗi tương tác CSDL gác cổng: ${e.localizedMessage}")
+                Log.e("AiOcrTest", "❌ Lỗi tương tác CSDL: ${e.localizedMessage}")
             }
         }
     }

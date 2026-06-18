@@ -75,20 +75,39 @@ fun AddQuestionDialog(
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
+                    if (questionText.contains("$")) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Câu hỏi (Công thức toán)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))
+                                    .padding(12.dp)
+                            ) {
+                                MathText(
+                                    latexText = questionText,
+                                    textColor = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 16
+                                )
+                            }
+                        }
+                    } else{
+                        OutlinedTextField(
+                            value = questionText,
+                            onValueChange = { viewModel.onQuestionTextChange(it) },
+                            label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.tertiary) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            maxLines = 3
+                        )
+                    }
 
-                    OutlinedTextField(
-                        value = questionText,
-                        onValueChange = { viewModel.onQuestionTextChange(it) },
-                        label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.tertiary) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        maxLines = 3
-                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -166,35 +185,51 @@ private fun AnswerInputRow(
             )
         )
 
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            placeholder = {
-                Text(
-                    if (isCorrect) "Câu trả lời đúng" else "Điền câu trả lời",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 14.sp
+        if (text.contains("$")) {
+            // ĐÁP ÁN CÓ CÔNG THỨC: Hiện MathText
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                MathText(
+                    latexText = text,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14
                 )
-            },
-            modifier = Modifier
-                .weight(1f)
-                .border(1.dp, borderColor, RoundedCornerShape(8.dp))
-                .background(Color.Transparent),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Transparent,
-                unfocusedBorderColor = Color.Transparent,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        IconButton(onClick = onDelete) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Xóa",
-                tint = if (isCorrect) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+            }
+        }else{
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = {
+                    Text(
+                        if (isCorrect) "Câu trả lời đúng" else "Điền câu trả lời",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontSize = 14.sp
+                    )
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .background(Color.Transparent),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                ),
+                shape = RoundedCornerShape(8.dp)
             )
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Xóa",
+                    tint = if (isCorrect) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

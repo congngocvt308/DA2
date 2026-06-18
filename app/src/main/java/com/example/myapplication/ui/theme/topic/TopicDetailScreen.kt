@@ -26,7 +26,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import com.example.myapplication.ui.theme.components.SearchableTopBar
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicDetailScreen(
     viewModel: TopicDetailViewModel = viewModel(),
@@ -42,6 +44,30 @@ fun TopicDetailScreen(
     val focusRequester = remember { FocusRequester() }
     var showEditTopicDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    val isStreaming by viewModel.isStreamingActive.collectAsState()
+    val notificationMessage by viewModel.streamNotificationMessage.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // 🌟 CẬP NHẬT CHUẨN XÁC KHỐI LẮNG NGHE THÔNG BÁO:
+    LaunchedEffect(notificationMessage) {
+        notificationMessage?.let { msg ->
+            // 1. CHỦ ĐỘNG ĐÓNG: Ép chiếc Snackbar cũ (đang ở trạng thái Indefinite) phải biến mất ngay lập tức
+            snackbarHostState.currentSnackbarData?.dismiss()
+
+            // 2. Hiển thị thông báo mới lên màn hình dựa theo trạng thái streaming thực tế
+            snackbarHostState.showSnackbar(
+                message = msg,
+                // Nếu AI vẫn đang đổ chữ thì giữ nguyên (Indefinite), nếu đã xong/hoặc lỗi thì tự ẩn sau vài giây (Short)
+                duration = if (isStreaming) SnackbarDuration.Indefinite else SnackbarDuration.Short
+            )
+
+            // 3. Xóa dữ liệu đệm trong ViewModel sau khi Snackbar đã hiển thị xong/hoặc bị tắt
+            viewModel.clearStreamNotification()
+        }
+    }
+
     LaunchedEffect(isSearching) {
         if (isSearching) {
             focusRequester.requestFocus()
@@ -258,11 +284,23 @@ fun TopicDetailScreen(
             }
         }
 
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 90.dp)
+        )
+
         if (showAddDialog) {
             AddQuestionDialog(
                 viewModel = viewModel,
                 onDismiss = { showAddDialog = false },
                 onSaveSuccess = { showAddDialog = false }
+            )
+        }
+
+        if (isStreaming) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
