@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.ui.theme.components.PremiumPurchaseDialog
+import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
 import com.example.myapplication.ui.theme.mission.MissionSelectionDialog
 import com.example.myapplication.ui.theme.qrcode.QRCodeManagementDialog
 import com.example.myapplication.ui.theme.qrcode.QRCodeScannerScreen
@@ -84,6 +87,7 @@ fun AlarmSettingsScreen(
     var showQRCodeManagement by remember { mutableStateOf(false) }
     var showQRCodeSelection by remember { mutableStateOf(false) }
     var showQRScanner by remember { mutableStateOf(false) }
+    var showFaceMissionTest by remember { mutableStateOf(false) }
     
     // State để lưu code từ camera scanner
     var scannedCodeFromCamera by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -231,6 +235,13 @@ fun AlarmSettingsScreen(
                                 onQRCodeClick = { 
                                     if (isPremium) {
                                         showQRCodeSelection = true
+                                    } else {
+                                        showPremiumDialog = true
+                                    }
+                                },
+                                onImageMissionClick = {
+                                    if (isPremium) {
+                                        showFaceMissionTest = true
                                     } else {
                                         showPremiumDialog = true
                                     }
@@ -398,6 +409,23 @@ fun AlarmSettingsScreen(
             }
         )
     }
+
+    // BẮT TRẠNG THÁI HIỂN THỊ MÀN HÌNH TEST CAMERA
+    if (showFaceMissionTest) {
+        // Gọi ViewModel tương ứng của ông
+        val faceViewModel: FaceMissionViewModel = viewModel(
+            factory = FaceMissionViewModelFactory(context)
+        )
+
+        FaceMissionScreen(
+            viewModel = faceViewModel,
+            onLuongAComplete = {
+                showFaceMissionTest = false
+                android.widget.Toast.makeText(context, "Hoàn thành Luồng A! 🎉", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
+        return // Dừng vẽ các UI phía dưới khi đang bật camera test
+    }
 }
 
 @Composable
@@ -469,7 +497,8 @@ fun AlarmTaskSection(
     isPremium: Boolean,
     onAddClick: () -> Unit,
     onLockedFeatureClick: () -> Unit,
-    onQRCodeClick: () -> Unit
+    onQRCodeClick: () -> Unit,
+    onImageMissionClick: () -> Unit
 ) {
     // Danh sách các tính năng nâng cao
     val premiumFeatures = remember {
@@ -531,11 +560,11 @@ fun AlarmTaskSection(
                 isUnlocked = isPremium,
                 onClick = {
                     if (isPremium) {
-                        // Xử lý tính năng QR Code
-                        if (feature.id == 3) {
-                            onQRCodeClick()
+                        when (feature.id) {
+                            2 -> onImageMissionClick() // Click vào "Hình ảnh" -> Mở màn hình quét mặt Luồng A
+                            3 -> onQRCodeClick()       // Click vào QR Code
+                            // TODO: Xử lý thêm cho Toán (id == 1) nếu có
                         }
-                        // TODO: Xử lý các tính năng khác (Toán, Hình ảnh)
                     } else {
                         onLockedFeatureClick()
                     }
