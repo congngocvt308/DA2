@@ -203,4 +203,38 @@ interface AppDao {
     @Query("SELECT ownerTopicId FROM questions WHERE questionId = :questionId")
     suspend fun getTopicIdByQuestionId(questionId: Int): Int?
 
+
+    // ==================== ALARM FACE MISSION CONFIG ====================
+
+    @Query("SELECT * FROM alarm_face_mission_config WHERE alarmId = :alarmId")
+    suspend fun getFaceMissionConfigByAlarmId(alarmId: Int): AlarmFaceMissionConfigEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateFaceMissionConfig(config: AlarmFaceMissionConfigEntity): Long
+
+    @Query("DELETE FROM alarm_face_mission_config WHERE alarmId = :alarmId")
+    suspend fun deleteFaceMissionConfigByAlarmId(alarmId: Int)
+
+    // ==================== PICTURES (BẢO TÀNG KÝ ỨC) ====================
+
+    @Query("SELECT * FROM pictures WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getAllPicturesByUser(userId: Int = 1): Flow<List<PictureEntity>>
+
+    @Query("SELECT * FROM pictures WHERE pictureId = :pictureId")
+    suspend fun getPictureById(pictureId: Int): PictureEntity?
+
+    @Query("SELECT * FROM pictures WHERE alarmHistoryId = :historyId")
+    suspend fun getPictureByAlarmHistoryId(historyId: Int): PictureEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPicture(picture: PictureEntity): Long
+
+    @Update
+    suspend fun updatePicture(picture: PictureEntity)
+
+    @Delete
+    suspend fun deletePicture(picture: PictureEntity)
+
+    @Query("DELETE FROM pictures WHERE pictureId = :pictureId")
+    suspend fun deletePictureById(pictureId: Int)
 }

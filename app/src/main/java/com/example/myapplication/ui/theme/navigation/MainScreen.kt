@@ -62,6 +62,7 @@ import com.example.myapplication.ui.theme.alarm.AlarmScreen
 import com.example.myapplication.ui.theme.alarm.AlarmSettingsScreen
 import com.example.myapplication.ui.theme.alarm.QuizScreen
 import com.example.myapplication.ui.theme.components.PermissionItem
+import com.example.myapplication.ui.theme.facedetection.MemoryMuseumScreen
 import com.example.myapplication.ui.theme.stats.StatsScreen
 import com.example.myapplication.ui.theme.topic.TopicDetailScreen
 import com.example.myapplication.ui.theme.topic.TopicScreen
@@ -230,7 +231,17 @@ fun MainScreen(initialExternalRoute: String? = null) {
             }
 
             composable(Screen.STATS_TAB) {
-                StatsScreen()
+                StatsScreen(
+                    onNavigateToMuseum = {
+                        navController.navigate(Screen.MEMORY_MUSEUM)
+                    }
+                )
+            }
+
+            composable(Screen.MEMORY_MUSEUM) {
+                MemoryMuseumScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             composable(Screen.QUIZ_SCREEN) {

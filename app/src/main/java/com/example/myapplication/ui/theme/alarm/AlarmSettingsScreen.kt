@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,7 +82,9 @@ fun AlarmSettingsScreen(
     val minuteListState = rememberLazyListState(initialFirstVisibleItemIndex = Int.MAX_VALUE / 2)
     var showDiscardDialog by remember { mutableStateOf(false) }
     var showSnoozeDialog by remember { mutableStateOf(false) }
+    var showMissionTypeDialog by remember { mutableStateOf(false) } // Mới: Hộp thoại chọn loại nhiệm vụ
     var showMissionDialog by remember { mutableStateOf(false) }
+    var showSmileConfigDialog by remember { mutableStateOf(false) } // Mới: Hộp thoại nụ cười (thiết kế sau)
     var showSoundDialog by remember { mutableStateOf(false) }
     var showPremiumDialog by remember { mutableStateOf(false) }
     var showResetPremiumDialog by remember { mutableStateOf(false) }
@@ -88,7 +92,7 @@ fun AlarmSettingsScreen(
     var showQRCodeSelection by remember { mutableStateOf(false) }
     var showQRScanner by remember { mutableStateOf(false) }
     var showFaceMissionTest by remember { mutableStateOf(false) }
-    
+
     // State để lưu code từ camera scanner
     var scannedCodeFromCamera by remember { mutableStateOf<Pair<String, String>?>(null) }
     
@@ -96,6 +100,22 @@ fun AlarmSettingsScreen(
 
     val ringtoneTitle = remember(uiState.ringtoneUri) {
         RingtoneUtils.getRingtoneTitle(context, uiState.ringtoneUri)
+    }
+
+    if (showFaceMissionTest) {
+        // Gọi ViewModel tương ứng của ông
+        val faceViewModel: FaceMissionViewModel = viewModel(
+            factory = FaceMissionViewModelFactory(context, uiState.id)
+        )
+
+        FaceMissionScreen(
+            viewModel = faceViewModel,
+            onLuongAComplete = {
+                showFaceMissionTest = false
+                android.widget.Toast.makeText(context, "Hoàn thành Luồng A! 🎉", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        )
+        return // Dừng vẽ các UI phía dưới khi đang bật camera test
     }
 
     DisposableEffect(Unit) {
@@ -230,7 +250,7 @@ fun AlarmSettingsScreen(
                             AlarmTaskSection(
                                 questionCount = uiState.questionCount,
                                 isPremium = isPremium,
-                                onAddClick = { showMissionDialog = true },
+                                onAddClick = { showMissionTypeDialog = true }, // Thay đổi từ showMissionDialog sang showMissionTypeDialog
                                 onLockedFeatureClick = { showPremiumDialog = true },
                                 onQRCodeClick = { 
                                     if (isPremium) {
@@ -308,6 +328,21 @@ fun AlarmSettingsScreen(
             onDurationSelected = { newDuration ->
                 viewModel.onSnoozeDurationChanged(newDuration)
                 showSnoozeDialog = false
+            }
+        )
+    }
+
+    // --- DIALOG CHỌN LOẠI NHIỆM VỤ ---
+    if (showMissionTypeDialog) {
+        MissionTypeSelectionDialog(
+            onDismiss = { showMissionTypeDialog = false },
+            onQuizSelected = {
+                showMissionTypeDialog = false
+                showMissionDialog = true
+            },
+            onSmileChallengeSelected = {
+                showMissionTypeDialog = false
+                showSmileConfigDialog = true
             }
         )
     }
@@ -411,20 +446,120 @@ fun AlarmSettingsScreen(
     }
 
     // BẮT TRẠNG THÁI HIỂN THỊ MÀN HÌNH TEST CAMERA
-    if (showFaceMissionTest) {
-        // Gọi ViewModel tương ứng của ông
-        val faceViewModel: FaceMissionViewModel = viewModel(
-            factory = FaceMissionViewModelFactory(context)
-        )
 
-        FaceMissionScreen(
-            viewModel = faceViewModel,
-            onLuongAComplete = {
-                showFaceMissionTest = false
-                android.widget.Toast.makeText(context, "Hoàn thành Luồng A! 🎉", android.widget.Toast.LENGTH_SHORT).show()
+
+    if (showSmileConfigDialog) {
+        SmileChallengeConfigDialog(
+            initialConfig = uiState.faceMissionConfig,
+            onDismiss = { showSmileConfigDialog = false },
+            onTest = {
+                showSmileConfigDialog = false
+                showFaceMissionTest = true // Mở camera test
+            },
+            onSave = { config ->
+                viewModel.updateFaceMissionConfig(config)
+                showSmileConfigDialog = false
             }
         )
-        return // Dừng vẽ các UI phía dưới khi đang bật camera test
+    }
+}
+
+@Composable
+fun MissionTypeSelectionDialog(
+    onDismiss: () -> Unit,
+    onQuizSelected: () -> Unit,
+    onSmileChallengeSelected: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        text = "Chọn loại nhiệm vụ",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.clickable { onDismiss() }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                MissionTypeItem(
+                    title = "Giải trắc nghiệm",
+                    description = "Giải các câu hỏi để tỉnh táo.",
+                    icon = "🧮",
+                    onClick = onQuizSelected
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MissionTypeItem(
+                    title = "Thử thách nụ cười",
+                    description = "Mở mắt, cười thật tươi và giữ tư thế để xác nhận thức dậy.",
+                    icon = "😊",
+                    onClick = onSmileChallengeSelected
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MissionTypeItem(
+    title: String,
+    description: String,
+    icon: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = icon, fontSize = 24.sp)
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+        }
     }
 }
 

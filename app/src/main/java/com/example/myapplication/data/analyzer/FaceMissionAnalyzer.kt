@@ -13,11 +13,14 @@ import com.google.mlkit.vision.face.FaceLandmark
 class FaceMissionAnalyzer(
     private val onFaceTracked: (
         isQualified: Boolean,
-        ear: Float,
+        leftEyeProb: Float,   // Mới: Nhận xác suất mắt trái
+        rightEyeProb: Float,  // Mới: Nhận xác suất mắt phải
         smileProb: Float,
         leftEyePos: PointF?,
         rightEyePos: PointF?,
         mouthPos: PointF?,
+        faceWidthPx: Float,
+        headRotationZ: Float,
         imageWidth: Int,
         imageHeight: Int
     ) -> Unit
@@ -56,6 +59,8 @@ class FaceMissionAnalyzer(
                     val rightEye = face.rightEyeOpenProbability ?: 0f
                     val avgEar = (leftEye + rightEye) / 2f
                     val smileProb = face.smilingProbability ?: 0f
+                    val faceWidth = face.boundingBox.width().toFloat()
+                    val rotationZ = face.headEulerAngleZ
 
                     // Lấy vị trí Landmark (Tọa độ Pixel thô trên cảm biến ảnh)
                     val leftEyePoint = face.getLandmark(FaceLandmark.LEFT_EYE)?.position
@@ -66,16 +71,17 @@ class FaceMissionAnalyzer(
                             smileProb >= FaceMissionConfig.THRESHOLD_SMILE
 
                     onFaceTracked(
-                        isQualified, avgEar, smileProb,
+                        isQualified, leftEye, rightEye, smileProb,
                         leftEyePoint, rightEyePoint, mouthPoint,
+                        faceWidth, rotationZ,
                         finalWidth, finalHeight
                     )
                 } else {
-                    onFaceTracked(false, 0f, 0f, null, null, null, finalWidth, finalHeight)
+                    onFaceTracked(false, 0f, 0f, 0f, null, null, null, 0f, 0f, finalWidth, finalHeight)
                 }
             }
             .addOnFailureListener {
-                onFaceTracked(false, 0f, 0f, null, null, null, finalWidth, finalHeight)
+                onFaceTracked(false, 0f, 0f, 0f, null, null, null, 0f, 0f, finalWidth, finalHeight)
             }
             .addOnCompleteListener { imageProxy.close() }
     }

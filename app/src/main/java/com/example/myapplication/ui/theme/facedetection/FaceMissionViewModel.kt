@@ -11,10 +11,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Locale
 import android.graphics.PointF
+import android.media.AudioManager
+import android.os.Bundle
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.AppDao
+import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.data.AlarmFaceMissionConfigEntity
 import com.example.myapplication.data.FaceMissionConfig
+import com.example.myapplication.data.PictureEntity
+import com.example.myapplication.utils.SoundPlayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
-class FaceMissionViewModel(context: Context) : ViewModel(), TextToSpeech.OnInitListener {
+class FaceMissionViewModel(
+    context: Context,
+    private val alarmId: Int = -1,
+    private val appDao: AppDao = AppDatabase.getDatabase(context).appDao()
+) : ViewModel(), TextToSpeech.OnInitListener {
 
     private val _uiState = MutableStateFlow(FaceMissionUiState())
     val uiState: StateFlow<FaceMissionUiState> = _uiState.asStateFlow()
@@ -23,28 +37,89 @@ class FaceMissionViewModel(context: Context) : ViewModel(), TextToSpeech.OnInitL
     private var lastTtsTime = 0L
 
     private var currentScore = 0f
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val soundPlayer = SoundPlayer(context)
+    private var targetScore = FaceMissionConfig.TARGET_SCORE
+
+    init {
+        loadAlarmConfig()
+    }
+
+    private fun loadAlarmConfig() {
+        viewModelScope.launch {
+            if (alarmId != -1) {
+                val config = appDao.getFaceMissionConfigByAlarmId(alarmId)
+                config?.let { c ->
+                    targetScore = (c.requiredHoldDurationSec * 20f).coerceAtLeast(20f)
+                    _uiState.update { it.copy(
+                        backgroundImageUri = c.backgroundImageUri,
+                        requiredHoldDurationSec = c.requiredHoldDurationSec,
+                        eyeOpenSoundUri = c.eyeOpenSoundUri,
+                        smileSoundUri = c.smileSoundUri,
+                        comboSoundUri = c.comboSoundUri,
+                        holdPoseSoundUri = c.holdPoseSoundUri
+                    ) }
+                }
+            }
+        }
+    }
+
+    fun savePictureToDb(imageUri: String, description: String, alarmHistoryId: Int? = null) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val picture = PictureEntity(
+                userId = 1,
+                alarmHistoryId = alarmHistoryId,
+                imageUri = imageUri,
+                description = description,
+                createdAt = System.currentTimeMillis()
+            )
+            appDao.insertPicture(picture)
+        }
+    }
 
     fun updateFaceTracking(
-        isQualified: Boolean, ear: Float, smileProb: Float,
-        leftEye: PointF?, rightEye: PointF?, mouth: PointF?,
-        cWidth: Int, cHeight: Int
+        isQualified: Boolean,
+        leftEyeProb: Float,
+        rightEyeProb: Float,
+        smileProb: Float,
+        leftEye: PointF?,
+        rightEye: PointF?,
+        mouth: PointF?,
+        faceWidthPx: Float,
+        headRotationZ: Float,
+        cWidth: Int,
+        cHeight: Int
     ) {
         if (_uiState.value.isSuccess) return
 
-        val eyeValid = ear >= FaceMissionConfig.THRESHOLD_EAR
+        val leftEyeValid = leftEyeProb >= FaceMissionConfig.THRESHOLD_EAR
+        val rightEyeValid = rightEyeProb >= FaceMissionConfig.THRESHOLD_EAR
         val smileValid = smileProb >= FaceMissionConfig.THRESHOLD_SMILE
+        val isBothEyesOpen = leftEyeValid && rightEyeValid
+
+        val (isWarning, msg) = when {
+            !isBothEyesOpen && !smileValid -> true to "Mở mắt và cười lên nào! ☀️"
+            !isBothEyesOpen -> true to "Mở mắt ra nào! 👀"
+            !smileValid -> true to "Cười tươi lên nào! 😄"
+            else -> false to "Giữ nguyên nhé! 🎯"
+        }
 
         if (isQualified) {
             currentScore += FaceMissionConfig.SCORE_INCREMENT
-            if (currentScore >= FaceMissionConfig.TARGET_SCORE) {
-                currentScore = FaceMissionConfig.TARGET_SCORE
+            if (currentScore >= targetScore) {
+                currentScore = targetScore
                 _uiState.update { it.copy(progress = 1f, isWarning = false, isSuccess = true) }
             } else {
                 _uiState.update {
                     it.copy(
-                        progress = currentScore / FaceMissionConfig.TARGET_SCORE, isWarning = false,
+                        progress = currentScore / targetScore,
+                        isWarning = false,
+                        warningMessage = msg,
                         leftEyePoint = leftEye, rightEyePoint = rightEye, mouthPoint = mouth,
-                        isEyeOpenValid = eyeValid, isSmileValid = smileValid,
+                        isLeftEyeOpen = leftEyeValid,   // Độc lập mắt trái
+                        isRightEyeOpen = rightEyeValid,
+                        isSmileValid = smileValid,
+                        headRotationZ = headRotationZ,
                         cameraWidth = cWidth, cameraHeight = cHeight
                     )
                 }
@@ -53,25 +128,56 @@ class FaceMissionViewModel(context: Context) : ViewModel(), TextToSpeech.OnInitL
             currentScore -= FaceMissionConfig.SCORE_DECREMENT
             if (currentScore < 0f) currentScore = 0f
 
-            val msg = when {
-                !eyeValid && !smileValid -> "Mở mắt ra và Cười tươi lên! 😡"
-                !eyeValid -> "Mở mắt ra nào, đừng ngủ nướng! 👁️"
-                else -> "Cười tươi lên xem nào! ☕"
-            }
-
             _uiState.update {
                 it.copy(
-                    progress = currentScore / FaceMissionConfig.TARGET_SCORE, isWarning = true, warningMessage = msg,
+                    progress = currentScore / targetScore,
+                    isWarning = isWarning,
+                    warningMessage = msg,
                     leftEyePoint = leftEye, rightEyePoint = rightEye, mouthPoint = mouth,
-                    isEyeOpenValid = eyeValid, isSmileValid = smileValid,
+                    isLeftEyeOpen = leftEyeValid,   // Độc lập mắt trái
+                    isRightEyeOpen = rightEyeValid, // Độc lập mắt phải
+                    isSmileValid = smileValid,
+                    faceWidthPx = if (faceWidthPx > 0f) faceWidthPx else it.faceWidthPx,
+                    headRotationZ = headRotationZ,
                     cameraWidth = cWidth, cameraHeight = cHeight
                 )
             }
+        }
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastTtsTime > 2500L) {
+            lastTtsTime = currentTime
+            
+            val config = _uiState.value
+            val customSoundUri = when {
+                !isBothEyesOpen && !smileValid -> config.comboSoundUri
+                !isBothEyesOpen -> config.eyeOpenSoundUri
+                !smileValid -> config.smileSoundUri
+                else -> config.holdPoseSoundUri
+            }
 
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastTtsTime > 2500L) {
-                tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, null)
-                lastTtsTime = currentTime
+            if (!customSoundUri.isNullOrEmpty()) {
+                soundPlayer.playOrUpdateVolume(customSoundUri, 1.0f)
+            } else {
+                // 🎯 Đẩy âm lượng kênh ALARM hoặc MUSIC của điện thoại lên mức MAX (100%)
+                val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                audioManager.setStreamVolume(
+                    AudioManager.STREAM_ALARM,
+                    maxVolume,
+                    0 // Không hiện UI thanh âm lượng hệ thống
+                )
+
+                // 🎯 Tạo Bundle cấu hình phát max volume cho TTS
+                val params = Bundle().apply {
+                    putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f) // 1.0f = 100% volume
+                    putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_ALARM) // Phát qua kênh Báo thức
+                }
+
+                tts.speak(
+                    msg,
+                    TextToSpeech.QUEUE_FLUSH,
+                    params,
+                    "FaceMissionTTS_${System.currentTimeMillis()}"
+                )
             }
         }
     }
@@ -80,11 +186,14 @@ class FaceMissionViewModel(context: Context) : ViewModel(), TextToSpeech.OnInitL
     override fun onCleared() { tts.stop(); tts.shutdown(); super.onCleared() }
 }
 
-class FaceMissionViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class FaceMissionViewModelFactory(
+    private val context: Context,
+    private val alarmId: Int = -1
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FaceMissionViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return FaceMissionViewModel(context) as T
+            return FaceMissionViewModel(context, alarmId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

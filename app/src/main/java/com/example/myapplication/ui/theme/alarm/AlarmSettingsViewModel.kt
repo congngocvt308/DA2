@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.alarm_logic.AlarmScheduler
 import com.example.myapplication.data.AlarmEntity
+import com.example.myapplication.data.AlarmFaceMissionConfigEntity
 import com.example.myapplication.data.AlarmQRLinkEntity
 import com.example.myapplication.data.AlarmSelectedQuestionEntity
 import com.example.myapplication.data.AlarmSettingData
@@ -94,6 +95,9 @@ class AlarmSettingsViewModel(
                     val selectedQRCodes = alarmDao.getQRCodesForAlarmOnce(alarmId)
                     val selectedQRCodeIds = selectedQRCodes.map { it.qrId }
 
+                    // 4. Load Face Mission Config
+                    val faceConfig = alarmDao.getFaceMissionConfigByAlarmId(alarmId)
+
                     _uiState.update {
                         it.copy(
                             id = alarm.alarmId,
@@ -107,6 +111,7 @@ class AlarmSettingsViewModel(
                             questionCount = alarm.questionCount,
                             selectedQuestions = selectedQuestions,
                             selectedQRCodeIds = selectedQRCodeIds,
+                            faceMissionConfig = faceConfig,
 
                             // SỬA Ở ĐÂY: Gán List<MissionTopic> thay vì Set ID
                             selectedTopicIds = restoredTopics,
@@ -294,6 +299,12 @@ class AlarmSettingsViewModel(
 
             // 4. Lưu QR Code và đặt lịch báo thức
             saveSelectedQRCodes(finalAlarmId, state.selectedQRCodeIds)
+
+            // 5. Lưu Face Mission Config
+            state.faceMissionConfig?.let {
+                alarmDao.insertOrUpdateFaceMissionConfig(it.copy(alarmId = finalAlarmId))
+            }
+
             scheduler.schedule(alarmEntity)
 
             _uiState.update { it.copy(isSaved = true, id = finalAlarmId) }
@@ -333,6 +344,12 @@ class AlarmSettingsViewModel(
     fun updateSelectedQRCodes(qrCodeIds: List<Int>) {
         _uiState.update { currentState ->
             currentState.copy(selectedQRCodeIds = qrCodeIds)
+        }
+    }
+
+    fun updateFaceMissionConfig(config: AlarmFaceMissionConfigEntity) {
+        _uiState.update { currentState ->
+            currentState.copy(faceMissionConfig = config)
         }
     }
     

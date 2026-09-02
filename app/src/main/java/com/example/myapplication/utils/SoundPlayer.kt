@@ -12,7 +12,7 @@ class SoundPlayer(private val context: Context) {
     // Biến lưu URI của bài hát đang phát để so sánh
     private var currentPlayingUri: String? = null
 
-    fun playOrUpdateVolume(uriString: String, volume: Float) {
+    fun playOrUpdateVolume(uriString: String, volume: Float, onCompletion: (() -> Unit)? = null) {
         if (uriString.isBlank()) return
 
         // TRƯỜNG HỢP 1: Bài này đang phát rồi -> Chỉ chỉnh Volume
@@ -37,9 +37,10 @@ class SoundPlayer(private val context: Context) {
                 prepare()
                 start()
 
-                // Khi hát xong thì reset biến
+                // Khi hát xong thì reset biến và gọi callback
                 setOnCompletionListener {
                     currentPlayingUri = null
+                    onCompletion?.invoke()
                 }
             }
             // Lưu lại URI bài đang phát

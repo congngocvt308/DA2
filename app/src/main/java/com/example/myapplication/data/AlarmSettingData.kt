@@ -14,6 +14,7 @@ data class AlarmSettingData(
     val selectedTopicIds: List<MissionTopic> = emptyList(),
     val selectedQRCodeIds: List<Int> = emptyList(),
     val volume: Float = 0.7f,
+    val faceMissionConfig: AlarmFaceMissionConfigEntity? = null,
     val isLoading: Boolean = true,
     val isSaved: Boolean = false,
     val timeUntilAlarm: String = ""

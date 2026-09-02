@@ -5,7 +5,7 @@ object FaceMissionConfig {
     const val THRESHOLD_EAR = 0.15f
 
     // Ngưỡng nụ cười (0.0: mặt lạnh -> 1.0: cười hết cỡ)
-    const val THRESHOLD_SMILE = 0.25f
+    const val THRESHOLD_SMILE = 0.3f
 
     // Tổng điểm cần đạt để xong nhiệm vụ (Số frame đúng liên tục)
     const val TARGET_SCORE = 60f

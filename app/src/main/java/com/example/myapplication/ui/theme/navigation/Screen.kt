@@ -7,6 +7,7 @@ object Screen {
     const val QUIZ_SCREEN = "quiz_screen"
     const val MISSION_SELECTION = "mission_selection"
     const val ALARM_RINGING = "alarm_ringing"
+    const val MEMORY_MUSEUM = "memory_museum"
 
     const val TOPIC_DETAIL = "topic_detail/{topicId}"
     fun topicDetailRoute(topicId: Int) = "topic_detail/$topicId"

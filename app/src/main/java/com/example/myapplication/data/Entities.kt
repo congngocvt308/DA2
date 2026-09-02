@@ -171,3 +171,57 @@ data class UserStatsEntity(
     val totalAlarmsDismissed: Int = 0,
     val lastActiveDate: Long = 0L // Lưu timestamp ngày cuối cùng hoạt động
 )
+
+@Entity(
+    tableName = "alarm_face_mission_config",
+    foreignKeys = [
+        ForeignKey(
+            entity = AlarmEntity::class,
+            parentColumns = ["alarmId"],
+            childColumns = ["alarmId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["alarmId"], unique = true)
+    ]
+)
+data class AlarmFaceMissionConfigEntity(
+    @PrimaryKey(autoGenerate = true)
+    val configId: Int = 0,
+    val alarmId: Int,
+    val backgroundImageUri: String? = null,
+    val eyeOpenSoundUri: String? = null,
+    val smileSoundUri: String? = null,
+    val comboSoundUri: String? = null,
+    val holdPoseSoundUri: String? = null,
+    val requiredHoldDurationSec: Int = 3
+)
+
+// -------------------------------------------------------------------
+// 2. PictureEntity (Bảo tàng ký ức / Ảnh lưu trữ - Đã bỏ FK User)
+// -------------------------------------------------------------------
+@Entity(
+    tableName = "pictures",
+    foreignKeys = [
+        ForeignKey(
+            entity = AlarmHistoryEntity::class,
+            parentColumns = ["historyId"],
+            childColumns = ["alarmHistoryId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ],
+    indices = [
+        Index(value = ["userId"]),
+        Index(value = ["alarmHistoryId"])
+    ]
+)
+data class PictureEntity(
+    @PrimaryKey(autoGenerate = true)
+    val pictureId: Int = 0,
+    val userId: Int = 1, // Mặc định userId = 1 nếu là app cá nhân đơn người dùng
+    val alarmHistoryId: Int? = null,
+    val imageUri: String,
+    val description: String? = null,
+    val createdAt: Long = System.currentTimeMillis()
+)

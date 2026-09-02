@@ -25,8 +25,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
 class TopicViewModel(application: Application) : AndroidViewModel(application) {
@@ -94,7 +96,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
 
                     val totalFileSize = getFileSize(uri)
                     val averagePageSize = totalFileSize.toFloat() / count.toFloat()
-                    val maxTextPageSizeThreshold = 500 * 1024 // 500KB Guardrail Threshold [cite: 123]
+                    val maxTextPageSizeThreshold = 500 * 1024 // 500KB Guardrail Threshold
 
                     if (averagePageSize < maxTextPageSizeThreshold) {
                         isTextPdf = true
@@ -139,19 +141,19 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         if (currentDocs.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Kích hoạt hiệu ứng loading xoay vòng ProcessingOcrLayout trên giao diện [cite: 587]
+            // 1. Kích hoạt hiệu ứng loading
             _isLoading.value = true
 
             Log.d("AiOcrTest", "=========================================================================")
             Log.d("AiOcrTest", "⚡ KÍCH HOẠT TIẾN TRÌNH XỬ LÝ NÉN PHÂN NHÁNH VÀ KIỂM THỬ BƯỚC 1")
             Log.d("AiOcrTest", "Số lượng tài liệu trong hàng chờ chuẩn bị đẩy đi: ${currentDocs.size}")
 
-            // 2. Chạy nén ngầm chuyển đổi sang mảng byte trực tiếp tại Memory (Không sinh file rác) [cite: 588]
+            // 2. Chạy nén ngầm
             val startTime = System.currentTimeMillis()
             val compressedDataList = documentCompressor.compressMultipleDocuments(currentDocs)
             val endTime = System.currentTimeMillis()
 
-            // 3. IN BẢNG BÁO CÁO NGHIỆM THU NÉN TRỰC QUAN RA LOGCAT [cite: 588]
+            // 3. In log báo cáo nén
             Log.d("AiOcrTest", "----------- BẢNG TỔNG HỢP KẾT QUẢ NÉN TẠI MEMORY -----------")
             Log.d("AiOcrTest", "Thời gian thực thi nén bất đồng bộ: ${endTime - startTime} ms")
             var totalBytesToSend = 0L
@@ -164,35 +166,34 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("AiOcrTest", "Tổng băng thông truyền dữ liệu mạng Multipart dự kiến: ${totalBytesToSend / 1024} KB")
             Log.d("AiOcrTest", "------------------------------------------------------------")
 
-            // 4. Giả lập 2 giây truyền tải mạng gửi gói tin Multipart lên Server & Chờ Gemini Flash xử lý [cite: 589]
+            // 4. Truyền tải gói tin Multipart Stream lên Server
             Log.d("AiOcrTest", "📡 3G/4G/Wifi: Đang truyền tải gói tin Multipart Stream lên Server...")
 
             try {
-                // Chuyển đổi danh sách CompressedFileData (RAM) thành MultipartBody.Part
+                // 🌟 CHỈNH SỬA DÙNG EXTENSION FUNCTION CỦA OKHTTP CHUẨN MỚI
                 val multipartParts = compressedDataList.map { fileData ->
-                    val requestBody = okhttp3.RequestBody.create(
-                        okhttp3.MediaType.parse(if (fileData.isRawPdf) "application/pdf" else "image/jpeg"),
-                        fileData.bytes
-                    )
+                    val mimeType = if (fileData.isRawPdf) "application/pdf" else "image/jpeg"
+                    val mediaType = mimeType.toMediaTypeOrNull()
+                    val requestBody = fileData.bytes.toRequestBody(mediaType)
+
                     MultipartBody.Part.createFormData("files", fileData.fileName, requestBody)
                 }
 
                 val okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS) // Thời gian kết nối tối đa
-                    .readTimeout(60, TimeUnit.SECONDS)    // Thời gian đợi Server đọc và trả dữ liệu về
-                    .writeTimeout(60, TimeUnit.SECONDS)   // Thời gian đẩy mảng byte lên RAM Server
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
                     .build()
 
-                // Khởi tạo Retrofit Instance (Bạn thay URL bằng IP máy tính/Server của bạn)
                 val retrofit = retrofit2.Retrofit.Builder()
-                    .baseUrl("http://192.168.1.219:3000/") // IP 10.0.2.2 trỏ về localhost của máy tính khi chạy máy ảo Android
+                    .baseUrl("http://192.168.1.219:3000/")
                     .client(okHttpClient)
                     .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
                     .build()
 
                 val aiApiService = retrofit.create(AiApiService::class.java)
 
-                // Thực hiện bắn Request mạng bất đồng bộ
+                // Bắn Request
                 val response = aiApiService.uploadDocuments(multipartParts)
 
                 if (response.isSuccessful && response.body() != null) {
@@ -201,14 +202,14 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d("AiOcrTest", "✅ Backend Server phản hồi chuỗi cấu trúc JSON thành công!")
                     Log.d("AiOcrTest", "🤖 Tên chủ đề Gemini bóc tách xịn: -> '${ocrResult.suggestedTopic}'")
 
-                    // 5. Trả dữ liệu thật về cho Main Thread để hiển thị lên Form gộp
+                    // 5. Trả dữ liệu về Main Thread
                     withContext(Dispatchers.Main) {
                         _isLoading.value = false
                         _extractedTextCache.value = ocrResult.extractedLatexContent ?: ""
                         Log.d("AiOcrTest", "📝 _extractedTextCache sau gán: '${_extractedTextCache.value}' (len=${_extractedTextCache.value.length})")
 
                         _matrixConfig.value = AiMatrixConfig(
-                            suggestedTopic = ocrResult.suggestedTopic, // Điền tên thông minh do AI trả về
+                            suggestedTopic = ocrResult.suggestedTopic,
                             easyCount = 1f,
                             midCount = 3f,
                             hardCount = 2f
@@ -256,7 +257,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
         onSuccess: (topicId: Int, extractedText: String, easy: Int, mid: Int, hard: Int) -> Unit
     ) {
         val config = _matrixConfig.value ?: return
-        val textToStream = _extractedTextCache.value.orEmpty() // Vá lỗi phòng vệ chống Null [cite: 3065]
+        val textToStream = _extractedTextCache.value.orEmpty()
 
         if (textToStream.isBlank()) {
             Log.e("AiOcrTest", "❌ Lỗi rào gác: Chuỗi đệm LaTeX rỗng, không thể sinh câu hỏi.")
@@ -273,7 +274,6 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                     it.topicName.equals(cleanTopicName, ignoreCase = true)
                 }
 
-                // Kiểm tra trùng lặp để lấy ID cũ hoặc chèn mới chống rác hệ thống [cite: 3367, 3368]
                 val finalTopicId = if (existingTopic != null) {
                     Log.d("AiOcrTest", "   ➔ Chủ đề cũ tồn tại. Sử dụng ID: ${existingTopic.topicId}")
                     existingTopic.topicId
@@ -289,12 +289,10 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                 val hard = config.hardCount.toInt()
 
                 withContext(Dispatchers.Main) {
-                    // Giải phóng dọn sạch bộ đệm hàng chờ tại màn hình chính [cite: 2311]
                     _matrixConfig.value = null
                     _selectedDocuments.value = emptyList()
                     _extractedTextCache.value = ""
 
-                    // 🚀 BẮN TOÀN BỘ DATA RA NGOÀI: Để màn hình chính thực hiện điều hướng lập tức
                     onSuccess(finalTopicId, textToStream, easy, mid, hard)
                 }
 
@@ -320,5 +318,4 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
             1L
         }
     }
-
 }

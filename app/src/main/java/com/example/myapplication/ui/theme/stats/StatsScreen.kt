@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Collections // 🔥 Icon cho Bảo tàng ký ức
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +38,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,10 +57,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.SrsStat
+import com.example.myapplication.ui.theme.facedetection.MemoryMuseumScreen // 🔥 Import màn hình Bảo tàng ký ức
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatsScreen() {
+fun StatsScreen(onNavigateToMuseum: () -> Unit) {
     val context = LocalContext.current
     val statsDao = remember(context) {
         AppDatabase.getDatabase(context).statisticsDao()
@@ -74,6 +78,17 @@ fun StatsScreen() {
     val questions by viewModel.filteredQuestions.collectAsStateWithLifecycle()
     val userStats by viewModel.userStats.collectAsStateWithLifecycle()
 
+    // 🔥 STATE ĐỂ CHUYỂN SANG MÀN HÌNH BẢO TÀNG KÝ ỨC
+    var showMemoryMuseum by remember { mutableStateOf(false) }
+
+    // Nếu người dùng click vào Bảo tàng ký ức -> Hiển thị MemoryMuseumScreen
+    if (showMemoryMuseum) {
+        MemoryMuseumScreen(
+            onBackClick = { showMemoryMuseum = false }
+        )
+        return // Dừng vẽ StatsScreen để hiển thị đè màn hình Bảo tàng ký ức
+    }
+
     if (selectedStatus != null) {
         ModalBottomSheet(onDismissRequest = { viewModel.selectSrsStatus(null) }) {
             Column(modifier = Modifier.padding(16.dp).fillMaxHeight(0.6f)) {
@@ -85,8 +100,6 @@ fun StatsScreen() {
                 LazyColumn {
                     items(questions) { question ->
                         ListItem(
-                            // 🚨 KIỂM TRA: Nếu 'questionText' báo đỏ, hãy đổi thành tên cột
-                            // trong QuestionEntity của bạn (ví dụ: question.text hoặc question.content)
                             headlineContent = { Text(question.prompt) },
                             supportingContent = { Text("ID: ${question.questionId}") }
                         )
@@ -96,7 +109,6 @@ fun StatsScreen() {
             }
         }
     }
-
 
     // Cập nhật điểm tỉnh táo khi mở màn hình
     LaunchedEffect(Unit) {
@@ -113,7 +125,7 @@ fun StatsScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp, vertical = 12.dp) // Tăng vertical lên chút cho đẹp
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .height(35.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -165,7 +177,14 @@ fun StatsScreen() {
                 )
             }
 
-            // 2. Hiển thị Trạng thái trí nhớ (SRS)
+            // 🔥 2. MỤC "BẢO TÀNG KÝ ỨC" (CLICK VÀO MỞ MÀN HÌNH BẢO TÀNG)
+            item {
+                MemoryMuseumCard(
+                    onClick = onNavigateToMuseum
+                )
+            }
+
+            // 3. Hiển thị Trạng thái trí nhớ (SRS)
             item {
                 Text(
                     text = "Trạng thái trí nhớ (SRS)",
@@ -177,7 +196,7 @@ fun StatsScreen() {
                 }
             }
 
-            // 3. Hiển thị Hiệu suất học tập 7 ngày qua
+            // 4. Hiển thị Hiệu suất học tập 7 ngày qua
             item {
                 Text(
                     text = "Hiệu suất 7 ngày gần nhất",
@@ -188,7 +207,47 @@ fun StatsScreen() {
             }
         }
     }
+}
 
+// 🔥 COMPOSABLE BỘ THẺ "BẢO TÀNG KÝ ỨC" ĐƯỢC THIẾT KẾ ĐẸP MẮT
+@Composable
+fun MemoryMuseumCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFF4081).copy(alpha = 0.12f) // Màu hồng tím mộng mơ
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Collections,
+                contentDescription = "Bảo tàng ký ức",
+                tint = Color(0xFFFF4081),
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = "Bảo tàng nụ cười",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Xem lại những khoảnh khắc thức dậy của bạn 📸",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFFF4081)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -205,7 +264,6 @@ fun SrsDistributionSection(
     Card(
         modifier = Modifier.fillMaxWidth().padding(12.dp),
         shape = RoundedCornerShape(16.dp),
-        // Sử dụng màu nền tối hơn một chút để làm nổi bật thanh tiến trình
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -218,16 +276,15 @@ fun SrsDistributionSection(
                 Text("$totalQuestions câu hỏi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
-            // 2. Thanh Stacked Progress Bar (Phần lõi)
+            // 2. Thanh Stacked Progress Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(24.dp)
-                    .clip(RoundedCornerShape(12.dp)) // Bo tròn toàn bộ thanh
-                    .background(Color.Gray.copy(alpha = 0.2f)) // Màu nền khi chưa có dữ liệu
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Gray.copy(alpha = 0.2f))
             ) {
                 if (totalQuestions > 0) {
-                    // Phần Mastered (Xanh lá)
                     Box(
                         modifier = Modifier
                             .weight((mastered.toFloat() / totalQuestions).coerceAtLeast(0.01f))
@@ -235,7 +292,6 @@ fun SrsDistributionSection(
                             .background(Color(0xFF4CAF50))
                             .clickable { onStatusClick("Mastered") }
                     )
-                    // Phần Learning (Vàng cam)
                     Box(
                         modifier = Modifier
                             .weight((learning.toFloat() / totalQuestions).coerceAtLeast(0.01f))
@@ -243,7 +299,6 @@ fun SrsDistributionSection(
                             .background(Color(0xFFFFC107))
                             .clickable { onStatusClick("Learning") }
                     )
-                    // Phần New (Xanh dương nhạt/Xám)
                     Box(
                         modifier = Modifier
                             .weight((new.toFloat() / totalQuestions).coerceAtLeast(0.01f))
@@ -254,7 +309,7 @@ fun SrsDistributionSection(
                 }
             }
 
-            // 3. Chú thích (Legend) bên dưới
+            // 3. Chú thích
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -267,7 +322,6 @@ fun SrsDistributionSection(
     }
 }
 
-// Hàm vẽ chú thích nhỏ
 @Composable
 fun LegendItem(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -280,7 +334,7 @@ fun LegendItem(color: Color, label: String) {
 @Composable
 fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
     val goalPercentage = 0.8f
-    val labelAreaHeight = 32.dp // 🚨 Cố định chiều cao vùng nhãn X để tính toán
+    val labelAreaHeight = 32.dp
 
     Card(
         modifier = Modifier
@@ -291,27 +345,24 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-
-            // 1. LỚP NỀN: Đường lưới (Grid Lines)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = labelAreaHeight), // 🚨 Chừa đúng khoảng trống cho nhãn X
+                    .padding(bottom = labelAreaHeight),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 GridLine("100%")
                 GridLine("50%")
-                // Vạch 0% giờ đây sẽ nằm chính xác ở đáy của vùng Graph
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "0%", style = MaterialTheme.typography.labelSmall, color = Color.Gray, modifier = Modifier.width(35.dp))
                     HorizontalDivider(color = Color.Gray.copy(alpha = 0.2f))
                 }
             }
-            // 3. LỚP CỘT VÀ NHÃN (Foreground)
+
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 35.dp), // Thụt vào để tránh nhãn trục Y
+                    .padding(start = 35.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 stats.forEach { (label, accuracy) ->
@@ -319,12 +370,11 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.weight(1f).fillMaxHeight()
                     ) {
-                        // Vùng hiển thị cột (Graph Area)
                         Box(
                             modifier = Modifier
-                                .weight(1f) // Chiếm toàn bộ không gian phía trên
+                                .weight(1f)
                                 .fillMaxWidth(),
-                            contentAlignment = Alignment.BottomCenter // 🚨 Ép cột mọc từ đáy
+                            contentAlignment = Alignment.BottomCenter
                         ) {
                             if (accuracy > 0f) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -337,7 +387,7 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
                                     Box(
                                         modifier = Modifier
                                             .width(20.dp)
-                                            .fillMaxHeight(accuracy) // Cao theo tỷ lệ chuẩn
+                                            .fillMaxHeight(accuracy)
                                             .background(
                                                 brush = Brush.verticalGradient(
                                                     colors = listOf(
@@ -350,12 +400,10 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
                                     )
                                 }
                             } else {
-                                // Nếu là 0%, vẽ một vạch mờ chính xác tại vạch 0%
                                 Box(modifier = Modifier.width(16.dp).height(1.dp).background(Color.Gray.copy(0.3f)))
                             }
                         }
 
-                        // Vùng nhãn trục X (Label Area)
                         Box(
                             modifier = Modifier.height(labelAreaHeight),
                             contentAlignment = Alignment.Center
@@ -374,7 +422,6 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
     }
 }
 
-// Hàm vẽ đường lưới ngang
 @Composable
 fun GridLine(label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -389,14 +436,13 @@ fun StatCard(
     value: String,
     subValue: String,
     icon: ImageVector,
-    color: Color // Bây giờ nó là Compose Color
+    color: Color
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp),
         shape = RoundedCornerShape(16.dp),
-        // .copy() bây giờ sẽ hoạt động
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
     ) {
         Row(
@@ -411,7 +457,6 @@ fun StatCard(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                // Color.Gray (viết hoa chữ G) là của Compose
                 Text(text = title, style = MaterialTheme.typography.labelLarge, color = Color.Gray)
                 Text(text = value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 if (subValue.isNotEmpty()) {
