@@ -62,6 +62,9 @@ import com.example.myapplication.ui.theme.alarm.AlarmScreen
 import com.example.myapplication.ui.theme.alarm.AlarmSettingsScreen
 import com.example.myapplication.ui.theme.alarm.QuizScreen
 import com.example.myapplication.ui.theme.components.PermissionItem
+import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
 import com.example.myapplication.ui.theme.facedetection.MemoryMuseumScreen
 import com.example.myapplication.ui.theme.stats.StatsScreen
 import com.example.myapplication.ui.theme.topic.TopicDetailScreen
@@ -281,6 +284,27 @@ fun MainScreen(initialExternalRoute: String? = null) {
                     },
                     onMissionSettingClick = {
                         navController.navigate(Screen.MISSION_SELECTION)
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.FACE_MISSION,
+                arguments = listOf(navArgument("alarmId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
+                val faceViewModel: FaceMissionViewModel = viewModel(
+                    factory = FaceMissionViewModelFactory(context, alarmId)
+                )
+
+                FaceMissionScreen(
+                    viewModel = faceViewModel,
+                    onLuongAComplete = {
+                        val intent = Intent(context, AlarmService::class.java)
+                        context.stopService(intent)
+                        navController.navigate(Screen.ALARM_TAB) {
+                            popUpTo(Screen.ALARM_RINGING) { inclusive = true }
+                        }
                     }
                 )
             }

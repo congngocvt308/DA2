@@ -27,6 +27,7 @@ data class FaceMissionUiState(
     val cameraHeight: Int = 1,
 
     // --- BỔ SUNG CẤU HÌNH TỪ DATABASE ---
+    val isConfigLoaded: Boolean = false,
     val backgroundImageUri: String? = null,
     val requiredHoldDurationSec: Int = 3,
     val eyeOpenSoundUri: String? = null,

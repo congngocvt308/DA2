@@ -20,15 +20,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,51 +39,50 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.myapplication.data.AlarmFaceMissionConfigEntity
+import com.example.myapplication.ui.theme.facedetection.CustomPaintProgressBar
 import com.example.myapplication.utils.SoundPlayer
 import com.example.myapplication.utils.VoiceRecorder
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
+import com.example.myapplication.R
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.RectF
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.ContentScale.Companion.Crop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,6 +117,11 @@ fun SmileChallengeConfigDialog(
     // State quản lý Dialog chọn âm thanh
     var showSoundPicker by remember { mutableStateOf(false) }
     var currentPickingLabel by remember { mutableStateOf("") }
+
+    // State quản lý hình nền mới
+    var showBackgroundSourcePicker by remember { mutableStateOf(false) }
+    var showBackgroundEditor by remember { mutableStateOf(false) }
+    var tempImageUriForEditor by remember { mutableStateOf<Uri?>(null) }
 
     val recorder = remember { VoiceRecorder(context) }
     val soundPlayer = remember { SoundPlayer(context) }
@@ -204,7 +211,8 @@ fun SmileChallengeConfigDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            backgroundImageUri = uri
+            tempImageUriForEditor = uri
+            showBackgroundEditor = true
         }
     }
 
@@ -279,13 +287,13 @@ fun SmileChallengeConfigDialog(
                     Slider(
                         value = smileDuration,
                         onValueChange = { smileDuration = it },
-                        valueRange = 3f..15f,
+                        valueRange = 1f..9f,
                         steps = 12,
                         modifier = Modifier.padding(top = 12.dp)
                     )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("3s", style = MaterialTheme.typography.bodySmall)
-                        Text("15s", style = MaterialTheme.typography.bodySmall)
+                        Text("1s", style = MaterialTheme.typography.bodySmall)
+                        Text("9s", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -427,7 +435,7 @@ fun SmileChallengeConfigDialog(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { imagePickerLauncher.launch("image/*") }
+                    .clickable { showBackgroundSourcePicker = true }
             ){
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -493,6 +501,31 @@ fun SmileChallengeConfigDialog(
                     "Giữ nguyên" -> holdPoseSoundUri = path
                 }
                 showSoundPicker = false
+            }
+        )
+    }
+
+    if (showBackgroundSourcePicker) {
+        BackgroundSourcePickerDialog(
+            onDismiss = { showBackgroundSourcePicker = false },
+            onDefaultSelected = {
+                backgroundImageUri = defaultBgUri
+                showBackgroundSourcePicker = false
+            },
+            onGallerySelected = {
+                showBackgroundSourcePicker = false
+                imagePickerLauncher.launch("image/*")
+            }
+        )
+    }
+
+    if (showBackgroundEditor && tempImageUriForEditor != null) {
+        BackgroundEditorDialog(
+            imageUri = tempImageUriForEditor!!,
+            onDismiss = { showBackgroundEditor = false },
+            onConfirm = { croppedPath ->
+                backgroundImageUri = Uri.fromFile(File(croppedPath))
+                showBackgroundEditor = false
             }
         )
     }
@@ -818,5 +851,232 @@ private fun getAudioDuration(path: String): Long {
         0L
     } finally {
         retriever.release()
+    }
+}
+
+@Composable
+fun BackgroundSourcePickerDialog(
+    onDismiss: () -> Unit,
+    onDefaultSelected: () -> Unit,
+    onGallerySelected: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Chọn hình nền", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Surface(
+                    onClick = onDefaultSelected,
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Landscape, null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Ảnh mặc định", fontWeight = FontWeight.Bold)
+                            Text("Cảnh hoàng hôn", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Surface(
+                    onClick = onGallerySelected,
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.PhotoLibrary, null, tint = MaterialTheme.colorScheme.secondary)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Từ bộ nhớ", fontWeight = FontWeight.Bold)
+                            Text("Chọn ảnh của bạn", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(onClick = onDismiss) { Text("Hủy") }
+            }
+        }
+    }
+}
+
+@Composable
+fun BackgroundEditorDialog(
+    imageUri: Uri,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var scale by remember { mutableStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    val context = LocalContext.current
+    
+    // Load bitmap gốc để xử lý zoom/pan không bị cắt
+    val originalBitmap = remember(imageUri) {
+        try {
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) { null }
+    }
+
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
+    
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .onGloballyPositioned { containerSize = it.size }
+        ) {
+            // 1. ẢNH NỀN TỰ DO (Dùng Canvas vẽ trực tiếp Bitmap)
+            if (originalBitmap != null) {
+                androidx.compose.foundation.Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale *= zoom
+                                offset += pan
+                            }
+                        }
+                ) {
+                    drawIntoCanvas { canvas ->
+                        val matrix = Matrix()
+                        val canvasWidth = size.width
+                        val canvasHeight = size.height
+                        val bitmapWidth = originalBitmap.width.toFloat()
+                        val bitmapHeight = originalBitmap.height.toFloat()
+                        
+                        // Khởi tạo Fit màn hình (Fill Center)
+                        val baseScale = maxOf(canvasWidth / bitmapWidth, canvasHeight / bitmapHeight)
+                        
+                        matrix.postTranslate(-bitmapWidth / 2f, -bitmapHeight / 2f)
+                        matrix.postScale(baseScale * scale, baseScale * scale)
+                        matrix.postTranslate(canvasWidth / 2f + offset.x, canvasHeight / 2f + offset.y)
+                        
+                        canvas.nativeCanvas.drawBitmap(originalBitmap, matrix, null)
+                    }
+                }
+            }
+
+            // 2. OVERLAY TĨNH (NHƯ FACE MISSION SCREEN)
+            Column(
+                modifier = Modifier.fillMaxSize().padding(top = 50.dp, bottom = 40.dp, start = 32.dp, end = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header Clock
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("07:30", color = Color.White.copy(alpha = 0.9f), fontSize = 76.sp, fontWeight = FontWeight.Bold)
+                    Text("Thứ Hai, 24 tháng 7", color = Color.White.copy(alpha = 0.7f), fontSize = 18.sp)
+                }
+
+                Spacer(modifier = Modifier.height(80.dp))
+
+                // Khung Camera Tĩnh
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(0.9f)
+                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(40.dp))
+                        .border(2.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(40.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("XEM TRƯỚC VỊ TRÍ MẶT", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Progress Bar Tĩnh
+                Text("Cười tươi để kiểm tra", color = Color.White, modifier = Modifier.padding(bottom = 16.dp))
+                CustomPaintProgressBar(progress = 0.6f, modifier = Modifier.fillMaxWidth().height(74.dp))
+            }
+
+            // 3. NÚT BACK (Góc Top Left)
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .padding(top = 40.dp, start = 16.dp)
+                    .align(Alignment.TopStart)
+                    .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại", tint = Color.White)
+            }
+
+            // 4. NÚT LƯU (Dưới cùng)
+            Button(
+                onClick = {
+                    if (originalBitmap != null && containerSize != IntSize.Zero) {
+                        val resultPath = saveTransformedBitmap(context, originalBitmap, scale, offset, containerSize)
+                        if (resultPath != null) onConfirm(resultPath)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(24.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Text("Lưu vị trí")
+            }
+        }
+    }
+}
+
+private fun saveTransformedBitmap(
+    context: android.content.Context, 
+    original: Bitmap, 
+    userScale: Float, 
+    userOffset: Offset, 
+    screenSize: IntSize
+): String? {
+    try {
+        val output = Bitmap.createBitmap(screenSize.width, screenSize.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(output)
+        val matrix = Matrix()
+        
+        val baseScale = maxOf(screenSize.width.toFloat() / original.width, screenSize.height.toFloat() / original.height)
+
+        matrix.postTranslate(-original.width / 2f, -original.height / 2f)
+        matrix.postScale(baseScale * userScale, baseScale * userScale)
+        matrix.postTranslate(screenSize.width / 2f + userOffset.x, screenSize.height / 2f + userOffset.y)
+
+        val paint = android.graphics.Paint().apply {
+            isFilterBitmap = true
+        }
+        canvas.drawBitmap(original, matrix, paint)
+        
+        val file = File(context.filesDir, "bg_custom_${System.currentTimeMillis()}.jpg")
+        FileOutputStream(file).use { 
+            output.compress(Bitmap.CompressFormat.JPEG, 90, it)
+        }
+        return file.absolutePath
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
     }
 }

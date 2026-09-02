@@ -22,6 +22,9 @@ import com.example.myapplication.alarm_logic.AlarmService
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.ui.theme.navigation.Screen
 import com.example.myapplication.ui.theme.qrcode.QRDismissScreen
+import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
+import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
 import com.example.myapplication.ui.theme.stats.StatsViewModel
 import com.example.myapplication.ui.theme.stats.StatsViewModelFactory
 import com.example.myapplication.ui.theme.theme.MyApplicationTheme
@@ -80,8 +83,27 @@ class AlarmRingingActivity : ComponentActivity() {
                                 }
                             },
                             onNavigateToQuiz = {
-                                // Chuyển sang màn hình Quiz nội bộ
-                                navController.navigate("quiz_screen")
+                                lifecycleScope.launch {
+                                    val faceConfig = appDao.getFaceMissionConfigByAlarmId(alarmId)
+                                    val alarm = appDao.getAlarmById(alarmId)
+                                    
+                                    when {
+                                        faceConfig != null -> {
+                                            val bgUri = faceConfig.backgroundImageUri ?: ""
+                                            navController.navigate("face_mission_screen?bgUri=$bgUri")
+                                        }
+                                        alarm != null && alarm.questionCount > 0 -> {
+                                            navController.navigate("quiz_screen")
+                                        }
+                                        hasQRCodes -> {
+                                            navController.navigate("qr_dismiss_screen")
+                                        }
+                                        else -> {
+                                            statsViewModel.updatePerformanceAfterAlarm()
+                                            completeAlarmDismiss()
+                                        }
+                                    }
+                                }
                             },
                             onNavigateToQRScan = {
                                 navController.navigate("qr_dismiss_screen")
@@ -98,6 +120,21 @@ class AlarmRingingActivity : ComponentActivity() {
                                 navController.popBackStack()
                             },
                             onQuizCompleted = {
+                                statsViewModel.updatePerformanceAfterAlarm()
+                                completeAlarmDismiss()
+                            }
+                        )
+                    }
+
+                    // Mới: Màn hình quét mặt (Face Mission)
+                    composable("face_mission_screen?bgUri={bgUri}") { backStackEntry ->
+                        val bgUri = backStackEntry.arguments?.getString("bgUri")
+                        val faceViewModel: FaceMissionViewModel = viewModel(
+                            factory = FaceMissionViewModelFactory(context, alarmId, bgUri)
+                        )
+                        FaceMissionScreen(
+                            viewModel = faceViewModel,
+                            onLuongAComplete = {
                                 statsViewModel.updatePerformanceAfterAlarm()
                                 completeAlarmDismiss()
                             }

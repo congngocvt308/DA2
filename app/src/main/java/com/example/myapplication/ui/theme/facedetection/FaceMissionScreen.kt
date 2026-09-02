@@ -74,6 +74,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import java.io.FileOutputStream
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @Composable
 fun CustomPaintProgressBar(
@@ -305,22 +306,17 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // --- ẢNH NỀN LINH HOẠT ---
-        if (!uiState.backgroundImageUri.isNullOrEmpty()) {
-            AsyncImage(
-                model = uiState.backgroundImageUri,
-                contentDescription = "Background",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.background),
-                contentDescription = "Background",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+        // --- ẢNH NỀN MƯỢT MÀ ---
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(uiState.backgroundImageUri ?: R.drawable.background)
+                .crossfade(400)
+                .placeholder(R.drawable.background)
+                .build(),
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
         // --- NỘI DUNG CHÍNH ---
         Column(

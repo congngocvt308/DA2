@@ -27,10 +27,11 @@ import kotlinx.coroutines.launch
 class FaceMissionViewModel(
     context: Context,
     private val alarmId: Int = -1,
-    private val appDao: AppDao = AppDatabase.getDatabase(context).appDao()
+    private val appDao: AppDao = AppDatabase.getDatabase(context).appDao(),
+    initialBgUri: String? = null
 ) : ViewModel(), TextToSpeech.OnInitListener {
 
-    private val _uiState = MutableStateFlow(FaceMissionUiState())
+    private val _uiState = MutableStateFlow(FaceMissionUiState(backgroundImageUri = initialBgUri))
     val uiState: StateFlow<FaceMissionUiState> = _uiState.asStateFlow()
 
     private var tts: TextToSpeech = TextToSpeech(context, this)
@@ -52,6 +53,7 @@ class FaceMissionViewModel(
                 config?.let { c ->
                     targetScore = (c.requiredHoldDurationSec * 20f).coerceAtLeast(20f)
                     _uiState.update { it.copy(
+                        isConfigLoaded = true,
                         backgroundImageUri = c.backgroundImageUri,
                         requiredHoldDurationSec = c.requiredHoldDurationSec,
                         eyeOpenSoundUri = c.eyeOpenSoundUri,
@@ -59,7 +61,13 @@ class FaceMissionViewModel(
                         comboSoundUri = c.comboSoundUri,
                         holdPoseSoundUri = c.holdPoseSoundUri
                     ) }
+                } ?: run {
+                    // Nếu không tìm thấy config trong DB, vẫn đánh dấu là đã load xong (dùng mặc định)
+                    _uiState.update { it.copy(isConfigLoaded = true) }
                 }
+            } else {
+                // Trường hợp test không có alarmId
+                _uiState.update { it.copy(isConfigLoaded = true) }
             }
         }
     }
@@ -188,12 +196,13 @@ class FaceMissionViewModel(
 
 class FaceMissionViewModelFactory(
     private val context: Context,
-    private val alarmId: Int = -1
+    private val alarmId: Int = -1,
+    private val initialBgUri: String? = null
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FaceMissionViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return FaceMissionViewModel(context, alarmId) as T
+            return FaceMissionViewModel(context, alarmId, initialBgUri = initialBgUri) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

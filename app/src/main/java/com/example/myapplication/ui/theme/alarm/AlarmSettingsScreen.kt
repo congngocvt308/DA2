@@ -249,8 +249,10 @@ fun AlarmSettingsScreen(
                             )
                             AlarmTaskSection(
                                 questionCount = uiState.questionCount,
+                                faceMissionConfig = uiState.faceMissionConfig,
                                 isPremium = isPremium,
                                 onAddClick = { showMissionTypeDialog = true }, // Thay đổi từ showMissionDialog sang showMissionTypeDialog
+                                onClearClick = { viewModel.clearMission() },
                                 onLockedFeatureClick = { showPremiumDialog = true },
                                 onQRCodeClick = { 
                                     if (isPremium) {
@@ -629,8 +631,10 @@ data class PremiumFeature(
 @Composable
 fun AlarmTaskSection(
     questionCount: Int,
+    faceMissionConfig: com.example.myapplication.data.AlarmFaceMissionConfigEntity?,
     isPremium: Boolean,
     onAddClick: () -> Unit,
+    onClearClick: () -> Unit,
     onLockedFeatureClick: () -> Unit,
     onQRCodeClick: () -> Unit,
     onImageMissionClick: () -> Unit
@@ -652,6 +656,10 @@ fun AlarmTaskSection(
     ) {
         // Card đầu tiên: Thêm câu hỏi
         item {
+            val hasQuiz = questionCount > 0
+            val hasSmile = faceMissionConfig != null
+            val hasAnyMission = hasQuiz || hasSmile
+            
             Box(modifier = Modifier){
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -664,8 +672,8 @@ fun AlarmTaskSection(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(top = 8.dp, start = 20.dp),
-                        horizontalAlignment = Alignment.Start,
+                            .padding(top = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ){
                         Box(
@@ -675,12 +683,45 @@ fun AlarmTaskSection(
                                 .background(MaterialTheme.colorScheme.secondary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                            when {
+                                hasSmile -> Text("😊", fontSize = 18.sp)
+                                hasQuiz -> Text("🧮", fontSize = 18.sp)
+                                else -> Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                            }
                         }
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
                         Text(
-                            text = if (questionCount > 0) "$questionCount câu" else "Thêm",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground
+                            text = when {
+                                hasSmile -> "${faceMissionConfig?.requiredHoldDurationSec} giây"
+                                hasQuiz -> "$questionCount câu"
+                                else -> "Thêm"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+
+                // NÚT XÓA NHIỆM VỤ (Dấu X đỏ)
+                if (hasAnyMission) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(24.dp)
+                            .offset(x = (-4).dp, y = 4.dp)
+                            .clickable { onClearClick() },
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.error,
+                        shadowElevation = 4.dp
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Xóa nhiệm vụ",
+                            tint = Color.White,
+                            modifier = Modifier.padding(4.dp)
                         )
                     }
                 }

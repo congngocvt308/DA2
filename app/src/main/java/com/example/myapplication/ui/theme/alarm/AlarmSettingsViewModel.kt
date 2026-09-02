@@ -300,9 +300,11 @@ class AlarmSettingsViewModel(
             // 4. Lưu QR Code và đặt lịch báo thức
             saveSelectedQRCodes(finalAlarmId, state.selectedQRCodeIds)
 
-            // 5. Lưu Face Mission Config
-            state.faceMissionConfig?.let {
-                alarmDao.insertOrUpdateFaceMissionConfig(it.copy(alarmId = finalAlarmId))
+            // 5. Lưu hoặc Xóa sạch cấu hình Nụ cười cũ
+            if (state.faceMissionConfig != null) {
+                alarmDao.insertOrUpdateFaceMissionConfig(state.faceMissionConfig.copy(alarmId = finalAlarmId))
+            } else {
+                alarmDao.deleteFaceMissionConfigByAlarmId(finalAlarmId)
             }
 
             scheduler.schedule(alarmEntity)
@@ -336,7 +338,8 @@ class AlarmSettingsViewModel(
             currentState.copy(
                 questionCount = count,
                 selectedQuestions = questions,
-                selectedTopicIds = topics
+                selectedTopicIds = topics,
+                faceMissionConfig = null
             )
         }
     }
@@ -349,8 +352,22 @@ class AlarmSettingsViewModel(
 
     fun updateFaceMissionConfig(config: AlarmFaceMissionConfigEntity) {
         _uiState.update { currentState ->
-            currentState.copy(faceMissionConfig = config)
+            currentState.copy(
+                faceMissionConfig = config,
+                questionCount = 0,
+                selectedQuestions = emptyList(),
+                selectedTopicIds = emptyList()
+            )
         }
+    }
+
+    fun clearMission() {
+        _uiState.update { it.copy(
+            questionCount = 0,
+            selectedQuestions = emptyList(),
+            selectedTopicIds = emptyList(),
+            faceMissionConfig = null
+        ) }
     }
     
     private suspend fun saveSelectedQRCodes(alarmId: Int, qrCodeIds: List<Int>) {
