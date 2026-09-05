@@ -1,11 +1,7 @@
 package com.cong.smartalarm.ui.theme.alarm
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -156,57 +153,69 @@ fun QuizOptionButton(
     onSelect: () -> Unit
 ) {
     val isSelected = (answer.id == uiState.selectedAnswerId)
-    val infiniteTransition = rememberInfiniteTransition(label = "Blink")
     val isCorrectAndAnswered = uiState.isAnswered && answer.isCorrect
+    val isWrongAndSelected = uiState.isAnswered && isSelected && !answer.isCorrect
 
-    val successColor = MaterialTheme.colorScheme.secondary
-    val errorColor = MaterialTheme.colorScheme.error
-    val selectedColor = MaterialTheme.colorScheme.surfaceVariant
-    val defaultColor = MaterialTheme.colorScheme.surface
+    // 🎯 1. ĐỊNH NGHĨA BẢNG MÀU CHUẨN
+    val colorSuccess = Color(0xFF4CAF50) // Xanh lá
+    val colorError = Color(0xFFF44336)   // Đỏ
+    val colorDefault = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    val colorSelected = MaterialTheme.colorScheme.primaryContainer
 
-    val blinkAlpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isCorrectAndAnswered) 0.3f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 400),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "BlinkAlpha"
-    )
     val targetColor = when {
-        uiState.isAnswered && answer.isCorrect -> successColor
-        uiState.isAnswered && isSelected && !answer.isCorrect -> errorColor
-        isSelected -> selectedColor
-        else -> defaultColor
-    }
-
-    val usesPrimaryContentColor = uiState.isAnswered && (answer.isCorrect || (isSelected && !answer.isCorrect))
-    val contentColor = if (usesPrimaryContentColor) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurface
+        isCorrectAndAnswered -> colorSuccess
+        isWrongAndSelected -> colorError
+        isSelected -> colorSelected
+        else -> colorDefault
     }
 
     val backgroundColor by animateColorAsState(
         targetValue = targetColor,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = 300),
         label = "OptionColor"
     )
 
-    Button(
+    // 🎯 2. HIỆU ỨNG NHẤP NHÁY CHO CÂU ĐÚNG
+    val infiniteTransition = rememberInfiniteTransition(label = "Blink")
+    val blinkAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isCorrectAndAnswered) 0.6f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "BlinkAlpha"
+    )
+
+    // 🎯 3. HIỆU ỨNG PHẢN HỒI KHI CHẠM (SCALE)
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "Scale"
+    )
+
+    Surface(
         onClick = onSelect,
         enabled = !uiState.isAnswered && !uiState.isTimeOut,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
-            disabledContainerColor = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
-            contentColor = contentColor,
-            disabledContentColor = contentColor
-        ),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = backgroundColor.copy(alpha = if (isCorrectAndAnswered) blinkAlpha else 1f),
+        contentColor = if (uiState.isAnswered && (answer.isCorrect || isSelected)) Color.White else MaterialTheme.colorScheme.onSurface,
+        shadowElevation = if (isSelected || uiState.isAnswered) 0.dp else 4.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(64.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
     ) {
-        Text(answer.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 24.dp)) {
+            Text(
+                text = answer.text,
+                fontSize = 18.sp,
+                fontWeight = if (isSelected || isCorrectAndAnswered) FontWeight.Bold else FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

@@ -10,6 +10,11 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,9 +69,19 @@ class AlarmRingingActivity : ComponentActivity() {
                 ) {
                     // 1. Màn hình báo thức đang reo
                     composable("ringing_screen") {
+                        var isSnoozeEnabled by remember { mutableStateOf(true) }
+                        
+                        LaunchedEffect(alarmId) {
+                            if (alarmId != -1) {
+                                val alarm = appDao.getAlarmById(alarmId)
+                                isSnoozeEnabled = alarm?.snoozeEnabled ?: true
+                            }
+                        }
+
                         AlarmRingingScreen(
                             alarmLabel = label,
                             hasQRCodes = hasQRCodes,
+                            isSnoozeEnabled = isSnoozeEnabled,
                             onSnooze = {
                                 lifecycleScope.launch {
                                     // 1. Dùng AppDao để lấy cấu hình báo thức (thời gian báo lại)
@@ -100,7 +115,9 @@ class AlarmRingingActivity : ComponentActivity() {
                                         }
                                         else -> {
                                             statsViewModel.updatePerformanceAfterAlarm()
-                                            completeAlarmDismiss()
+                                            navController.navigate("success_screen") {
+                                                popUpTo(0)
+                                            }
                                         }
                                     }
                                 }
@@ -121,7 +138,9 @@ class AlarmRingingActivity : ComponentActivity() {
                             },
                             onQuizCompleted = {
                                 statsViewModel.updatePerformanceAfterAlarm()
-                                completeAlarmDismiss()
+                                navController.navigate("success_screen") {
+                                    popUpTo(0)
+                                }
                             }
                         )
                     }
@@ -136,7 +155,9 @@ class AlarmRingingActivity : ComponentActivity() {
                             viewModel = faceViewModel,
                             onLuongAComplete = {
                                 statsViewModel.updatePerformanceAfterAlarm()
-                                completeAlarmDismiss()
+                                navController.navigate("success_screen") {
+                                    popUpTo(0)
+                                }
                             }
                         )
                     }
@@ -150,9 +171,16 @@ class AlarmRingingActivity : ComponentActivity() {
                             },
                             onDismissSuccess = {
                                 statsViewModel.updatePerformanceAfterAlarm()
-                                completeAlarmDismiss()
+                                navController.navigate("success_screen") {
+                                    popUpTo(0)
+                                }
                             }
                         )
+                    }
+
+                    // Mới: Màn hình thành công rực rỡ
+                    composable("success_screen") {
+                        SuccessScreen(onFinished = { completeAlarmDismiss() })
                     }
                 }
             }
