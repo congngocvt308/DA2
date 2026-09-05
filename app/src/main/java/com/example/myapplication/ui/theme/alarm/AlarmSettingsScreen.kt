@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -41,18 +41,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.ui.theme.components.PremiumPurchaseDialog
-import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
-import com.example.myapplication.ui.theme.mission.MissionSelectionDialog
-import com.example.myapplication.ui.theme.qrcode.QRCodeManagementDialog
-import com.example.myapplication.ui.theme.qrcode.QRCodeScannerScreen
-import com.example.myapplication.ui.theme.qrcode.QRCodeSelectionDialog
-import com.example.myapplication.ui.theme.qrcode.QRCodeViewModel
-import com.example.myapplication.utils.PremiumManager
-import com.example.myapplication.utils.RingtoneUtils
-import com.example.myapplication.utils.SoundPlayer
+import com.cong.smartalarm.ui.theme.components.PremiumPurchaseDialog
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionScreen
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModel
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModelFactory
+import com.cong.smartalarm.ui.theme.mission.MissionSelectionDialog
+import com.cong.smartalarm.ui.theme.qrcode.QRCodeManagementDialog
+import com.cong.smartalarm.ui.theme.qrcode.QRCodeScannerScreen
+import com.cong.smartalarm.ui.theme.qrcode.QRCodeSelectionDialog
+import com.cong.smartalarm.ui.theme.qrcode.QRCodeViewModel
+import com.cong.smartalarm.utils.PremiumManager
+import com.cong.smartalarm.utils.RingtoneUtils
+import com.cong.smartalarm.utils.SoundPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -177,7 +177,7 @@ fun AlarmSettingsScreen(
                         ),
                         leadingIcon = {
                             Image(
-                                painter = painterResource(com.example.myapplication.R.drawable.sun),
+                                painter = painterResource(com.cong.smartalarm.R.drawable.sun),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -631,7 +631,7 @@ data class PremiumFeature(
 @Composable
 fun AlarmTaskSection(
     questionCount: Int,
-    faceMissionConfig: com.example.myapplication.data.AlarmFaceMissionConfigEntity?,
+    faceMissionConfig: com.cong.smartalarm.data.AlarmFaceMissionConfigEntity?,
     isPremium: Boolean,
     onAddClick: () -> Unit,
     onClearClick: () -> Unit,

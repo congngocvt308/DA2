@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.navigation
+package com.cong.smartalarm.ui.theme.navigation
 
 object Screen {
     const val ALARM_TAB = "alarm"

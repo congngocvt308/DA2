@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.AiMatrixConfig
-import com.example.myapplication.ui.theme.components.SearchableTopBar
+import com.cong.smartalarm.data.AiMatrixConfig
+import com.cong.smartalarm.ui.theme.components.SearchableTopBar
 import kotlinx.coroutines.launch
 
 import android.view.ViewGroup

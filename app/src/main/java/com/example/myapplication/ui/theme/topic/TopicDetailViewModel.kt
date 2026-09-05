@@ -1,16 +1,16 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AiApiService
-import com.example.myapplication.data.AnswerData
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.GenerateQuestionsRequest
-import com.example.myapplication.data.QuestionData
-import com.example.myapplication.data.QuestionEntity
+import com.cong.smartalarm.data.AiApiService
+import com.cong.smartalarm.data.AnswerData
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.GenerateQuestionsRequest
+import com.cong.smartalarm.data.QuestionData
+import com.cong.smartalarm.data.QuestionEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

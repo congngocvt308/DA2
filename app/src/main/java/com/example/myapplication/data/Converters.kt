@@ -1,4 +1,4 @@
-package com.example.myapplication.data
+package com.cong.smartalarm.data
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson

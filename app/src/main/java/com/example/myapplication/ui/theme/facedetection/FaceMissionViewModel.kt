@@ -1,10 +1,10 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.myapplication.data.FaceMissionUiState
+import com.cong.smartalarm.data.FaceMissionUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,12 +14,12 @@ import android.graphics.PointF
 import android.media.AudioManager
 import android.os.Bundle
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AppDao
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.AlarmFaceMissionConfigEntity
-import com.example.myapplication.data.FaceMissionConfig
-import com.example.myapplication.data.PictureEntity
-import com.example.myapplication.utils.SoundPlayer
+import com.cong.smartalarm.data.AppDao
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.AlarmFaceMissionConfigEntity
+import com.cong.smartalarm.data.FaceMissionConfig
+import com.cong.smartalarm.data.PictureEntity
+import com.cong.smartalarm.utils.SoundPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

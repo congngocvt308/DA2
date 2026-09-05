@@ -6,17 +6,18 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.cong.smartalarm"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.cong.smartalarm"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        resConfigs("vi", "en")
     }
 
     buildTypes {
@@ -84,7 +85,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     
     // ML Kit Barcode Scanning
-    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
     
     // Coroutines Play Services (for await())
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
@@ -97,6 +98,6 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax_version")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation("com.google.android.gms:play-services-mlkit-face-detection:17.1.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
 }

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.content.Intent
 import android.net.Uri
@@ -20,8 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.utils.RingtoneUtils
-import com.example.myapplication.utils.SoundPlayer
+import com.cong.smartalarm.utils.RingtoneUtils
+import com.cong.smartalarm.utils.SoundPlayer
 
 @Composable
 fun SoundSelectionDialog(

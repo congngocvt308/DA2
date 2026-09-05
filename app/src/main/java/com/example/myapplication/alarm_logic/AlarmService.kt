@@ -1,4 +1,4 @@
-package com.example.myapplication.alarm_logic
+package com.cong.smartalarm.alarm_logic
 
 import android.app.*
 import android.content.Intent
@@ -7,11 +7,11 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.example.myapplication.R
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.ui.theme.MainActivity
-import com.example.myapplication.ui.theme.alarm.AlarmRingingActivity
-import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
+import com.cong.smartalarm.R
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.ui.theme.MainActivity
+import com.cong.smartalarm.ui.theme.alarm.AlarmRingingActivity
+import com.cong.smartalarm.ui.theme.alarm.AlarmRingingScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,25 +27,34 @@ class AlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 1. Lấy dữ liệu
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
         val ringtoneUri = intent?.getStringExtra("ALARM_URI") ?: ""
         val volume = intent?.getFloatExtra("ALARM_VOLUME", 0.7f) ?: 0.7f
         val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
 
-        // Kiểm tra xem báo thức có QR codes không
+        // 1. Tạo notification ngay lập tức
+        // Mặc định ban đầu chưa biết có QR hay không, ta cứ hiện mặc định hoặc xử lý nhanh
+        val notification = createNotification(label, alarmId, false)
+        
+        // 2. Gọi startForeground ngay TRƯỚC khi làm bất cứ việc gì khác
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        } else {
+            startForeground(1, notification)
+        }
+
+        // 3. Việc check DB để cập nhật Notification có QR hay không thì làm sau
         serviceScope.launch {
             val dao = AppDatabase.getDatabase(applicationContext).appDao()
-            val qrCodeCount = if (alarmId > 0) {
-                dao.getQRLinkCountForAlarm(alarmId)
-            } else 0
+            val qrCodeCount = if (alarmId > 0) dao.getQRLinkCountForAlarm(alarmId) else 0
             val hasQRCodes = qrCodeCount > 0
-
-            val notification = createNotification(label, alarmId, hasQRCodes)
-            startForeground(1, notification)
             
+            // Cập nhật lại Notification nếu cần (không bắt buộc nhưng giúp UI chuẩn hơn)
+            val updatedNotification = createNotification(label, alarmId, hasQRCodes)
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.notify(1, updatedNotification)
+
             val activityIntent = Intent(this@AlarmService, AlarmRingingActivity::class.java).apply {
-                // Flag quan trọng để tách khỏi MainActivity
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 putExtra("ALARM_LABEL", label)
                 putExtra("ALARM_ID", alarmId)
@@ -55,7 +64,6 @@ class AlarmService : Service() {
         }
 
         playAlarmSound(ringtoneUri, volume)
-
         return START_NOT_STICKY
     }
 

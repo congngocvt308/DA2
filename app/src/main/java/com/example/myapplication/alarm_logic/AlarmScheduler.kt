@@ -1,4 +1,4 @@
-package com.example.myapplication.alarm_logic
+package com.cong.smartalarm.alarm_logic
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -6,8 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.example.myapplication.data.AlarmEntity
-import com.example.myapplication.data.AlarmSettingData // Model của bạn
+import com.cong.smartalarm.data.AlarmEntity
+import com.cong.smartalarm.data.AlarmSettingData // Model của bạn
 import java.util.Calendar
 import kotlin.jvm.java
 

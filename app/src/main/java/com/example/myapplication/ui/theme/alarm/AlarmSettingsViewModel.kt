@@ -1,21 +1,21 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.app.Application
 import android.media.RingtoneManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.alarm_logic.AlarmScheduler
-import com.example.myapplication.data.AlarmEntity
-import com.example.myapplication.data.AlarmFaceMissionConfigEntity
-import com.example.myapplication.data.AlarmQRLinkEntity
-import com.example.myapplication.data.AlarmSelectedQuestionEntity
-import com.example.myapplication.data.AlarmSettingData
-import com.example.myapplication.data.AlarmTopicLink
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.MissionQuestion
-import com.example.myapplication.data.MissionTopic
-import com.example.myapplication.ui.theme.mission.MissionViewModel
+import com.cong.smartalarm.alarm_logic.AlarmScheduler
+import com.cong.smartalarm.data.AlarmEntity
+import com.cong.smartalarm.data.AlarmFaceMissionConfigEntity
+import com.cong.smartalarm.data.AlarmQRLinkEntity
+import com.cong.smartalarm.data.AlarmSelectedQuestionEntity
+import com.cong.smartalarm.data.AlarmSettingData
+import com.cong.smartalarm.data.AlarmTopicLink
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.MissionQuestion
+import com.cong.smartalarm.data.MissionTopic
+import com.cong.smartalarm.ui.theme.mission.MissionViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -320,7 +320,7 @@ class AlarmSettingsViewModel(
         // Lưu các câu hỏi mới được chọn
         questions.forEach { question ->
             // Xử lý cả câu hỏi mặc định (id bắt đầu bằng "default_") và câu hỏi từ database
-            val entity = com.example.myapplication.data.AlarmSelectedQuestionEntity(
+            val entity = com.cong.smartalarm.data.AlarmSelectedQuestionEntity(
                 alarmId = alarmId,
                 questionId = question.id, // Dùng trực tiếp question.id kiểu Int
                 topicId = null

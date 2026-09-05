@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme
+package com.cong.smartalarm.ui.theme
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,9 +11,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.myapplication.ui.theme.navigation.MainScreen
-import com.example.myapplication.ui.theme.navigation.Screen
-import com.example.myapplication.ui.theme.theme.MyApplicationTheme
+import com.cong.smartalarm.ui.theme.navigation.MainScreen
+import com.cong.smartalarm.ui.theme.navigation.Screen
+import com.cong.smartalarm.ui.theme.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
 

@@ -1,4 +1,4 @@
-package com.example.myapplication.data
+package com.cong.smartalarm.data
 
 object FaceMissionConfig {
     // Ngưỡng mở mắt (0.0: nhắm hoàn toàn -> 1.0: mở to)

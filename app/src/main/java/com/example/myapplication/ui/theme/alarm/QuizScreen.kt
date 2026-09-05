@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.AnswerData
-import com.example.myapplication.data.QuizUiStateData
+import com.cong.smartalarm.data.AnswerData
+import com.cong.smartalarm.data.QuizUiStateData
 
 @Composable
 fun QuizScreen(

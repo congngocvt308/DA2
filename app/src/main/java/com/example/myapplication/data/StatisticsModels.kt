@@ -1,4 +1,4 @@
-package com.example.myapplication.data
+package com.cong.smartalarm.data
 
 data class DailyStat(
     val day: String,   // Kết quả từ hàm date() trong SQL

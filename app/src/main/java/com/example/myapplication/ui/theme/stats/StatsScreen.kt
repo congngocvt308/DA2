@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.stats
+package com.cong.smartalarm.ui.theme.stats
 
 import android.content.Context
 import androidx.compose.foundation.Canvas
@@ -55,9 +55,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.SrsStat
-import com.example.myapplication.ui.theme.facedetection.MemoryMuseumScreen // 🔥 Import màn hình Bảo tàng ký ức
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.SrsStat
+import com.cong.smartalarm.ui.theme.facedetection.MemoryMuseumScreen // 🔥 Import màn hình Bảo tàng ký ức
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

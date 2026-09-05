@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.mission
+package com.cong.smartalarm.ui.theme.mission
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.MissionQuestion
-import com.example.myapplication.data.MissionTopic
-import com.example.myapplication.data.MissionUiState
-import com.example.myapplication.ui.theme.mission.MissionViewModel
+import com.cong.smartalarm.data.MissionQuestion
+import com.cong.smartalarm.data.MissionTopic
+import com.cong.smartalarm.data.MissionUiState
+import com.cong.smartalarm.ui.theme.mission.MissionViewModel
 
 @Composable
 fun MissionSelectionDialog(

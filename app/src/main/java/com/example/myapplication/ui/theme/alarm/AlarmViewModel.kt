@@ -1,13 +1,13 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.alarm_logic.AlarmScheduler
-import com.example.myapplication.data.AlarmData
-import com.example.myapplication.data.AlarmEntity
-import com.example.myapplication.data.AlarmSettingData
-import com.example.myapplication.data.AppDatabase
+import com.cong.smartalarm.alarm_logic.AlarmScheduler
+import com.cong.smartalarm.data.AlarmData
+import com.cong.smartalarm.data.AlarmEntity
+import com.cong.smartalarm.data.AlarmSettingData
+import com.cong.smartalarm.data.AppDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

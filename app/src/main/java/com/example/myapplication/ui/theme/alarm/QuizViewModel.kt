@@ -1,15 +1,15 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AlarmHistoryEntity
-import com.example.myapplication.data.AnswerData
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.QuestionData
-import com.example.myapplication.data.QuizUiStateData
+import com.cong.smartalarm.data.AlarmHistoryEntity
+import com.cong.smartalarm.data.AnswerData
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.QuestionData
+import com.cong.smartalarm.data.QuizUiStateData
 // 1. IMPORT CLASS THUẬT TOÁN
-import com.example.myapplication.logic.QuestionAlgorithmManager
+import com.cong.smartalarm.logic.QuestionAlgorithmManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -171,9 +171,9 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadMockQuestions(count: Int = 5) {
         val allMocks = listOf(
-            QuestionData(1, "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?", listOf(AnswerData(1, "Hồng Lâu Mộng", false), AnswerData(2, "Liêu Trai Chí Dị", true))),
-            QuestionData(2, "1 + 1 = ?", listOf(AnswerData(3, "3", false), AnswerData(4, "2", true))),
-            QuestionData(3, "Thủ đô Việt Nam?", listOf(AnswerData(5, "Hà Nội", true), AnswerData(6, "Hồ Chí Minh", false))),
+            QuestionData(-10, "Tác phẩm nào KHÔNG thuộc Tứ đại danh tác?", listOf(AnswerData(1, "Hồng Lâu Mộng", false), AnswerData(2, "Liêu Trai Chí Dị", true))),
+            QuestionData(-11, "1 + 1 = ?", listOf(AnswerData(3, "3", false), AnswerData(4, "2", true))),
+            QuestionData(-12, "Thủ đô Việt Nam?", listOf(AnswerData(5, "Hà Nội", true), AnswerData(6, "Hồ Chí Minh", false))),
         )
         // Chỉ lấy đúng số lượng cần thiết
         val finalMocks = allMocks.take(count)

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import android.content.Context
 import android.net.Uri
@@ -25,8 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.data.AiMatrixConfig
-import com.example.myapplication.data.SelectedDocument
+import com.cong.smartalarm.data.AiMatrixConfig
+import com.cong.smartalarm.data.SelectedDocument
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

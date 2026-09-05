@@ -1,4 +1,4 @@
-package com.example.myapplication.utils
+package com.cong.smartalarm.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

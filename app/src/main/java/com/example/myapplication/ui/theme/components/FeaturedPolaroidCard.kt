@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.components
+package com.cong.smartalarm.ui.theme.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -18,8 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.myapplication.R
-import com.example.myapplication.data.PictureEntity
+import com.cong.smartalarm.R
+import com.cong.smartalarm.data.PictureEntity
 
 @Composable
 fun FeaturedPolaroidCard(

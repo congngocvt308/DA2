@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.components
+package com.cong.smartalarm.ui.theme.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*

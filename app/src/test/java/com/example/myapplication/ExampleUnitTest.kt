@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.cong.smartalarm
 
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
-import com.example.myapplication.ui.theme.components.SearchableTopBar
+import com.cong.smartalarm.ui.theme.components.SearchableTopBar
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

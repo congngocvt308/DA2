@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.theme
+package com.cong.smartalarm.ui.theme.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import android.os.Build

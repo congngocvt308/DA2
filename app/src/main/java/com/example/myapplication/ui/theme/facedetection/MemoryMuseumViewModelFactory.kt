@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
 
 import androidx.lifecycle.ViewModel

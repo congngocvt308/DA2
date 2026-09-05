@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

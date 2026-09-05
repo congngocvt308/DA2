@@ -1,10 +1,10 @@
-package com.example.myapplication.data.analyzer
+package com.cong.smartalarm.data.analyzer
 
 import android.graphics.PointF
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.example.myapplication.data.FaceMissionConfig
+import com.cong.smartalarm.data.FaceMissionConfig
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions

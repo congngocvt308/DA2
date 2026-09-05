@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.app.AlarmManager
 import android.app.KeyguardManager
@@ -16,18 +16,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.myapplication.alarm_logic.AlarmDismissHelper
-import com.example.myapplication.alarm_logic.AlarmReceiver
-import com.example.myapplication.alarm_logic.AlarmService
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.ui.theme.navigation.Screen
-import com.example.myapplication.ui.theme.qrcode.QRDismissScreen
-import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
-import com.example.myapplication.ui.theme.stats.StatsViewModel
-import com.example.myapplication.ui.theme.stats.StatsViewModelFactory
-import com.example.myapplication.ui.theme.theme.MyApplicationTheme
+import com.cong.smartalarm.alarm_logic.AlarmDismissHelper
+import com.cong.smartalarm.alarm_logic.AlarmReceiver
+import com.cong.smartalarm.alarm_logic.AlarmService
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.ui.theme.navigation.Screen
+import com.cong.smartalarm.ui.theme.qrcode.QRDismissScreen
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionScreen
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModel
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModelFactory
+import com.cong.smartalarm.ui.theme.stats.StatsViewModel
+import com.cong.smartalarm.ui.theme.stats.StatsViewModelFactory
+import com.cong.smartalarm.ui.theme.theme.MyApplicationTheme
 import kotlinx.coroutines.launch
 import kotlin.jvm.java
 
@@ -171,7 +171,7 @@ class AlarmRingingActivity : ComponentActivity() {
         }
 
         try {
-            val snoozeIntent = Intent(this, com.example.myapplication.alarm_logic.AlarmReceiver::class.java).apply {
+            val snoozeIntent = Intent(this, com.cong.smartalarm.alarm_logic.AlarmReceiver::class.java).apply {
                 putExtra("ALARM_ID", alarmId)
                 putExtra("ALARM_LABEL", label)
             }

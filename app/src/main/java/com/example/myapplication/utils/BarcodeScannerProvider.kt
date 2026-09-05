@@ -1,4 +1,4 @@
-package com.example.myapplication.utils
+package com.cong.smartalarm.utils
 
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning

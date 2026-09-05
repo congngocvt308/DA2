@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.qrcode
+package com.cong.smartalarm.ui.theme.qrcode
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.QRCodeEntity
+import com.cong.smartalarm.data.QRCodeEntity
 
 /**
  * Dialog để chọn QR codes cho một báo thức cụ thể

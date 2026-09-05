@@ -1,11 +1,11 @@
-package com.example.myapplication.logic
+package com.cong.smartalarm.logic
 
-import com.example.myapplication.data.AppDao
-import com.example.myapplication.data.HistoryEntity
-import com.example.myapplication.data.MissionQuestion
-import com.example.myapplication.data.QuestionEntity
-import com.example.myapplication.data.QuestionProgressEntity
-import com.example.myapplication.data.TopicStatsEntity
+import com.cong.smartalarm.data.AppDao
+import com.cong.smartalarm.data.HistoryEntity
+import com.cong.smartalarm.data.MissionQuestion
+import com.cong.smartalarm.data.QuestionEntity
+import com.cong.smartalarm.data.QuestionProgressEntity
+import com.cong.smartalarm.data.TopicStatsEntity
 import java.util.Date
 
 class QuestionAlgorithmManager(private val dao: AppDao) {

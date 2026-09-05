@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.qrcode
+package com.cong.smartalarm.ui.theme.qrcode
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -37,7 +37,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myapplication.data.QRCodeEntity
+import com.cong.smartalarm.data.QRCodeEntity
 
 /**
  * Dialog quản lý QR/Barcode - Xem, thêm, xóa các mã đã lưu

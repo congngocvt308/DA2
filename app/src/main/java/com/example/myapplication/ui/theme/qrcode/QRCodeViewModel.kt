@@ -1,14 +1,14 @@
-package com.example.myapplication.ui.theme.qrcode
+package com.cong.smartalarm.ui.theme.qrcode
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AlarmQRLinkEntity
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.QRCodeEntity
-import com.example.myapplication.utils.BarcodeScannerProvider
-import com.example.myapplication.utils.BitmapDecodeUtils
+import com.cong.smartalarm.data.AlarmQRLinkEntity
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.QRCodeEntity
+import com.cong.smartalarm.utils.BarcodeScannerProvider
+import com.cong.smartalarm.utils.BitmapDecodeUtils
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.components
+package com.cong.smartalarm.ui.theme.components
 
 import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.background

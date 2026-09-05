@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.topic
+package com.cong.smartalarm.ui.theme.topic
 
 import android.app.Application
 import android.graphics.pdf.PdfRenderer
@@ -6,13 +6,13 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.AiApiService
-import com.example.myapplication.data.AiMatrixConfig
-import com.example.myapplication.data.AppDatabase
-import com.example.myapplication.data.GenerateQuestionsRequest
-import com.example.myapplication.data.TopicData
-import com.example.myapplication.data.TopicEntity
-import com.example.myapplication.data.SelectedDocument
+import com.cong.smartalarm.data.AiApiService
+import com.cong.smartalarm.data.AiMatrixConfig
+import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.data.GenerateQuestionsRequest
+import com.cong.smartalarm.data.TopicData
+import com.cong.smartalarm.data.TopicEntity
+import com.cong.smartalarm.data.SelectedDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

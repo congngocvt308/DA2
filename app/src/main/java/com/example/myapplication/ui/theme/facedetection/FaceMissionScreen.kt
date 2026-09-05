@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -57,9 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.myapplication.R
-import com.example.myapplication.data.FaceMissionUiState
-import com.example.myapplication.data.analyzer.FaceMissionAnalyzer
+import com.cong.smartalarm.R
+import com.cong.smartalarm.data.FaceMissionUiState
+import com.cong.smartalarm.data.analyzer.FaceMissionAnalyzer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -64,14 +64,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.example.myapplication.data.AlarmFaceMissionConfigEntity
-import com.example.myapplication.ui.theme.facedetection.CustomPaintProgressBar
-import com.example.myapplication.utils.SoundPlayer
-import com.example.myapplication.utils.VoiceRecorder
+import com.cong.smartalarm.data.AlarmFaceMissionConfigEntity
+import com.cong.smartalarm.ui.theme.facedetection.CustomPaintProgressBar
+import com.cong.smartalarm.utils.SoundPlayer
+import com.cong.smartalarm.utils.VoiceRecorder
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
-import com.example.myapplication.R
+import com.cong.smartalarm.R
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix

@@ -1,10 +1,10 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.MemoryMuseumUiState
-import com.example.myapplication.data.PictureEntity
+import com.cong.smartalarm.data.MemoryMuseumUiState
+import com.cong.smartalarm.data.PictureEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

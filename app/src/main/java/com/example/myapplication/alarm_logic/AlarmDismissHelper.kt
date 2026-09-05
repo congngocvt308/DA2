@@ -1,8 +1,8 @@
-package com.example.myapplication.alarm_logic
+package com.cong.smartalarm.alarm_logic
 
 import android.content.Context
 import android.content.Intent
-import com.example.myapplication.data.AppDatabase
+import com.cong.smartalarm.data.AppDatabase
 
 object AlarmDismissHelper {
 

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.qrcode
+package com.cong.smartalarm.ui.theme.qrcode
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.data.AppDatabase
+import com.cong.smartalarm.data.AppDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

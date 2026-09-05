@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
 import android.os.Build
 import android.view.WindowManager
@@ -38,7 +38,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import coil.compose.AsyncImage
-import com.example.myapplication.data.PictureEntity
+import com.cong.smartalarm.data.PictureEntity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

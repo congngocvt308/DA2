@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.qrcode
+package com.cong.smartalarm.ui.theme.qrcode
 
 import android.util.Size
 import androidx.camera.core.CameraSelector
@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.myapplication.utils.BarcodeScannerProvider
+import com.cong.smartalarm.utils.BarcodeScannerProvider
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors

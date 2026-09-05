@@ -1,7 +1,7 @@
-package com.example.myapplication.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
 
-import com.example.myapplication.data.AppDao
-import com.example.myapplication.data.PictureEntity
+import com.cong.smartalarm.data.AppDao
+import com.cong.smartalarm.data.PictureEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

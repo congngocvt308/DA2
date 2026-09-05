@@ -1,11 +1,11 @@
-package com.example.myapplication.ui.theme.stats
+package com.cong.smartalarm.ui.theme.stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.QuestionEntity
-import com.example.myapplication.data.StatisticsDao
-import com.example.myapplication.data.UserStatsEntity
+import com.cong.smartalarm.data.QuestionEntity
+import com.cong.smartalarm.data.StatisticsDao
+import com.cong.smartalarm.data.UserStatsEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,7 +64,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
     // 🚨 ĐÃ FIX: Chỉ định rõ <QuestionEntity> và gọi qua statsDao
     val filteredQuestions = _selectedStatus.flatMapLatest { status ->
         if (status == null) {
-            flowOf(emptyList<com.example.myapplication.data.QuestionEntity>())
+            flowOf(emptyList<com.cong.smartalarm.data.QuestionEntity>())
         } else {
             // Gọi hàm từ statsDao
             statsDao.getQuestionsBySrsStatus(status)

@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.components
+package com.cong.smartalarm.ui.theme.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.myapplication.utils.PremiumManager
+import com.cong.smartalarm.utils.PremiumManager
 import kotlinx.coroutines.delay
 
 /**

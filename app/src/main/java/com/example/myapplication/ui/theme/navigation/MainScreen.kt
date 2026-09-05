@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.navigation
+package com.cong.smartalarm.ui.theme.navigation
 
 import android.app.AlarmManager
 import android.content.Context
@@ -56,19 +56,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.myapplication.alarm_logic.AlarmService
-import com.example.myapplication.ui.theme.alarm.AlarmRingingScreen
-import com.example.myapplication.ui.theme.alarm.AlarmScreen
-import com.example.myapplication.ui.theme.alarm.AlarmSettingsScreen
-import com.example.myapplication.ui.theme.alarm.QuizScreen
-import com.example.myapplication.ui.theme.components.PermissionItem
-import com.example.myapplication.ui.theme.facedetection.FaceMissionScreen
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModel
-import com.example.myapplication.ui.theme.facedetection.FaceMissionViewModelFactory
-import com.example.myapplication.ui.theme.facedetection.MemoryMuseumScreen
-import com.example.myapplication.ui.theme.stats.StatsScreen
-import com.example.myapplication.ui.theme.topic.TopicDetailScreen
-import com.example.myapplication.ui.theme.topic.TopicScreen
+import com.cong.smartalarm.alarm_logic.AlarmService
+import com.cong.smartalarm.ui.theme.alarm.AlarmRingingScreen
+import com.cong.smartalarm.ui.theme.alarm.AlarmScreen
+import com.cong.smartalarm.ui.theme.alarm.AlarmSettingsScreen
+import com.cong.smartalarm.ui.theme.alarm.QuizScreen
+import com.cong.smartalarm.ui.theme.components.PermissionItem
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionScreen
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModel
+import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModelFactory
+import com.cong.smartalarm.ui.theme.facedetection.MemoryMuseumScreen
+import com.cong.smartalarm.ui.theme.stats.StatsScreen
+import com.cong.smartalarm.ui.theme.topic.TopicDetailScreen
+import com.cong.smartalarm.ui.theme.topic.TopicScreen
 
 @Composable
 fun MainScreen(initialExternalRoute: String? = null) {

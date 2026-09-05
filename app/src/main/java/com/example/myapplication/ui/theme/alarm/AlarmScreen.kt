@@ -1,6 +1,6 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
-import com.example.myapplication.ui.theme.alarm.AlarmCard
+import com.cong.smartalarm.ui.theme.alarm.AlarmCard
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.myapplication.ui.theme.navigation.Screen
-import com.example.myapplication.utils.RingtoneUtils
-import com.example.myapplication.utils.SoundPlayer
+import com.cong.smartalarm.ui.theme.navigation.Screen
+import com.cong.smartalarm.utils.RingtoneUtils
+import com.cong.smartalarm.utils.SoundPlayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

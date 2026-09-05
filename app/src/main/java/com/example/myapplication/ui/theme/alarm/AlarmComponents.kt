@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -37,8 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myapplication.R
-import com.example.myapplication.data.AlarmData
+import com.cong.smartalarm.R
+import com.cong.smartalarm.data.AlarmData
 
 @Composable
 fun AlarmCard(
