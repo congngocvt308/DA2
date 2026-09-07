@@ -339,14 +339,21 @@ class AlarmSettingsViewModel(
                 questionCount = count,
                 selectedQuestions = questions,
                 selectedTopicIds = topics,
-                faceMissionConfig = null
+                faceMissionConfig = null,
+                selectedQRCodeIds = emptyList()
             )
         }
     }
     
     fun updateSelectedQRCodes(qrCodeIds: List<Int>) {
         _uiState.update { currentState ->
-            currentState.copy(selectedQRCodeIds = qrCodeIds)
+            currentState.copy(
+                selectedQRCodeIds = qrCodeIds,
+                questionCount = 0,
+                selectedQuestions = emptyList(),
+                selectedTopicIds = emptyList(),
+                faceMissionConfig = null
+            )
         }
     }
 
@@ -356,7 +363,8 @@ class AlarmSettingsViewModel(
                 faceMissionConfig = config,
                 questionCount = 0,
                 selectedQuestions = emptyList(),
-                selectedTopicIds = emptyList()
+                selectedTopicIds = emptyList(),
+                selectedQRCodeIds = emptyList()
             )
         }
     }
@@ -366,7 +374,8 @@ class AlarmSettingsViewModel(
             questionCount = 0,
             selectedQuestions = emptyList(),
             selectedTopicIds = emptyList(),
-            faceMissionConfig = null
+            faceMissionConfig = null,
+            selectedQRCodeIds = emptyList()
         ) }
     }
     

@@ -189,18 +189,17 @@ fun SmileChallengeConfigDialog(
         }
     }
 
-    var isRecording by remember { mutableStateOf(false) }
+    var showRecordingDialog by remember { mutableStateOf(false) }
+    var isActuallyRecording by remember { mutableStateOf(false) }
     var currentRecordingLabel by remember { mutableStateOf("") }
     
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Permission granted, start recording if we have a label
             if (currentRecordingLabel.isNotEmpty()) {
-                // Thêm rec_ và timestamp để phân biệt các bản thu khác nhau
-                recorder.startRecording("rec_${currentRecordingLabel.replace(" ", "_")}_${System.currentTimeMillis()}")
-                isRecording = true
+                showRecordingDialog = true
+                isActuallyRecording = false
             }
         } else {
             Toast.makeText(context, "Cần cấp quyền truy cập Micro để thu âm", Toast.LENGTH_SHORT).show()
@@ -530,10 +529,13 @@ fun SmileChallengeConfigDialog(
         )
     }
 
-    if (isRecording) {
+    if (showRecordingDialog) {
         Dialog(
-            onDismissRequest = { },
-            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+            onDismissRequest = { if (!isActuallyRecording) showRecordingDialog = false },
+            properties = DialogProperties(
+                dismissOnBackPress = !isActuallyRecording,
+                dismissOnClickOutside = !isActuallyRecording
+            )
         ) {
             val infiniteTransition = rememberInfiniteTransition(label = "recording")
             val scale by infiniteTransition.animateFloat(
@@ -556,9 +558,10 @@ fun SmileChallengeConfigDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Đang thu âm...",
+                        text = if (isActuallyRecording) "Đang thu âm..." else "Sẵn sàng thu âm",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                     Text(
                         text = "Mục: $currentRecordingLabel",
@@ -573,48 +576,82 @@ fun SmileChallengeConfigDialog(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(Color.Red.copy(alpha = 0.1f))
-                            .border(2.dp, Color.Red, CircleShape)
+                            .background((if (isActuallyRecording) Color.Red else Color.Gray).copy(alpha = 0.1f))
+                            .border(2.dp, if (isActuallyRecording) Color.Red else Color.Gray, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = null,
-                            tint = Color.Red,
-                            modifier = Modifier.size(40.dp).scale(scale)
+                            tint = if (isActuallyRecording) Color.Red else Color.Gray,
+                            modifier = Modifier.size(40.dp).scale(if (isActuallyRecording) scale else 1f)
                         )
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
-                    Button(
-                        onClick = {
-                            val path = recorder.stopRecording()
-                            isRecording = false
-                            if (path != null) {
-                                val duration = getAudioDuration(path)
-                                if (duration > 4000) {
-                                    // Xóa file ngay lập tức nếu quá dài
-                                    File(path).delete()
-                                    Toast.makeText(context, "Bản thu quá dài (vượt quá 4s). Vui lòng thu âm ngắn hơn!", Toast.LENGTH_LONG).show()
-                                } else {
-                                    // CẬP NHẬT ĐƯỜNG DẪN VÀO ĐÚNG MỤC
-                                    when (currentRecordingLabel) {
-                                        "Nhắc nhở" -> reminderSoundUri = path
-                                        "Mở mắt" -> eyeOpenSoundUri = path
-                                        "Cười lên" -> smileSoundUri = path
-                                        "Giữ nguyên" -> holdPoseSoundUri = path
+                    if (isActuallyRecording) {
+                        Button(
+                            onClick = {
+                                val path = recorder.stopRecording()
+                                isActuallyRecording = false
+                                showRecordingDialog = false
+                                if (path != null) {
+                                    val duration = getAudioDuration(path)
+                                    if (duration > 4000) {
+                                        File(path).delete()
+                                        Toast.makeText(context, "Bản thu quá dài (vượt quá 4s). Vui lòng thu âm ngắn hơn!", Toast.LENGTH_LONG).show()
+                                    } else {
+                                        when (currentRecordingLabel) {
+                                            "Nhắc nhở" -> reminderSoundUri = path
+                                            "Mở mắt" -> eyeOpenSoundUri = path
+                                            "Cười lên" -> smileSoundUri = path
+                                            "Giữ nguyên" -> holdPoseSoundUri = path
+                                        }
+                                        Toast.makeText(context, "Đã lưu bản thu cho $currentRecordingLabel!", Toast.LENGTH_SHORT).show()
                                     }
-                                    Toast.makeText(context, "Đã lưu bản thu cho $currentRecordingLabel!", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Stop, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Dừng & Lưu")
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showRecordingDialog = false },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Hủy")
+                            }
+                            Button(
+                                onClick = {
+                                    recorder.startRecording("rec_${currentRecordingLabel.replace(" ", "_")}_${System.currentTimeMillis()}")
+                                    isActuallyRecording = true
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(0.dp) // Xóa padding mặc định của button nếu muốn sát hơn
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 17.dp), // Tùy chỉnh độ lệch sang trái ở đây
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Bắt đầu", maxLines = 1, softWrap = false)
                                 }
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.Stop, null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Dừng & Lưu")
+                        }
                     }
                 }
             }

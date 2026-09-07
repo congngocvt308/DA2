@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
@@ -41,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cong.smartalarm.ui.theme.components.PremiumPurchaseDialog
 import com.cong.smartalarm.ui.theme.facedetection.FaceMissionScreen
 import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModel
 import com.cong.smartalarm.ui.theme.facedetection.FaceMissionViewModelFactory
@@ -49,8 +49,6 @@ import com.cong.smartalarm.ui.theme.mission.MissionSelectionDialog
 import com.cong.smartalarm.ui.theme.qrcode.QRCodeManagementDialog
 import com.cong.smartalarm.ui.theme.qrcode.QRCodeScannerScreen
 import com.cong.smartalarm.ui.theme.qrcode.QRCodeSelectionDialog
-import com.cong.smartalarm.ui.theme.qrcode.QRCodeViewModel
-import com.cong.smartalarm.utils.PremiumManager
 import com.cong.smartalarm.utils.RingtoneUtils
 import com.cong.smartalarm.utils.SoundPlayer
 import kotlinx.coroutines.delay
@@ -67,10 +65,6 @@ fun AlarmSettingsScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     
-    // Premium Manager
-    val premiumManager = remember { PremiumManager.getInstance(context) }
-    val isPremium by premiumManager.isPremium.collectAsState()
-    
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -86,8 +80,6 @@ fun AlarmSettingsScreen(
     var showMissionDialog by remember { mutableStateOf(false) }
     var showSmileConfigDialog by remember { mutableStateOf(false) } // Mới: Hộp thoại nụ cười (thiết kế sau)
     var showSoundDialog by remember { mutableStateOf(false) }
-    var showPremiumDialog by remember { mutableStateOf(false) }
-    var showResetPremiumDialog by remember { mutableStateOf(false) }
     var showQRCodeManagement by remember { mutableStateOf(false) }
     var showQRCodeSelection by remember { mutableStateOf(false) }
     var showQRScanner by remember { mutableStateOf(false) }
@@ -243,29 +235,20 @@ fun AlarmSettingsScreen(
                                 .padding(16.dp)
                         ){
                             SettingsSectionHeader(
-                                title = "Nhiệm vụ báo thức",
-                                isPremium = isPremium,
-                                onLongPress = { showResetPremiumDialog = true }
+                                title = "Nhiệm vụ báo thức"
                             )
                             AlarmTaskSection(
                                 questionCount = uiState.questionCount,
                                 faceMissionConfig = uiState.faceMissionConfig,
-                                isPremium = isPremium,
-                                onAddClick = { showMissionTypeDialog = true }, // Thay đổi từ showMissionDialog sang showMissionTypeDialog
+                                selectedQRCodeIds = uiState.selectedQRCodeIds,
+                                onAddClick = { showMissionTypeDialog = true },
                                 onClearClick = { viewModel.clearMission() },
-                                onLockedFeatureClick = { showPremiumDialog = true },
-                                onQRCodeClick = { 
-                                    if (isPremium) {
-                                        showQRCodeSelection = true
-                                    } else {
-                                        showPremiumDialog = true
-                                    }
-                                },
-                                onImageMissionClick = {
-                                    if (isPremium) {
-                                        showFaceMissionTest = true
-                                    } else {
-                                        showPremiumDialog = true
+                                onEditClick = {
+                                    when {
+                                        uiState.faceMissionConfig != null -> showSmileConfigDialog = true
+                                        uiState.questionCount > 0 -> showMissionDialog = true
+                                        uiState.selectedQRCodeIds.isNotEmpty() -> showQRCodeSelection = true
+                                        else -> showMissionTypeDialog = true
                                     }
                                 }
                             )
@@ -345,6 +328,10 @@ fun AlarmSettingsScreen(
             onSmileChallengeSelected = {
                 showMissionTypeDialog = false
                 showSmileConfigDialog = true
+            },
+            onQRCodeSelected = {
+                showMissionTypeDialog = false
+                showQRCodeSelection = true
             }
         )
     }
@@ -377,23 +364,6 @@ fun AlarmSettingsScreen(
             onDismiss = { showSoundDialog = false },
             onConfirm = { newUri ->
                 viewModel.updateRingtone(newUri)
-            }
-        )
-    }
-    
-    if (showPremiumDialog) {
-        PremiumPurchaseDialog(
-            onDismiss = { showPremiumDialog = false },
-            onPurchaseSuccess = { showPremiumDialog = false }
-        )
-    }
-    
-    if (showResetPremiumDialog) {
-        ResetPremiumDialog(
-            onDismiss = { showResetPremiumDialog = false },
-            onConfirmReset = {
-                premiumManager.resetPremiumForTesting()
-                showResetPremiumDialog = false
             }
         )
     }
@@ -470,7 +440,8 @@ fun AlarmSettingsScreen(
 fun MissionTypeSelectionDialog(
     onDismiss: () -> Unit,
     onQuizSelected: () -> Unit,
-    onSmileChallengeSelected: () -> Unit
+    onSmileChallengeSelected: () -> Unit,
+    onQRCodeSelected: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -514,6 +485,15 @@ fun MissionTypeSelectionDialog(
                     icon = "😊",
                     onClick = onSmileChallengeSelected
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MissionTypeItem(
+                    title = "Quét mã QR/Barcode",
+                    description = "Rời khỏi giường và quét mã để tắt chuông.",
+                    icon = Icons.Default.QrCodeScanner,
+                    onClick = onQRCodeSelected
+                )
             }
         }
     }
@@ -523,7 +503,7 @@ fun MissionTypeSelectionDialog(
 private fun MissionTypeItem(
     title: String,
     description: String,
-    icon: String,
+    icon: Any,
     onClick: () -> Unit
 ) {
     Surface(
@@ -543,7 +523,15 @@ private fun MissionTypeItem(
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = icon, fontSize = 24.sp)
+                when (icon) {
+                    is String -> Text(text = icon, fontSize = 24.sp)
+                    is androidx.compose.ui.graphics.vector.ImageVector -> Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -621,53 +609,42 @@ fun SoundSelectionRow() {
     }
 }
 
-// Định nghĩa các tính năng nâng cao bị khóa
-data class PremiumFeature(
-    val id: Int,
-    val name: String,
-    val icon: @Composable () -> Unit
-)
-
 @Composable
 fun AlarmTaskSection(
     questionCount: Int,
     faceMissionConfig: com.cong.smartalarm.data.AlarmFaceMissionConfigEntity?,
-    isPremium: Boolean,
+    selectedQRCodeIds: List<Int>,
     onAddClick: () -> Unit,
     onClearClick: () -> Unit,
-    onLockedFeatureClick: () -> Unit,
-    onQRCodeClick: () -> Unit,
-    onImageMissionClick: () -> Unit
+    onEditClick: () -> Unit
 ) {
-    // Danh sách các tính năng nâng cao
-    val premiumFeatures = remember {
-        listOf(
-            PremiumFeature(1, "Toán", { Text("🧮", fontSize = 20.sp) }),
-            PremiumFeature(2, "Hình ảnh", { Text("🖼️", fontSize = 20.sp) }),
-            PremiumFeature(3, "QR Code", { Text("📱", fontSize = 20.sp) })
-        )
-    }
-    
+    val hasQuiz = questionCount > 0
+    val hasSmile = faceMissionConfig != null
+    val hasQR = selectedQRCodeIds.isNotEmpty()
+    val hasAnyMission = hasQuiz || hasSmile || hasQR
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp, bottom = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Card đầu tiên: Thêm câu hỏi
+        // --- 1. CARD NHIỆM VỤ CHÍNH (80x80) ---
         item {
-            val hasQuiz = questionCount > 0
-            val hasSmile = faceMissionConfig != null
-            val hasAnyMission = hasQuiz || hasSmile
-            
-            Box(modifier = Modifier){
+            Box(modifier = Modifier.padding(top = 8.dp, end = 8.dp)) {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)),
-                    onClick = onAddClick,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .padding(top = 8.dp, end = 8.dp)
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                    ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (hasAnyMission) MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                        else MaterialTheme.colorScheme.surface
+                    ),
+                    onClick = if (hasAnyMission) onEditClick else onAddClick,
+                    modifier = Modifier.size(80.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -675,7 +652,7 @@ fun AlarmTaskSection(
                             .padding(top = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
-                    ){
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(30.dp)
@@ -686,16 +663,27 @@ fun AlarmTaskSection(
                             when {
                                 hasSmile -> Text("😊", fontSize = 18.sp)
                                 hasQuiz -> Text("🧮", fontSize = 18.sp)
-                                else -> Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                                hasQR -> Icon(
+                                    Icons.Default.QrCodeScanner,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                else -> Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(4.dp))
-                        
+
                         Text(
                             text = when {
                                 hasSmile -> "${faceMissionConfig?.requiredHoldDurationSec} giây"
                                 hasQuiz -> "$questionCount câu"
+                                hasQR -> "${selectedQRCodeIds.size} mã"
                                 else -> "Thêm"
                             },
                             style = MaterialTheme.typography.labelSmall,
@@ -711,7 +699,7 @@ fun AlarmTaskSection(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .size(24.dp)
-                            .offset(x = (-4).dp, y = 4.dp)
+                            .offset(x = 4.dp, y = (-4).dp)
                             .clickable { onClearClick() },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.error,
@@ -727,112 +715,28 @@ fun AlarmTaskSection(
                 }
             }
         }
-        
-        // Các tính năng Premium
-        items(premiumFeatures.size) { index ->
-            val feature = premiumFeatures[index]
-            PremiumFeatureCard(
-                feature = feature,
-                isUnlocked = isPremium,
-                onClick = {
-                    if (isPremium) {
-                        when (feature.id) {
-                            2 -> onImageMissionClick() // Click vào "Hình ảnh" -> Mở màn hình quét mặt Luồng A
-                            3 -> onQRCodeClick()       // Click vào QR Code
-                            // TODO: Xử lý thêm cho Toán (id == 1) nếu có
-                        }
-                    } else {
-                        onLockedFeatureClick()
-                    }
-                }
-            )
-        }
-    }
-}
 
-@Composable
-private fun PremiumFeatureCard(
-    feature: PremiumFeature,
-    isUnlocked: Boolean,
-    onClick: () -> Unit
-) {
-    val goldColor = Color(0xFFFFD700)
-    
-    Box(modifier = Modifier) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isUnlocked) 
-                    goldColor.copy(alpha = 0.2f) 
-                else 
-                    MaterialTheme.colorScheme.tertiary
-            ),
-            onClick = onClick,
-            modifier = Modifier
-                .size(80.dp)
-                .padding(top = 4.dp, end = 8.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        // --- 2. BA CARD KHÓA (PLACEHOLDERS CHO TƯƠNG LAI) ---
+        items(3) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                ),
+                modifier = Modifier.size(80.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isUnlocked) 
-                                goldColor.copy(alpha = 0.3f) 
-                            else 
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isUnlocked) {
-                        feature.icon()
-                    } else {
-                        Icon(
-                            Icons.Default.Lock, 
-                            contentDescription = null, 
-                            tint = MaterialTheme.colorScheme.background,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Coming Soon",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = if (isUnlocked) feature.name else "Khóa",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isUnlocked) 
-                        goldColor 
-                    else 
-                        MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
-                    fontSize = 10.sp
-                )
-            }
-        }
-        
-        // Badge "PRO" nếu chưa mở khóa
-        if (!isUnlocked) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-4).dp, y = 0.dp),
-                shape = RoundedCornerShape(4.dp),
-                color = goldColor
-            ) {
-                Text(
-                    text = "PRO",
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                )
             }
         }
     }
@@ -1026,23 +930,10 @@ fun CustomDayChip(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SettingsSectionHeader(
-    title: String,
-    isPremium: Boolean = false,
-    onLongPress: (() -> Unit)? = null
+    title: String
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (onLongPress != null) {
-                    Modifier.combinedClickable(
-                        onClick = { },
-                        onLongClick = onLongPress
-                    )
-                } else {
-                    Modifier
-                }
-            ),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1052,22 +943,6 @@ fun SettingsSectionHeader(
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = 18.sp
         )
-        
-        // Hiển thị badge Premium nếu đã mua
-        if (isPremium) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFFFD700).copy(alpha = 0.2f)
-            ) {
-                Text(
-                    text = "⭐ PREMIUM",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFD700),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-        }
     }
 }
 
@@ -1217,98 +1092,3 @@ fun SnoozeDurationDialog(
     }
 }
 
-/**
- * Dialog để reset trạng thái Premium (chỉ dành cho testing)
- */
-@Composable
-fun ResetPremiumDialog(
-    onDismiss: () -> Unit,
-    onConfirmReset: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier.width(320.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Warning icon
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🔧",
-                        fontSize = 28.sp
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "Reset Premium",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Bạn có chắc muốn reset trạng thái Premium? Thao tác này chỉ dành cho testing.",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 14.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "⚠️ Chức năng ẩn dành cho Developer",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(12.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Hủy")
-                    }
-                    
-                    Button(
-                        onClick = onConfirmReset,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text("Reset", color = MaterialTheme.colorScheme.onError)
-                    }
-                }
-            }
-        }
-    }
-}
