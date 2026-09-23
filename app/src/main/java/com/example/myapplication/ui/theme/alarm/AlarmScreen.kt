@@ -63,7 +63,7 @@ fun AlarmScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .clickable(enabled = isFabMenuOpen) { isFabMenuOpen = false }
-            .padding(top = 50.dp)
+            .padding(top = 10.dp) // Giảm từ 50.dp xuống 10.dp để hợp với padding hệ thống
     ) {
         Column(
             modifier = Modifier
@@ -79,23 +79,23 @@ fun AlarmScreen(
                 onDeleteInactive = { viewModel.deleteInactiveAlarms()}
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text =headerText,
-                fontSize = 20.sp,
+                text = headerText,
+                fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 items(items = alarmList, key = { it.id }) { alarm ->
                     AlarmCard(
@@ -138,8 +138,9 @@ fun AlarmScreen(
                 showQuickDialog = true
             },
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
+                .padding(bottom = 65.dp) // Gần hơn với Nav Bar
         )
 
         if (showQuickDialog) {
@@ -198,13 +199,12 @@ private fun AlarmTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Thiết lập báo thức",
+            text = "Báo thức",
             fontSize = 20.sp,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold
@@ -294,8 +294,8 @@ fun FabSpeedDial(
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 100.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 70.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
@@ -333,7 +333,7 @@ fun FabSpeedDial(
             shape = RoundedCornerShape(28.dp),
             modifier = Modifier
                 .size(56.dp)
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomCenter)
         ) {
             Icon(
                 imageVector = Icons.Filled.Add,

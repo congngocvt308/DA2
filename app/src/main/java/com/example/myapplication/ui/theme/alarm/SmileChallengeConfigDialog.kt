@@ -275,7 +275,9 @@ fun SmileChallengeConfigDialog(
             Spacer(modifier = Modifier.height(24.dp))
 
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.fillMaxWidth()
             ){
@@ -301,7 +303,9 @@ fun SmileChallengeConfigDialog(
             Spacer(modifier = Modifier.height(24.dp))
 
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -430,7 +434,9 @@ fun SmileChallengeConfigDialog(
             Spacer(modifier = Modifier.height(24.dp))
 
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier
                     .fillMaxWidth()

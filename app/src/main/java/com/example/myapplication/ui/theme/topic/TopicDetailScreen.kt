@@ -83,7 +83,7 @@ fun TopicDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(top = 106.dp)
+                .padding(top = 64.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),

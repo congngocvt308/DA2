@@ -145,6 +145,7 @@ fun AlarmSettingsScreen(
                         Icon(Icons.Default.Close, "Đóng", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
 
@@ -226,7 +227,12 @@ fun AlarmSettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 20.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.1f)
+                        ),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         Column(
@@ -508,8 +514,12 @@ private fun MissionTypeItem(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.1f)
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -970,11 +980,16 @@ fun SnoozeSettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.1f)
+        ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -984,7 +999,8 @@ fun SnoozeSettingsSection(
                 Text(
                     text = "Báo lại",
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 Switch(
                     checked = isSnoozeEnabled,
@@ -1005,35 +1021,41 @@ fun SnoozeSettingsSection(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Divider(color = Color.Gray, thickness = 0.5.dp)
+                    HorizontalDivider(color = Color.Gray, thickness = 0.5.dp)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onDurationClick),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        onClick = onDurationClick,
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "Khoảng thời gian",
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 16.sp
-                        )
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "$snoozeDuration phút",
-                                color = MaterialTheme.colorScheme.tertiary,
+                                text = "Khoảng thời gian",
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.size(14.dp)
-                            )
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "$snoozeDuration phút",
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
                         }
                     }
                 }

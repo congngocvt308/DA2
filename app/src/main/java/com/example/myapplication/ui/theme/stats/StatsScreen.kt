@@ -119,44 +119,26 @@ fun StatsScreen(onNavigateToMuseum: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(top = 50.dp)
+            .padding(top = 10.dp)
     ){
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .height(35.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Phân tích hệ thống",
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(vertical = 26.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 120.dp), // Tăng bottom để ko bị che bởi Nav mới
+            verticalArrangement = Arrangement.spacedBy(8.dp) // Giảm khoảng cách giữa các card
         ) {
             item {
                 userStats?.let { stats ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(end = 12.dp, start = 12.dp, bottom = 12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Thẻ hiện Streak (Chuỗi ngày)
                         SmallStatCard(
                             label = "Chuỗi ngày",
                             value = "${stats.currentStreak} 🔥",
                             modifier = Modifier.weight(1f)
                         )
-                        // Thẻ hiện Tổng điểm
                         SmallStatCard(
                             label = "Tổng điểm",
                             value = "${stats.totalPoints} ⭐",
@@ -215,11 +197,16 @@ fun MemoryMuseumCard(onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.1f)
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFF4081).copy(alpha = 0.12f) // Màu hồng tím mộng mơ
+            containerColor = Color(0xFFFF4081).copy(alpha = 0.12f)
         )
     ) {
         Row(
@@ -262,8 +249,15 @@ fun SrsDistributionSection(
     val new = srsStats.find { it.status == "New" }?.count ?: 0
 
     Card(
-        modifier = Modifier.fillMaxWidth().padding(12.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.05f)
+        ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -340,8 +334,13 @@ fun LearningPerformanceChart(stats: List<Pair<String, Float>>) {
         modifier = Modifier
             .fillMaxWidth()
             .height(280.dp)
-            .padding(12.dp),
-        shape = RoundedCornerShape(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.05f)
+        ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -441,12 +440,17 @@ fun StatCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        shape = RoundedCornerShape(16.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = color.copy(alpha = 0.2f)
+        ),
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp), // Tăng nội padding cho thoáng
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -474,8 +478,13 @@ fun SmallStatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.padding(vertical = 4.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = Color.White.copy(alpha = 0.05f)
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
         )
@@ -483,7 +492,7 @@ fun SmallStatCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(

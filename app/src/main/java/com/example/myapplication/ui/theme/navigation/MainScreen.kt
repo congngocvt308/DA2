@@ -9,12 +9,27 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Assessment
@@ -25,10 +40,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,7 +51,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.text.font.FontWeight
@@ -207,115 +223,120 @@ fun MainScreen(initialExternalRoute: String? = null) {
     val showBottomBar = currentRoute in listOf(Screen.ALARM_TAB, Screen.TOPIC_TAB, Screen.STATS_TAB)
 
     Scaffold(
-        bottomBar = { if (showBottomBar) BottomNavBar(navController = navController)},
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-
-        NavHost(
-            navController = navController,
-            startDestination = Screen.ALARM_TAB,
-            modifier = Modifier.padding(bottom = if (showBottomBar) paddingValues.calculateBottomPadding() else 0.dp)
-        ) {
-            composable(Screen.ALARM_TAB) {
-                AlarmScreen(
-                    onNavigateToSettings = { alarmId ->
-                        navController.navigate(Screen.alarmSettingsRoute(alarmId))
-                    },
-                    navController = navController
-                )
-            }
-
-            composable(Screen.TOPIC_TAB) {
-                TopicScreen(
-                    onNavigateToDetail = { topicId ->
-                        navController.navigate(Screen.topicDetailRoute(topicId))
-                    }
-                )
-            }
-
-            composable(Screen.STATS_TAB) {
-                StatsScreen(
-                    onNavigateToMuseum = {
-                        navController.navigate(Screen.MEMORY_MUSEUM)
-                    }
-                )
-            }
-
-            composable(Screen.MEMORY_MUSEUM) {
-                MemoryMuseumScreen(
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-
-            composable(Screen.QUIZ_SCREEN) {
-
-                QuizScreen(
-                    viewModel = viewModel(),
-                    onBack = {
-                        navController.popBackStack()
-                    },
-                    onQuizCompleted = {
-                        val intent = Intent(context, AlarmService::class.java)
-                        context.stopService(intent)
-                        navController.navigate(Screen.ALARM_TAB) {
-                            popUpTo(Screen.ALARM_RINGING) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(Screen.ALARM_RINGING) {
-                AlarmRingingScreen(
-                    alarmLabel = "Thức dậy đi học",
-                    onSnooze = { /* Logic Snooze */ },
-                    onNavigateToQuiz = {
-                        navController.navigate(Screen.QUIZ_SCREEN)
-                    }
-                )
-            }
-
-            composable(
-                route = Screen.ALARM_SETTINGS,
-                arguments = listOf(navArgument("alarmId") { type = NavType.IntType; defaultValue = -1 })
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            NavHost(
+                navController = navController,
+                startDestination = Screen.ALARM_TAB,
+                modifier = Modifier.fillMaxSize()
             ) {
-                AlarmSettingsScreen(
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onMissionSettingClick = {
-                        navController.navigate(Screen.MISSION_SELECTION)
-                    }
-                )
-            }
+                // ... (giữ nguyên các composable bên trong NavHost)
+                composable(Screen.ALARM_TAB) {
+                    AlarmScreen(
+                        onNavigateToSettings = { alarmId ->
+                            navController.navigate(Screen.alarmSettingsRoute(alarmId))
+                        },
+                        navController = navController
+                    )
+                }
 
-            composable(
-                route = Screen.FACE_MISSION,
-                arguments = listOf(navArgument("alarmId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
-                val faceViewModel: FaceMissionViewModel = viewModel(
-                    factory = FaceMissionViewModelFactory(context, alarmId)
-                )
-
-                FaceMissionScreen(
-                    viewModel = faceViewModel,
-                    onLuongAComplete = {
-                        val intent = Intent(context, AlarmService::class.java)
-                        context.stopService(intent)
-                        navController.navigate(Screen.ALARM_TAB) {
-                            popUpTo(Screen.ALARM_RINGING) { inclusive = true }
+                composable(Screen.TOPIC_TAB) {
+                    TopicScreen(
+                        onNavigateToDetail = { topicId ->
+                            navController.navigate(Screen.topicDetailRoute(topicId))
                         }
-                    }
-                )
+                    )
+                }
+
+                composable(Screen.STATS_TAB) {
+                    StatsScreen(
+                        onNavigateToMuseum = {
+                            navController.navigate(Screen.MEMORY_MUSEUM)
+                        }
+                    )
+                }
+
+                composable(Screen.MEMORY_MUSEUM) {
+                    MemoryMuseumScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.QUIZ_SCREEN) {
+
+                    QuizScreen(
+                        viewModel = viewModel(),
+                        onBack = {
+                            navController.popBackStack()
+                        },
+                        onQuizCompleted = {
+                            val intent = Intent(context, AlarmService::class.java)
+                            context.stopService(intent)
+                            navController.navigate(Screen.ALARM_TAB) {
+                                popUpTo(Screen.ALARM_RINGING) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Screen.ALARM_RINGING) {
+                    AlarmRingingScreen(
+                        alarmLabel = "Thức dậy đi học",
+                        onSnooze = { /* Logic Snooze */ },
+                        onNavigateToQuiz = {
+                            navController.navigate(Screen.QUIZ_SCREEN)
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.ALARM_SETTINGS,
+                    arguments = listOf(navArgument("alarmId") { type = NavType.IntType; defaultValue = -1 })
+                ) {
+                    AlarmSettingsScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        onMissionSettingClick = {
+                            navController.navigate(Screen.MISSION_SELECTION)
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.FACE_MISSION,
+                    arguments = listOf(navArgument("alarmId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
+                    val faceViewModel: FaceMissionViewModel = viewModel(
+                        factory = FaceMissionViewModelFactory(context, alarmId)
+                    )
+
+                    FaceMissionScreen(
+                        viewModel = faceViewModel,
+                        onLuongAComplete = {
+                            val intent = Intent(context, AlarmService::class.java)
+                            context.stopService(intent)
+                            navController.navigate(Screen.ALARM_TAB) {
+                                popUpTo(Screen.ALARM_RINGING) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.TOPIC_DETAIL,
+                    arguments = listOf(navArgument("topicId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    TopicDetailScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
             }
 
-            composable(
-                route = Screen.TOPIC_DETAIL,
-                arguments = listOf(navArgument("topicId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                TopicDetailScreen(
-                    onBackClick = { navController.popBackStack() }
-                )
+            if (showBottomBar) {
+                BottomNavBar(navController = navController)
             }
         }
     }
@@ -330,43 +351,93 @@ fun BottomNavBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.height(90.dp)
-    ) {
-        items.forEachIndexed { index, item ->
-            val route = routes[index]
-            val isSelected = currentRoute == route
+    val selectedIndex = routes.indexOf(currentRoute).coerceAtLeast(0)
+    val navWidth = 320.dp
+    val itemWidth = navWidth / items.size
 
-            NavigationBarItem(
-                icon = { Icon(icons[index], contentDescription = item, modifier = Modifier.size(24.dp)) },
-                label = {
-                    Text(
-                        text = item,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                    )
-                },
-                selected = isSelected,
-                onClick = {
-                    if (currentRoute != route) {
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+    val indicatorOffset by animateDpAsState(
+        targetValue = itemWidth * selectedIndex,
+        animationSpec = tween(durationMillis = 400),
+        label = "indicatorOffset"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Surface(
+            color = Color(0xFF1C1E23), // Màu đặc, không trong suốt
+            shape = RoundedCornerShape(40.dp),
+            shadowElevation = 20.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.08f)
+            ),
+            modifier = Modifier
+                .width(navWidth)
+                .height(64.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Vùng xám chỉ báo (Sliding Pill)
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp, vertical = 6.dp)
+                        .offset(x = indicatorOffset)
+                        .width(itemWidth - 12.dp)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(Color.White.copy(alpha = 0.12f)) // Vùng xám chỉ báo
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items.forEachIndexed { index, item ->
+                        val isSelected = selectedIndex == index
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    if (currentRoute != routes[index]) {
+                                        navController.navigate(routes[index]) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = icons[index],
+                                    contentDescription = item,
+                                    modifier = Modifier.size(22.dp),
+                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f)
+                                )
+                                Text(
+                                    text = item,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f)
+                                )
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
                     }
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedIconColor = MaterialTheme.colorScheme.tertiary,
-                    unselectedTextColor =MaterialTheme.colorScheme.tertiary,
-                    indicatorColor = MaterialTheme.colorScheme.background
-                )
-            )
+                }
+            }
         }
     }
 }

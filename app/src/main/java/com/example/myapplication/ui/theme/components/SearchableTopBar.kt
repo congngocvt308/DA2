@@ -43,11 +43,10 @@ fun SearchableTopBar(
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = Color.Transparent,
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp)
-            .padding(top = 50.dp)
+            .height(64.dp) // Giảm chiều cao tổng thể
     ) {
         Crossfade(targetState = isSearching, label = "AppBarCrossfade") { searching ->
             if (searching) {
@@ -102,13 +101,7 @@ fun SearchableTopBar(
                         }
                     }
 
-                    Text(
-                        text = title,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.weight(1f).padding(start = if (onBackClick == null) 16.dp else 0.dp)
-                    )
+                    Spacer(modifier = Modifier.weight(1f))
 
                     IconButton(onClick = onSearchToggle) {
                         Icon(Icons.Filled.Search, "Tìm kiếm", tint = MaterialTheme.colorScheme.onSurface)

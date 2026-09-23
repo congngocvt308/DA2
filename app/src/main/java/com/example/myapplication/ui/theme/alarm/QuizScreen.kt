@@ -127,7 +127,7 @@ fun QuizTopBar(
     total: Int,
     onBack: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(top = 50.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         LinearProgressIndicator(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(4.dp),

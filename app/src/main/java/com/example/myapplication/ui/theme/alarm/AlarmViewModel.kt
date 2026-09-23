@@ -84,11 +84,11 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
         return when {
             days < 1 -> {
-                if (hours == 0L && minutes == 0L) "Đổ chuông trong vòng chưa đầy 1 phút"
-                else "Báo thức tiếp theo sau $hours giờ $minutes phút"
+                if (hours == 0L && minutes == 0L) "Báo thức sau chưa đầy 1 phút"
+                else "Báo thức sau $hours giờ $minutes phút"
             }
-            days == 1L -> "Báo thức tiếp theo sau 1 ngày"
-            else -> "Báo thức tiếp theo sau $days ngày"
+            days == 1L -> "Báo thức sau 1 ngày"
+            else -> "Báo thức sau $days ngày"
         }
     }
 

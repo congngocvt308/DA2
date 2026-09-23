@@ -14,10 +14,10 @@ import androidx.compose.ui.graphics.Color
 private val AppDarkColorScheme = darkColorScheme(
     primary = Color(0xFFE50043),
     onPrimary = Color.White,
-    background = Color.Black,
+    background = Color(0xFF121418),
     onBackground = Color.White,
-    surface = Color(0xFF1C1C1E),
-    surfaceVariant = Color(0xFF2C2C2E),
+    surface = Color(0xFF1A1C22),
+    surfaceVariant = Color(0xFF23272F),
     onSurface = Color.White,
     secondary = Color(0xFF42A5F5),
     tertiary = Color.LightGray

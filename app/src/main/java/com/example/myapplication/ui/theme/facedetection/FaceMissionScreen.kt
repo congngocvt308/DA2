@@ -322,7 +322,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 50.dp, bottom = 10.dp, start = 32.dp, end = 32.dp), // Thu hẹp padding lề để thanh bão hòa tối đa màn hình
+                .padding(top = 10.dp, bottom = 10.dp, start = 32.dp, end = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {

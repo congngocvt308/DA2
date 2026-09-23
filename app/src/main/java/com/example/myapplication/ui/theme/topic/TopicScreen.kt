@@ -84,10 +84,10 @@ fun TopicScreen(
                 actions = {}
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 26.dp),
+                contentPadding = PaddingValues(top = 4.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (topicList.isEmpty()) {
@@ -120,12 +120,13 @@ fun TopicScreen(
         }
 
         AnimatedVisibility(
-            visible = !isSearching, // Chỉ hiện khi KHÔNG tìm kiếm
-            enter = fadeIn() + scaleIn(), // Hiệu ứng hiện ra (phóng to)
-            exit = fadeOut() + scaleOut(), // Hiệu ứng biến mất (thu nhỏ)
+            visible = !isSearching,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut(),
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
+                .padding(bottom = 10.dp) // Gần hơn với Nav Bar
         ) {
             FabSpeedDial(
                 isMenuOpen = isFabMenuOpen,
@@ -140,8 +141,11 @@ fun TopicScreen(
                 onAiClick = {
                     isFabMenuOpen = false
                     showAiDialog = true
-                }
-                // Bỏ modifier cũ ở đây vì đã đưa lên AnimatedVisibility
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 55.dp)
             )
         }
 
@@ -216,7 +220,7 @@ private fun FabSpeedDial(
             visible = isMenuOpen,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
-            modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 80.dp)
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 70.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -247,7 +251,7 @@ private fun FabSpeedDial(
             onClick = onToggleMenu,
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(28.dp),
-            modifier = Modifier.size(56.dp).align(Alignment.BottomEnd)
+            modifier = Modifier.size(56.dp).align(Alignment.BottomCenter)
         ) {
             Icon(
                 imageVector = Icons.Filled.Add,
