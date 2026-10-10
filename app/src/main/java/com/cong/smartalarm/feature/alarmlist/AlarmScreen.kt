@@ -1,0 +1,377 @@
+package com.cong.smartalarm.feature.alarmlist
+
+import com.cong.smartalarm.feature.alarmedit.AlarmSettingsViewModel
+import com.cong.smartalarm.feature.alarmedit.SoundSelectionDialog
+
+
+import com.cong.smartalarm.core.designsystem.component.GlassFloatingActionButton
+import com.cong.smartalarm.core.designsystem.component.LiquidGlass
+import com.cong.smartalarm.core.designsystem.theme.Calm
+
+import com.cong.smartalarm.feature.alarmlist.AlarmCard
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.cong.smartalarm.navigation.Screen
+import com.cong.smartalarm.core.media.RingtoneUtils
+import com.cong.smartalarm.core.media.SoundPlayer
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AlarmScreen(
+    viewModel: AlarmViewModel = viewModel(),
+    settingsViewModel: AlarmSettingsViewModel = viewModel(),
+    onNavigateToSettings: (Int) -> Unit,
+    navController: NavHostController
+) {
+    val context = LocalContext.current
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val alarmList by viewModel.alarms.collectAsStateWithLifecycle()
+    val currentSortType by viewModel.sortType.collectAsStateWithLifecycle()
+    val headerText by viewModel.timeUntilNextAlarms.collectAsStateWithLifecycle()
+    var isFabMenuOpen by remember { mutableStateOf(false) }
+    var isMoreMenuOpen by remember { mutableStateOf(false) }
+    var showQuickDialog by remember { mutableStateOf(false) }
+    var showSoundDialog by remember { mutableStateOf(false) }
+    val previewPlayer = remember { SoundPlayer(context) }
+    DisposableEffect(Unit) {
+        onDispose { previewPlayer.stop() }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .clickable(enabled = isFabMenuOpen) { isFabMenuOpen = false }
+            .padding(top = 10.dp) // Giảm từ 50.dp xuống 10.dp để hợp với padding hệ thống
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            AlarmTopBar(
+                currentSortType = currentSortType,
+                isMenuOpen = isMoreMenuOpen,
+                onMenuClick = { isMoreMenuOpen = true },
+                onDismissMenu = { isMoreMenuOpen = false },
+                onSortDefault = { viewModel.setSortType(SortType.DEFAULT)},
+                onSortActive = { viewModel.setSortType(SortType.ACTIVE_FIRST)},
+                onDeleteInactive = { viewModel.deleteInactiveAlarms()}
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = headerText,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                items(items = alarmList, key = { it.id }) { alarm ->
+                    AlarmCard(
+                        alarmData = alarm,
+                        onToggle = { newState ->
+                            viewModel.toggleAlarm(alarm.id, newState)
+                        },
+                        onCardClick = {
+                            onNavigateToSettings(alarm.id)
+                        },
+                        onDelete = {
+                            viewModel.deleteAlarm(alarm.id)
+                        }
+                    )
+                }
+            }
+        }
+
+        if (isFabMenuOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Calm.Foreground.copy(alpha = 0.16f)) // lớp phủ xám nhạt
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { isFabMenuOpen = false }
+            )
+        }
+
+        FabSpeedDial(
+            isMenuOpen = isFabMenuOpen,
+            onToggleMenu = { isFabMenuOpen = !isFabMenuOpen },
+            onAddNewAlarm = {
+                isFabMenuOpen = false
+                onNavigateToSettings(-1)
+            },
+            onQuickAlarmClick = {
+                isFabMenuOpen = false
+                showQuickDialog = true
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 65.dp) // Gần hơn với Nav Bar
+        )
+
+        if (showQuickDialog) {
+            QuickAlarmDialog(
+                currentSoundTitle = RingtoneUtils.getRingtoneTitle(context, settingsUiState.ringtoneUri),
+                volume = settingsUiState.volume,
+                onVolumeChange = { newVol ->
+                    settingsViewModel.updateVolume(newVol)
+                    previewPlayer.playOrUpdateVolume(settingsUiState.ringtoneUri, newVol)
+                },
+                onSoundClick = { showSoundDialog = true },
+                onDismissRequest = {
+                    showQuickDialog = false
+                    previewPlayer.stop()
+                },
+                onSave = { minutes ->
+                    // BƯỚC QUAN TRỌNG:
+                    // 1. Cập nhật thời gian vào SettingsViewModel
+                    settingsViewModel.setupQuickAlarm(minutes)
+                    // 2. Gọi hàm save có sẵn của SettingsViewModel
+                    settingsViewModel.saveAlarm()
+
+                    showQuickDialog = false
+                    previewPlayer.stop()
+                    // 3. Có thể gọi alarmViewModel.refresh() nếu cần cập nhật danh sách ngay
+                }
+            )
+        }
+
+        if (showSoundDialog) {
+            // Tái sử dụng Dialog chọn nhạc, truyền callback vào settingsViewModel
+            SoundSelectionDialog(
+                currentUri = settingsUiState.ringtoneUri,
+                currentVolume = settingsUiState.volume,
+                onDismiss = { showSoundDialog = false },
+                onConfirm = { newUri ->
+                    // Cập nhật vào ViewModel "mượn"
+                    settingsViewModel.updateRingtone(newUri)
+                    showSoundDialog = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlarmTopBar(
+    currentSortType: SortType,
+    isMenuOpen: Boolean,
+    onMenuClick: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onSortDefault: () -> Unit,
+    onSortActive: () -> Unit,
+    onDeleteInactive: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Báo thức",
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
+
+        Box {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Tùy chọn",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = isMenuOpen,
+                onDismissRequest = onDismissMenu,
+                offset = DpOffset(x = 0.dp, y = 0.dp),
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Sắp xếp", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp) },
+                    onClick = {},
+                    trailingIcon = { Icon(Icons.Default.Sort, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(15.dp)) }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Mặc định", color = MaterialTheme.colorScheme.onSurface) },
+                    onClick = {
+                        onSortDefault()
+                        onDismissMenu()
+                    },
+                    trailingIcon = {
+                        if(currentSortType == SortType.DEFAULT)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        else null
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Đang hoạt động trước", color = MaterialTheme.colorScheme.onSurface) },
+                    onClick = {
+                        onSortActive()
+                        onDismissMenu()
+                    },
+                    trailingIcon = {
+                        if(currentSortType == SortType.ACTIVE_FIRST)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        else null
+                    }
+                )
+
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+
+                DropdownMenuItem(
+                    text = { Text("Xóa báo thức không hoạt động", color = Calm.Destructive) },
+                    onClick = {
+                        onDeleteInactive()
+                        onDismissMenu()
+                    },
+                    trailingIcon = { Icon(Icons.Default.Delete, null, tint = Calm.Destructive)}
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FabSpeedDial(
+    isMenuOpen: Boolean,
+    onToggleMenu: () -> Unit,
+    onAddNewAlarm: () -> Unit,
+    onQuickAlarmClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isMenuOpen) 45f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "FabRotation"
+    )
+
+    Box(
+        modifier = modifier.padding(16.dp)
+    ) {
+        AnimatedVisibility(
+            visible = isMenuOpen,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 70.dp)
+        ) {
+            LiquidGlass(
+                cornerRadius = 16.dp
+            ) {
+                Column(
+                    modifier = Modifier.width(250.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    FabMenuItem(
+                        Icons.Default.FlashOn,
+                        "Báo thức nhanh",
+                        onClick ={
+                            onToggleMenu()
+                            onQuickAlarmClick()
+                        }
+                    )
+
+                    FabMenuItem(
+                        Icons.Default.Alarm,
+                        "Báo thức",
+                        onClick = {
+                            onToggleMenu()
+                            onAddNewAlarm()
+                        }
+                    )
+                }
+            }
+        }
+
+        GlassFloatingActionButton(
+            onClick = onToggleMenu,
+            containerColor = MaterialTheme.colorScheme.primary,
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .size(56.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "Tạo mới",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .size(32.dp)
+                    .rotate(rotation)
+            )
+        }
+    }
+}
+
+@Composable
+fun FabMenuItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(25.dp))
+
+        Spacer(modifier = Modifier.width(15.dp))
+
+        Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp)
+    }
+}

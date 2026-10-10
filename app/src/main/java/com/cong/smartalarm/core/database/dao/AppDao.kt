@@ -1,0 +1,259 @@
+package com.cong.smartalarm.core.database.dao
+
+import com.cong.smartalarm.core.database.entity.AlarmEntity
+import com.cong.smartalarm.core.database.entity.AlarmFaceMissionConfigEntity
+import com.cong.smartalarm.core.database.entity.AlarmHistoryEntity
+import com.cong.smartalarm.core.database.entity.AlarmQRLinkEntity
+import com.cong.smartalarm.core.database.entity.AlarmSelectedQuestionEntity
+import com.cong.smartalarm.core.database.entity.AlarmTopicLink
+import com.cong.smartalarm.core.database.entity.HistoryEntity
+import com.cong.smartalarm.core.database.entity.PictureEntity
+import com.cong.smartalarm.core.database.entity.QRCodeEntity
+import com.cong.smartalarm.core.database.entity.QuestionEntity
+import com.cong.smartalarm.core.database.entity.QuestionProgressEntity
+import com.cong.smartalarm.core.database.entity.TopicEntity
+import com.cong.smartalarm.core.database.entity.TopicStatsEntity
+import com.cong.smartalarm.core.database.model.TopicWithCountResult
+import com.cong.smartalarm.core.database.entity.TopicWithQuestions
+
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface AppDao {
+    @Query("SELECT * FROM alarms")
+    fun getAllAlarms(): Flow<List<AlarmEntity>>
+
+    @Query("SELECT * FROM alarms WHERE isEnabled = 1")
+    suspend fun getEnabledAlarms(): List<AlarmEntity>
+
+    @Query("SELECT * FROM alarms WHERE alarmId = :id")
+    suspend fun getAlarmById(id: Int): AlarmEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlarm(alarm: AlarmEntity): Long
+
+    @Update
+    suspend fun updateAlarm(alarm: AlarmEntity)
+
+    @Query("SELECT * FROM topics")
+    fun getAllTopics(): Flow<List<TopicEntity>>
+
+    @Insert
+    suspend fun insertTopic(topic: TopicEntity): Long
+
+    @Query("SELECT * FROM questions WHERE ownerTopicId = :topicId")
+    fun getQuestionsByTopic(topicId: Int): Flow<List<QuestionEntity>>
+
+    @Insert
+    suspend fun insertQuestion(question: QuestionEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSelectedQuestion(item: AlarmSelectedQuestionEntity)
+
+    @Query("DELETE FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    suspend fun clearSelectedQuestionsForAlarm(alarmId: Int)
+
+    @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    fun getSelectedQuestionsForAlarm(alarmId: Int): Flow<List<AlarmSelectedQuestionEntity>>
+    
+    @Query("SELECT * FROM alarm_selected_questions WHERE alarmId = :alarmId")
+    suspend fun getSelectedQuestionsForAlarmOnce(alarmId: Int): List<AlarmSelectedQuestionEntity>
+
+    @Query("""
+        SELECT q.* FROM questions q
+        INNER JOIN alarm_selected_questions asq ON q.questionId = asq.questionId
+        WHERE asq.alarmId = :alarmId
+    """)
+    fun getManualQuestionsForAlarm(alarmId: Int): Flow<List<QuestionEntity>>
+
+    @Delete
+    suspend fun deleteAlarm(alarm: AlarmEntity)
+
+    @Query("DELETE FROM alarms WHERE isEnabled = 0")
+    suspend fun deleteInactiveAlarms()
+
+    @Query("""
+        SELECT t.topicId, t.topicName, COUNT(q.questionId) AS questionCount 
+        FROM topics t 
+        LEFT JOIN questions q ON t.topicId = q.ownerTopicId 
+        GROUP BY t.topicId
+    """)
+    fun getAllTopicsWithCount(): Flow<List<TopicWithCountResult>>
+
+    @Query("SELECT * FROM questions WHERE questionId = :id")
+    suspend fun getQuestionById(id: Int): QuestionEntity?
+
+    @Delete
+    suspend fun deleteQuestion(question: QuestionEntity)
+
+    @Update
+    suspend fun updateQuestion(question: QuestionEntity)
+
+    @Query("SELECT topicName FROM topics WHERE topicId = :id")
+    suspend fun getTopicNameById(id: Int): String?
+
+    @Query("DELETE FROM topics WHERE topicId = :id")
+    suspend fun deleteTopicById(id: Int)
+
+    @Query("UPDATE topics SET topicName = :newName WHERE topicId = :topicId")
+    suspend fun updateTopicName(topicId: Int, newName: String)
+
+    @Transaction
+    @Query("SELECT * FROM topics")
+    fun getTopicsWithQuestions(): Flow<List<TopicWithQuestions>>
+
+    @Query("UPDATE alarms SET isEnabled = :enabled WHERE alarmId = :id")
+    suspend fun updateAlarmEnabledStatus(id: Int, enabled: Boolean)
+    
+    // ==================== QR CODE METHODS ====================
+    
+    @Query("SELECT * FROM qr_codes ORDER BY createdAt DESC")
+    fun getAllQRCodes(): Flow<List<QRCodeEntity>>
+    
+    @Query("SELECT * FROM qr_codes ORDER BY createdAt DESC")
+    suspend fun getAllQRCodesOnce(): List<QRCodeEntity>
+    
+    @Query("SELECT COUNT(*) FROM qr_codes")
+    suspend fun getQRCodeCount(): Int
+    
+    @Query("SELECT * FROM qr_codes WHERE qrId = :id")
+    suspend fun getQRCodeById(id: Int): QRCodeEntity?
+    
+    @Query("SELECT * FROM qr_codes WHERE codeValue = :code")
+    suspend fun getQRCodeByValue(code: String): QRCodeEntity?
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertQRCode(qrCode: QRCodeEntity): Long
+    
+    @Delete
+    suspend fun deleteQRCode(qrCode: QRCodeEntity)
+    
+    @Query("DELETE FROM qr_codes WHERE qrId = :id")
+    suspend fun deleteQRCodeById(id: Int)
+    
+    @Update
+    suspend fun updateQRCode(qrCode: QRCodeEntity)
+    
+    // ==================== ALARM-QR LINK METHODS ====================
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlarmQRLink(link: AlarmQRLinkEntity)
+    
+    @Query("DELETE FROM alarm_qr_link WHERE alarmId = :alarmId")
+    suspend fun clearQRLinksForAlarm(alarmId: Int)
+    
+    @Query("DELETE FROM alarm_qr_link WHERE alarmId = :alarmId AND qrId = :qrId")
+    suspend fun deleteAlarmQRLink(alarmId: Int, qrId: Int)
+    
+    @Query("SELECT COUNT(*) FROM alarm_qr_link WHERE alarmId = :alarmId")
+    suspend fun getQRLinkCountForAlarm(alarmId: Int): Int
+    
+    @Query("""
+        SELECT q.* FROM qr_codes q
+        INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+        WHERE link.alarmId = :alarmId
+    """)
+    fun getQRCodesForAlarm(alarmId: Int): Flow<List<QRCodeEntity>>
+    
+    @Query("""
+        SELECT q.* FROM qr_codes q
+        INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+        WHERE link.alarmId = :alarmId
+    """)
+    suspend fun getQRCodesForAlarmOnce(alarmId: Int): List<QRCodeEntity>
+    
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM qr_codes q
+            INNER JOIN alarm_qr_link link ON q.qrId = link.qrId
+            WHERE link.alarmId = :alarmId AND q.codeValue = :codeValue
+        )
+    """)
+    suspend fun isQRCodeValidForAlarm(alarmId: Int, codeValue: String): Boolean
+
+    @Query("DELETE FROM alarm_topic_link WHERE alarmId = :alarmId")
+    suspend fun clearAlarmTopicLinks(alarmId: Int)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlarmTopicLink(link: AlarmTopicLink)
+
+    // Lấy danh sách các liên kết Topic của một báo thức cụ thể
+    @Query("SELECT * FROM alarm_topic_link WHERE alarmId = :alarmId")
+    suspend fun getTopicLinksForAlarmOnce(alarmId: Int): List<AlarmTopicLink>
+
+    //
+    // 1. Lấy tất cả câu hỏi thuộc các Topic được chọn hết (qua bảng AlarmTopicLink)
+    @Query("""
+    SELECT q.* FROM questions q
+    INNER JOIN alarm_topic_link link ON q.ownerTopicId = link.topicId
+    WHERE link.alarmId = :alarmId
+""")
+    suspend fun getQuestionsFromLinkedTopics(alarmId: Int): List<QuestionEntity>
+
+    // 2. Lấy thông tin tiến độ của một danh sách câu hỏi (để tính SRS)
+    @Query("SELECT * FROM question_progress WHERE questionId IN (:questionIds)")
+    suspend fun getProgressForQuestions(questionIds: List<Int>): List<QuestionProgressEntity>
+
+    // 3. Lấy hoặc tạo mới Stats của Topic
+    @Query("SELECT * FROM topic_stats WHERE topicId = :topicId")
+    suspend fun getTopicStats(topicId: Int): TopicStatsEntity?
+
+    // 4. Các hàm Insert/Update cần thiết
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateQuestionProgress(progress: QuestionProgressEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun updateTopicStats(stats: TopicStatsEntity)
+
+    @Insert
+    suspend fun insertHistory(history: HistoryEntity)
+
+    @Insert
+    suspend fun insertAlarmHistory(history: AlarmHistoryEntity): Long
+
+    @Update
+    suspend fun updateAlarmHistory(history: AlarmHistoryEntity)
+
+    @Query("SELECT * FROM alarm_history WHERE historyId = :id")
+    suspend fun getAlarmHistoryById(id: Int): AlarmHistoryEntity?
+
+    // --- PHẦN BỔ SUNG CHO TOPIC STATS ---
+    @Query("SELECT ownerTopicId FROM questions WHERE questionId = :questionId")
+    suspend fun getTopicIdByQuestionId(questionId: Int): Int?
+
+
+    // ==================== ALARM FACE MISSION CONFIG ====================
+
+    @Query("SELECT * FROM alarm_face_mission_config WHERE alarmId = :alarmId")
+    suspend fun getFaceMissionConfigByAlarmId(alarmId: Int): AlarmFaceMissionConfigEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateFaceMissionConfig(config: AlarmFaceMissionConfigEntity): Long
+
+    @Query("DELETE FROM alarm_face_mission_config WHERE alarmId = :alarmId")
+    suspend fun deleteFaceMissionConfigByAlarmId(alarmId: Int)
+
+    // ==================== PICTURES (BẢO TÀNG KÝ ỨC) ====================
+
+    @Query("SELECT * FROM pictures WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getAllPicturesByUser(userId: Int = 1): Flow<List<PictureEntity>>
+
+    @Query("SELECT * FROM pictures WHERE pictureId = :pictureId")
+    suspend fun getPictureById(pictureId: Int): PictureEntity?
+
+    @Query("SELECT * FROM pictures WHERE alarmHistoryId = :historyId")
+    suspend fun getPictureByAlarmHistoryId(historyId: Int): PictureEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPicture(picture: PictureEntity): Long
+
+    @Update
+    suspend fun updatePicture(picture: PictureEntity)
+
+    @Delete
+    suspend fun deletePicture(picture: PictureEntity)
+
+    @Query("DELETE FROM pictures WHERE pictureId = :pictureId")
+    suspend fun deletePictureById(pictureId: Int)
+}

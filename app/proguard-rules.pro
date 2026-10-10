@@ -10,7 +10,9 @@
 -keep class * implements com.google.gson.TypeAdapterFactory
 -keep class * implements com.google.gson.JsonSerializer
 -keep class * implements com.google.gson.JsonDeserializer
--keep class com.cong.smartalarm.data.** { *; }
+-keep class com.cong.smartalarm.core.database.** { *; }
+-keep class com.cong.smartalarm.core.network.** { *; }
+-keep class com.cong.smartalarm.feature.topic.model.** { *; }
 
 # ML Kit
 -keep class com.google.mlkit.** { *; }
@@ -22,8 +24,8 @@
 # --- NEW RULES TO FIX APK CRASH ---
 
 # 1. Bảo vệ các lớp Logic và Thuật toán (Brain của Quiz)
--keep class com.cong.smartalarm.logic.** { *; }
--keep class com.cong.smartalarm.alarm_logic.** { *; }
+-keep class com.cong.smartalarm.domain.** { *; }
+-keep class com.cong.smartalarm.core.alarm.** { *; }
 
 # 2. Quan trọng: Giữ lại hàm khởi tạo của ViewModels cho Compose
 # Giúp hàm viewModel() tìm thấy constructor sau khi bị mã hóa code

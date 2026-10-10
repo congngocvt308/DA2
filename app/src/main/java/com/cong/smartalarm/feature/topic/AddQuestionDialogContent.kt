@@ -1,0 +1,249 @@
+package com.cong.smartalarm.feature.topic
+
+
+import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.theme.Calm
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
+@Composable
+fun AddQuestionDialog(
+    viewModel: TopicDetailViewModel,
+    onDismiss: () -> Unit,
+    onSaveSuccess: () -> Unit
+) {
+    val questionText by viewModel.draftQuestionText.collectAsState()
+    val answers by viewModel.draftAnswers.collectAsState()
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f)),
+            contentAlignment = Alignment.Center
+        ) {
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .heightIn(max = 700.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Đóng",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            // Vùng chạm 48dp, biểu tượng vẫn 24dp
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clickable { onDismiss() }
+                                .padding(12.dp)
+                        )
+
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Lưu",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clickable {
+                                    viewModel.saveQuestion()
+                                    onSaveSuccess()
+                                }
+                                .padding(12.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                    if (questionText.contains("$")) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Câu hỏi (Công thức toán)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                MathText(
+                                    latexText = questionText,
+                                    textColor = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 16
+                                )
+                            }
+                        }
+                    } else{
+                        OutlinedTextField(
+                            value = questionText,
+                            onValueChange = { viewModel.onQuestionTextChange(it) },
+                            label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            maxLines = 3
+                        )
+                    }
+
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.weight(1f, fill = false),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(answers) { index, answer ->
+                            AnswerInputRow(
+                                text = answer.text,
+                                isCorrect = answer.isCorrect,
+                                onTextChange = { viewModel.onAnswerTextChange(index, it) },
+                                onSelectCorrect = { viewModel.onSelectCorrectAnswer(index) },
+                                onDelete = { viewModel.onRemoveAnswerLine(index) }
+                            )
+                        }
+                        if (answers.size < 5) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp)
+                                        .heightIn(min = 48.dp)
+                                        .clickable { viewModel.onAddAnswerLine() },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Text("Thêm câu trả lời", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    GlassButton(
+                        onClick = {
+                            viewModel.saveQuestion()
+                            onSaveSuccess()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(25.dp)
+                    ) {
+                        Text("Thêm câu hỏi", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnswerInputRow(
+    text: String,
+    isCorrect: Boolean,
+    onTextChange: (String) -> Unit,
+    onSelectCorrect: () -> Unit,
+    onDelete: () -> Unit
+) {
+    // Đáp án đúng: viền xanh wellness (kèm nút chọn và chữ gợi ý, không chỉ dựa vào màu)
+    val borderColor = if (isCorrect) Calm.Wellness else MaterialTheme.colorScheme.outline
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        RadioButton(
+            selected = isCorrect,
+            onClick = onSelectCorrect,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = Calm.Wellness,
+                unselectedColor = MaterialTheme.colorScheme.outline
+            )
+        )
+
+        if (text.contains("$")) {
+            // ĐÁP ÁN CÓ CÔNG THỨC: Hiện MathText
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                MathText(
+                    latexText = text,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14
+                )
+            }
+        }else{
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = {
+                    Text(
+                        if (isCorrect) "Câu trả lời đúng" else "Điền câu trả lời",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp
+                    )
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                    .background(Color.Transparent),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Xóa",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}

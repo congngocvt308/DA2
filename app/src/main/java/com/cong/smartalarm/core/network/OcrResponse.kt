@@ -1,0 +1,11 @@
+package com.cong.smartalarm.core.network
+
+import com.google.gson.annotations.SerializedName
+
+data class OcrResponse(
+    @SerializedName("suggested_topic")
+    val suggestedTopic: String,
+
+    @SerializedName("extracted_text")
+    val extractedLatexContent: String
+)
