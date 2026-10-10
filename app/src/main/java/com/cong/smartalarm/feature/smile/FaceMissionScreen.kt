@@ -1,263 +1,50 @@
 package com.cong.smartalarm.feature.smile
 
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.cong.smartalarm.core.designsystem.theme.Calm
-import androidx.compose.runtime.CompositionLocalProvider
-
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
 import android.widget.Toast
-import androidx.annotation.DrawableRes
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.cong.smartalarm.R
-import com.cong.smartalarm.feature.smile.FaceMissionUiState
-import com.cong.smartalarm.feature.smile.FaceMissionAnalyzer
+import com.cong.smartalarm.core.designsystem.theme.Calm
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlinx.coroutines.delay
-import java.io.File
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Collections
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import java.io.FileOutputStream
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 
-@Composable
-fun CustomPaintProgressBar(
-    progress: Float,
-    modifier: Modifier = Modifier,
-    borderWidth: Dp = 3.dp // Bóp nhỏ borderWidth lại một chút cho thanh thoát giống Ảnh 2
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth() // Cho tràn full chiều rộng Box
-                .height(40.dp)
-        ) {
-            val strokePx = borderWidth.toPx()
-
-            val innerLeft = strokePx
-            val innerTop = strokePx
-            val innerWidth = size.width - (strokePx * 2)
-            val innerHeight = size.height - (strokePx * 2)
-
-            val innerRadius = innerHeight / 2
-
-            // Dải màu dịu: xám -> đen -> xanh wellness
-            val calmBrush = Brush.linearGradient(
-                colors = listOf(Calm.Neutral, Calm.Primary, Calm.Wellness),
-                start = Offset(0f, 0f),
-                end = Offset(size.width, 0f)
-            )
-
-            if (innerWidth > 0f && innerHeight > 0f) {
-                // 1. NỀN BÊN TRONG: rãnh xám nhạt
-                drawRoundRect(
-                    color = Calm.NeutralMist,
-                    topLeft = Offset(innerLeft, innerTop),
-                    size = Size(innerWidth, innerHeight),
-                    cornerRadius = CornerRadius(innerRadius, innerRadius)
-                )
-
-                // 2. TIẾN TRÌNH (FILL)
-                val currentProgressWidth = innerWidth * progress.coerceIn(0f, 1f)
-                if (currentProgressWidth > 0f) {
-                    drawRoundRect(
-                        brush = calmBrush,
-                        topLeft = Offset(innerLeft, innerTop),
-                        size = Size(currentProgressWidth, innerHeight),
-                        cornerRadius = CornerRadius(innerRadius, innerRadius)
-                    )
-                }
-            }
-
-            // 3. ĐƯỜNG VIỀN: viền xám nhạt
-            val borderLeft = strokePx / 2
-            val borderTop = strokePx / 2
-            val borderWidthSize = size.width - strokePx
-            val borderHeightSize = size.height - strokePx
-            val borderRadius = borderHeightSize / 2
-
-            drawRoundRect(
-                color = Calm.NeutralSoft,
-                topLeft = Offset(borderLeft, borderTop),
-                size = Size(borderWidthSize, borderHeightSize),
-                cornerRadius = CornerRadius(borderRadius, borderRadius),
-                style = Stroke(width = strokePx)
-            )
-        }
-    }
-}
-
-@Composable
-fun FaceFilterOverlay(
-    uiState: FaceMissionUiState,
-    previewWidth: Float,
-    previewHeight: Float,
-    modifier: Modifier = Modifier
-) {
-    // 1. Load các ảnh từ Drawable (đã đổi tên chuẩn)
-    val imgLeftEyeOpen = ImageBitmap.imageResource(id = R.drawable.ic_eye_left_open)   // left eye.png
-    val imgRightEyeOpen = ImageBitmap.imageResource(id = R.drawable.ic_eye_right_open) // right eye.png
-    val imgEyeClosed = ImageBitmap.imageResource(id = R.drawable.ic_eye_closed)       // mắt nhắm
-    val imgMouthSmile = ImageBitmap.imageResource(id = R.drawable.ic_mouth_smile)     // smile1.png
-    val imgMouthUnsmile = ImageBitmap.imageResource(id = R.drawable.ic_mouth_unsmile) // un smile.png
-
-    Canvas(modifier = modifier.fillMaxSize()) {
-        if (previewWidth > 0 && previewHeight > 0 && uiState.cameraWidth > 0 && uiState.cameraHeight > 0) {
-            val scaleX = previewWidth / uiState.cameraWidth.toFloat()
-            val scaleY = previewHeight / uiState.cameraHeight.toFloat()
-
-            val scaledFaceWidth = uiState.faceWidthPx * scaleX
-
-            // Dynamic Size filter
-            val baseScale = (scaledFaceWidth / (previewWidth * 0.45f)).coerceIn(0.5f, 3.0f)
-            val openEyeSize = (55.dp.toPx() * baseScale).toInt()
-            val closedEyeSize = (45.dp.toPx() * baseScale).toInt()
-            val closedEyeOffsetY = 8.dp.toPx() * baseScale
-            val mouthWidth = (70.dp.toPx() * baseScale).toInt()  // Chiều ngang miệng
-            val mouthHeight = (35.dp.toPx() * baseScale).toInt()
-            val rotationAngle = uiState.headRotationZ
-
-            // ----------------------------------------------------
-            // 2. VẼ FILTER MẮT TRÁI
-            // ----------------------------------------------------
-            uiState.leftEyePoint?.let { pt ->
-                val correctedX = previewWidth - (pt.x * scaleX)
-                var correctedY = pt.y * scaleY
-
-                val bitmap = if (uiState.isLeftEyeOpen ) imgLeftEyeOpen else imgEyeClosed
-
-                val currentEyeSize = if (uiState.isLeftEyeOpen) openEyeSize else closedEyeSize
-                if (!uiState.isLeftEyeOpen) {
-                    correctedY += closedEyeOffsetY // Hạ vị trí Y xuống một chút
-                }
-
-                withTransform({
-                    rotate(degrees = rotationAngle, pivot = Offset(correctedX, correctedY))
-                }) {
-                    drawImage(
-                        image = bitmap,
-                        dstOffset = IntOffset(
-                            x = (correctedX - currentEyeSize / 2).toInt(),
-                            y = (correctedY - currentEyeSize / 2).toInt()
-                        ),
-                        dstSize = IntSize(currentEyeSize, currentEyeSize)
-                    )
-                }
-            }
-
-            // MẮT PHẢI: Dùng riêng trạng thái isRightEyeOpen
-            uiState.rightEyePoint?.let { pt ->
-                val correctedX = previewWidth - (pt.x * scaleX)
-                var correctedY = pt.y * scaleY
-
-                val bitmap = if (uiState.isRightEyeOpen) imgRightEyeOpen else imgEyeClosed
-
-                val currentEyeSize = if (uiState.isRightEyeOpen) openEyeSize else closedEyeSize
-                if (!uiState.isRightEyeOpen) {
-                    correctedY += closedEyeOffsetY // Hạ vị trí Y xuống một chút
-                }
-
-                withTransform({
-                    rotate(degrees = rotationAngle, pivot = Offset(correctedX, correctedY))
-                }) {
-                    drawImage(
-                        image = bitmap,
-                        dstOffset = IntOffset(
-                            x = (correctedX - currentEyeSize / 2).toInt(),
-                            y = (correctedY - currentEyeSize / 2).toInt()
-                        ),
-                        dstSize = IntSize(currentEyeSize, currentEyeSize)
-                    )
-                }
-            }
-
-
-
-            // ----------------------------------------------------
-            // 4. VẼ FILTER MIỆNG
-            // ----------------------------------------------------
-            uiState.mouthPoint?.let { pt ->
-                val correctedX = previewWidth - (pt.x * scaleX)
-                var correctedY = pt.y * scaleY
-                if (!uiState.isSmileValid) {
-                    val offsetY = 8.dp.toPx() * baseScale // Thay đổi 12.dp (ví dụ: 15.dp hoặc 20.dp) để hạ thấp thêm
-                    correctedY += offsetY
-                }
-                val bitmap = if (uiState.isSmileValid) imgMouthSmile else imgMouthUnsmile
-
-                withTransform({
-                    rotate(degrees = rotationAngle, pivot = Offset(correctedX, correctedY))
-                }) {
-                    drawImage(
-                        image = bitmap,
-                        dstOffset = IntOffset(
-                            x = (correctedX - mouthWidth / 2).toInt(),
-                            y = (correctedY - mouthHeight / 2).toInt()
-                        ),
-                        dstSize = IntSize(mouthWidth, mouthHeight)
-                    )
-                }
-            }
-        }
-    }
-}
-
+/** Màn hình nhiệm vụ khuôn mặt: mở to mắt và mỉm cười trước camera để tắt báo thức. */
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> Unit) {
@@ -480,70 +267,4 @@ private fun FaceMissionContent(viewModel: FaceMissionViewModel, onLuongAComplete
             }
         }
     }
-}
-
-fun takePhotoToInternalStorage(
-    context: Context,
-    imageCapture: ImageCapture,
-    onPhotoSaved: (imageUri: String, description: String) -> Unit
-) {
-    // 1. Tạo thư mục ẩn riêng trong App
-    val photoFolder = File(context.filesDir, "alarm_photos").apply {
-        if (!exists()) mkdirs()
-    }
-
-    // 2. Tạo file .nomedia chặn Gallery ứng dụng khác quét
-    val noMediaFile = File(photoFolder, ".nomedia")
-    if (!noMediaFile.exists()) {
-        try { noMediaFile.createNewFile() } catch (e: Exception) { e.printStackTrace() }
-    }
-
-    val now = Date()
-    // 🎯 3. Định dạng tên file theo chuẩn "Giờ:Phút Ngày-Tháng" (Ví dụ: 15:30 25-07.jpg)
-    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(now)
-    val photoFile = File(photoFolder, "IMG_$timeStamp.jpg")
-
-    // 🎯 2. Tên mặc định hiển thị trên Card/Dialog chỉ có "Giờ:Phút" (Ví dụ: 11:16)
-    val displayDescription = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
-
-    imageCapture.takePicture(
-        ContextCompat.getMainExecutor(context),
-        object : ImageCapture.OnImageCapturedCallback() {
-            override fun onCaptureSuccess(image: ImageProxy) {
-                // 1. Chuyển ImageProxy thành Bitmap
-                val bitmap = imageProxyToBitmap(image)
-                image.close()
-
-                // 2. Lật ngang Bitmap (Flip Horizontal) cho đúng góc nhìn gương
-                val matrix = android.graphics.Matrix().apply {
-                    postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
-                }
-                val flippedBitmap = android.graphics.Bitmap.createBitmap(
-                    bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
-                )
-
-                // 3. Ghi Bitmap đã lật vào File mang tên vừa đặt
-                FileOutputStream(photoFile).use { out ->
-                    flippedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
-                }
-
-                val savedUri = photoFile.absolutePath
-
-                onPhotoSaved(savedUri, displayDescription)
-
-                Toast.makeText(context, "Ảnh đã được lưu vào Bảo Tàng Nụ Cười ✨", Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onError(exception: ImageCaptureException) {
-                Log.e("CameraCapture", "Lỗi chụp ảnh: ${exception.message}", exception)
-            }
-        }
-    )
-}
-
-private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
-    val buffer = image.planes[0].buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 }
