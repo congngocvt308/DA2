@@ -23,13 +23,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cong.smartalarm.core.designsystem.component.BreathCycleMillis
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
-import com.cong.smartalarm.core.designsystem.component.LiquidGlassButton
-import com.cong.smartalarm.core.designsystem.component.glassBackdropHost
-import com.cong.smartalarm.core.designsystem.component.rememberGlassBackdrop
-import com.cong.smartalarm.core.designsystem.component.rememberReducedMotion
-import com.cong.smartalarm.core.designsystem.component.rememberTiltLight
+import com.cong.smartalarm.core.designsystem.theme.BreathCycleMillis
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
+import com.cong.smartalarm.core.designsystem.component.SoftSurfaceButton
+import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import kotlinx.coroutines.delay
 import java.time.LocalDateTime
@@ -92,14 +89,12 @@ fun AlarmRingingScreen(
     }
 
     val stars = remember { generateStars() }
-    val backdrop = rememberGlassBackdrop { canvasSize -> drawSunrise(canvasSize, phase.value, stars) }
-    val tilt = rememberTiltLight()
-    val light = { tilt.value }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .glassBackdropHost(backdrop)
+            // phase chỉ được đọc khi vẽ -> trời chuyển màu mà không recompose
+            .drawBehind { drawSunrise(size, phase.value, stars) }
     ) {
         Column(
             modifier = Modifier
@@ -125,14 +120,14 @@ fun AlarmRingingScreen(
                     val r = size.width * 0.5f * (0.92f + 0.06f * b)
                     drawCircle(
                         Brush.radialGradient(
-                            listOf(Calm.LavenderMist.copy(alpha = 0.55f + 0.2f * b), Calm.LavenderMist.copy(alpha = 0f)),
+                            listOf(Calm.NeutralMist.copy(alpha = 0.55f + 0.2f * b), Calm.NeutralMist.copy(alpha = 0f)),
                             center = center,
                             radius = r
                         ),
                         radius = r
                     )
                     drawCircle(
-                        Calm.Lavender.copy(alpha = 0.10f + 0.10f * b),
+                        Calm.Neutral.copy(alpha = 0.10f + 0.10f * b),
                         radius = r * 0.82f,
                         style = Stroke(width = 1.5.dp.toPx())
                     )
@@ -150,9 +145,7 @@ fun AlarmRingingScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // --- NHÃN BÁO THỨC TRONG VIÊN KÍNH ---
-            LiquidGlass(
-                backdrop = backdrop,
-                light = light,
+            SoftSurface(
                 modifier = Modifier.height(52.dp)
             ) {
                 Row(
@@ -181,10 +174,8 @@ fun AlarmRingingScreen(
 
             // --- NÚT BÁO LẠI (Chỉ hiện nếu bật) ---
             if (isSnoozeEnabled) {
-                LiquidGlassButton(
+                SoftSurfaceButton(
                     onClick = onSnooze,
-                    backdrop = backdrop,
-                    light = light,
                     modifier = Modifier
                         .width(200.dp)
                         .height(60.dp)
@@ -199,10 +190,8 @@ fun AlarmRingingScreen(
             }
 
             // --- NÚT TẮT BÁO THỨC: NÚT CHÍNH MÀU TÍM ---
-            LiquidGlassButton(
+            SoftSurfaceButton(
                 onClick = onNavigateToQuiz,
-                backdrop = backdrop,
-                light = light,
                 tint = SolidColor(Calm.Primary),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,7 +249,7 @@ private fun DrawScope.drawSunrise(canvas: Size, phase: Float, stars: List<Star>)
             center = Offset(cx, cy)
         )
     }
-    blob(Calm.LavenderSoft.copy(alpha = 0.35f), w * (0.2f + 0.05f * sin(phase)), h * (0.22f + 0.02f * cos(phase)), w * 0.7f)
+    blob(Calm.NeutralSoft.copy(alpha = 0.35f), w * (0.2f + 0.05f * sin(phase)), h * (0.22f + 0.02f * cos(phase)), w * 0.7f)
     blob(Color(0xFFE4E4E7).copy(alpha = 0.30f), w * (0.85f + 0.04f * cos(phase)), h * (0.55f + 0.02f * sin(phase)), w * 0.6f)
     blob(Color(0xFFE4E4E7).copy(alpha = 0.30f), w * (0.55f + 0.06f * sin(phase + 2f)), h * 0.08f, w * 0.55f)
 

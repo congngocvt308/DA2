@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.qr
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.widget.Toast
@@ -53,7 +53,7 @@ fun QRCodeSelectionDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        GlassCard(
+        CalmCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.7f)
@@ -115,7 +115,7 @@ fun QRCodeSelectionDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Calm.LavenderSoft
+                                tint = Calm.NeutralSoft
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
@@ -132,7 +132,7 @@ fun QRCodeSelectionDialog(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(24.dp))
-                            GlassButton(
+                            CalmButton(
                                 onClick = onManageQRCodes,
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -198,11 +198,11 @@ fun QRCodeSelectionDialog(
                 
                 // Info card
                 if (selectedIds.isNotEmpty()) {
-                    GlassCard(
+                    CalmCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Calm.LavenderMist
+                            containerColor = Calm.NeutralMist
                         )
                     ) {
                         Row(
@@ -242,7 +242,7 @@ fun QRCodeSelectionDialog(
                         Text("Hủy")
                     }
                     
-                    GlassButton(
+                    CalmButton(
                         onClick = { onConfirm(selectedIds.toList()) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
@@ -266,7 +266,7 @@ private fun SelectableQRCodeItem(
     canSelect: Boolean,
     onToggle: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -281,7 +281,7 @@ private fun SelectableQRCodeItem(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
-                Calm.LavenderMist
+                Calm.NeutralMist
             else
                 Calm.Surface
         ),
@@ -337,7 +337,7 @@ private fun SelectableQRCodeItem(
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (qrCode.codeType == "QR")
-                            Calm.LavenderMist
+                            Calm.NeutralMist
                         else
                             Calm.WellnessMist
                     ),

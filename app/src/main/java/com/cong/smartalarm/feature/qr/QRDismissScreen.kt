@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.qr
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -107,7 +107,7 @@ private fun ScanResultScreen(
                 .padding(top = 48.dp, start = 16.dp)
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Calm.LavenderMist)
+                .background(Calm.NeutralMist)
         ) {
             Icon(
                 Icons.Default.ArrowBack,
@@ -220,7 +220,7 @@ private fun InvalidContent(
         if (requiredCodes.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
             
-            GlassCard(
+            CalmCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
@@ -253,7 +253,7 @@ private fun InvalidContent(
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        GlassButton(
+        CalmButton(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,

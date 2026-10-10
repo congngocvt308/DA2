@@ -1,11 +1,10 @@
 package com.cong.smartalarm.feature.museum
 
 import com.cong.smartalarm.data.repository.PictureRepository
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
 import androidx.compose.runtime.CompositionLocalProvider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.rememberReducedMotion
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import androidx.compose.ui.graphics.Brush
 
@@ -73,10 +72,7 @@ fun MemoryMuseumScreen(
         )
     )
 ) {
-    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
-    CompositionLocalProvider(LocalGlassBackdrop provides null) {
-        MemoryMuseumContent(onBackClick, viewModel)
-    }
+    MemoryMuseumContent(onBackClick, viewModel)
 }
 
 @Composable
@@ -274,7 +270,7 @@ private fun EmptyMuseumCard() {
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        GlassCard(
+        CalmCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = Calm.Surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
@@ -291,7 +287,7 @@ private fun EmptyMuseumCard() {
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Calm.LavenderMist),
+                        .background(Calm.NeutralMist),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

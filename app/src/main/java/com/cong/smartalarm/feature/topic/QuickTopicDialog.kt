@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.topic
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -61,7 +61,7 @@ fun QuickTopicContent(
 ) {
     var topicName by remember { mutableStateOf(initialName) }
 
-    GlassCard(
+    CalmCard(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
@@ -107,7 +107,7 @@ fun QuickTopicContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            GlassButton(
+            CalmButton(
                 onClick = {
                     if (topicName.isNotBlank()) {
                         onSave(topicName.trim())

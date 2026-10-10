@@ -126,7 +126,7 @@ fun CustomAlarmCard(
                         .clip(RoundedCornerShape(16.dp))
                         .border(
                             width = 1.dp,
-                            color = Calm.LavenderSoft,
+                            color = Calm.NeutralSoft,
                             shape = RoundedCornerShape(16.dp)
                         )
                 )

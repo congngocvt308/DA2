@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.topic
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.foundation.clickable
@@ -28,7 +28,7 @@ fun TopicCard(
     topic: TopicData,
     onClick: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()

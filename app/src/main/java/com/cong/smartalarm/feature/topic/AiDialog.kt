@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.topic
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.content.Context
@@ -83,7 +83,7 @@ fun AiCreateQuestionBottomSheet(
                 modifier = Modifier
                     .width(40.dp)
                     .height(4.dp)
-                    .background(Calm.LavenderSoft, RoundedCornerShape(2.dp))
+                    .background(Calm.NeutralSoft, RoundedCornerShape(2.dp))
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -138,7 +138,7 @@ fun AiCreateQuestionBottomSheet(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Nút hành động chính để thực thi lưu trữ/nén tạm thời
-                        GlassButton(
+                        CalmButton(
                             onClick = onProcessAndCompress,
                             enabled = selectedDocuments.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -175,12 +175,12 @@ fun AiCreateQuestionBottomSheet(
 
 @Composable
 private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
-    GlassCard(
+    CalmCard(
         onClick = onUploadClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(if (isCompact) 64.dp else 130.dp), // Tự động co giãn diện tích dựa theo trạng thái hàng chờ
-        colors = CardDefaults.cardColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground),
+        colors = CardDefaults.cardColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -236,7 +236,7 @@ private fun DocumentItemRow(
         label = "ArrowRotation"
     )
 
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
@@ -541,7 +541,7 @@ private fun ConfigureMatrixLayout(
         val chipColors = FilterChipDefaults.filterChipColors(
             containerColor = Calm.Surface,
             labelColor = Calm.MutedForeground,
-            selectedContainerColor = Calm.LavenderMist,
+            selectedContainerColor = Calm.NeutralMist,
             selectedLabelColor = Calm.Foreground,
             selectedLeadingIconColor = Calm.Primary
         )
@@ -577,7 +577,7 @@ private fun ConfigureMatrixLayout(
         Spacer(modifier = Modifier.height(16.dp))
 
         val totalQuestions = (config.easyCount + config.midCount + config.hardCount).toInt()
-        GlassButton(
+        CalmButton(
             onClick = onGenerateClick,
             enabled = totalQuestions > 0,
             modifier = Modifier.fillMaxWidth().height(48.dp),

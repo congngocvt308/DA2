@@ -1,7 +1,7 @@
 package com.cong.smartalarm.core.designsystem.component
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -33,7 +33,7 @@ fun PermissionItem(
     isGranted: Boolean,
     onClick: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isGranted) {

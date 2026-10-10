@@ -1,9 +1,8 @@
 package com.cong.smartalarm.feature.museum
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
 import androidx.compose.runtime.CompositionLocalProvider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassAlertDialog
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.os.Build
@@ -56,10 +55,7 @@ fun ImageDetailDialog(
     onDeletePhoto: (PictureEntity) -> Unit,
     onUpdateDescription: (PictureEntity, String) -> Unit // 🚀 Callback để lưu mô tả mới
 ) {
-    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
-    CompositionLocalProvider(LocalGlassBackdrop provides null) {
-        ImageDetailDialogContent(picture, onDismiss, onDeletePhoto, onUpdateDescription)
-    }
+    ImageDetailDialogContent(picture, onDismiss, onDeletePhoto, onUpdateDescription)
 }
 
 @Composable
@@ -126,9 +122,9 @@ private fun ImageDetailDialogContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. HIỂN THỊ ẢNH CHÍNH
-                GlassCard(
+                CalmCard(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Calm.LavenderMist),
+                    colors = CardDefaults.cardColors(containerColor = Calm.NeutralMist),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -258,7 +254,7 @@ private fun ImageDetailDialogContent(
 
     // Dialog xác nhận xóa
     if (showDeleteConfirm) {
-        GlassAlertDialog(
+        CalmAlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Xác nhận xóa", fontWeight = FontWeight.Bold) },
             text = { Text("Bạn có chắc chắn muốn xóa nụ cười này khỏi Bảo Tàng?") },

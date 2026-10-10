@@ -1,7 +1,9 @@
 package com.cong.smartalarm.feature.alarmlist
+
+import com.cong.smartalarm.core.designsystem.component.CalmSwitch
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -52,7 +54,7 @@ fun AlarmCard(
     onToggle: (Boolean) -> Unit,
     onCardClick: () -> Unit,
     onDelete:() -> Unit){
-    GlassCard(
+    CalmCard(
         onClick = onCardClick,
         modifier = Modifier
             .fillMaxWidth()
@@ -107,16 +109,9 @@ fun AlarmCard(
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
-                Switch(
+                CalmSwitch(
                     checked = alarmData.isEnabled,
-                    onCheckedChange = { onToggle(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                        uncheckedTrackColor = Calm.Muted,
-                        uncheckedBorderColor = MaterialTheme.colorScheme.outline
-                    )
+                    onCheckedChange = { onToggle(it) }
                 )
             }
             Row(
@@ -148,7 +143,7 @@ fun AlarmSoundSection(
     onVolumeChange: (Float) -> Unit,
     onSoundClick: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
@@ -173,7 +168,7 @@ fun AlarmSoundSection(
             Surface(
                 onClick = onSoundClick,
                 shape = RoundedCornerShape(12.dp),
-                color = Calm.LavenderMist,
+                color = Calm.NeutralMist,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Row(

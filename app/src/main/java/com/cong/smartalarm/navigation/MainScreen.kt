@@ -1,7 +1,7 @@
 package com.cong.smartalarm.navigation
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassAlertDialog
+import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 
 import android.app.AlarmManager
 import android.content.Context
@@ -16,8 +16,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
-import com.cong.smartalarm.core.designsystem.component.rememberReducedMotion
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
+import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -165,7 +165,7 @@ fun MainScreen(initialExternalRoute: String? = null) {
 
     // --- DIALOG CUSTOM VỚI PERMISSION ITEMS ---
     if (showPermissionDialog) {
-        GlassAlertDialog(
+        CalmAlertDialog(
             onDismissRequest = {showPermissionDialog = false},
             title = { Text("Yêu cầu hệ thống 🚨", fontWeight = FontWeight.Bold) },
             text = {
@@ -378,8 +378,8 @@ fun BottomNavBar(navController: NavHostController) {
             .navigationBarsPadding(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // 🧊 Thanh điều hướng kính nổi (Liquid Glass)
-        LiquidGlass(
+        // Thanh điều hướng nổi mềm (soft UI)
+        SoftSurface(
             shape = RoundedCornerShape(40.dp),
             elevation = 12.dp,
             modifier = Modifier
@@ -395,8 +395,8 @@ fun BottomNavBar(navController: NavHostController) {
                         .width(itemWidth - 12.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(32.dp))
-                        .background(Calm.LavenderMist) // Viên chỉ báo tab đang chọn
-                        .border(1.dp, Calm.LavenderSoft, RoundedCornerShape(32.dp))
+                        .background(Calm.NeutralMist) // Viên chỉ báo tab đang chọn
+                        .border(1.dp, Calm.NeutralSoft, RoundedCornerShape(32.dp))
                 )
 
                 Row(

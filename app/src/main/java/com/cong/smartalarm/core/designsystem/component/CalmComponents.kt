@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.cong.smartalarm.core.designsystem.theme.CalmShapes
+import com.cong.smartalarm.core.designsystem.theme.SoftPressMillis
 
 // ---------------------------------------------------------------------------
 // Các component soft UI "thay thế tại chỗ": cùng tham số với bản Material3 tương ứng
@@ -57,12 +59,12 @@ import androidx.compose.ui.window.DialogProperties
 // ---------------------------------------------------------------------------
 
 /** Màu nền Material -> lớp phủ trên bề mặt trắng. Trong suốt = giữ bề mặt trắng. */
-private fun glassTint(container: Color): Brush =
-    if (container.alpha == 0f) SolidColor(Color.Transparent) else SolidColor(container)
+private fun tintOf(container: Color): Brush =
+    if (container.alpha == 0f) NoTint else SolidColor(container)
 
 /** Card nổi mềm — thay cho androidx.compose.material3.Card. */
 @Composable
-fun GlassCard(
+fun CalmCard(
     modifier: Modifier = Modifier,
     shape: Shape = CardDefaults.shape,
     colors: CardColors = CardDefaults.cardColors(),
@@ -70,12 +72,12 @@ fun GlassCard(
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    GlassCardImpl(null, modifier, true, shape, colors, border, null, content)
+    CalmCardImpl(null, modifier, true, shape, colors, border, null, content)
 }
 
 /** Card nổi mềm bấm được — thay cho Card(onClick = ...). */
 @Composable
-fun GlassCard(
+fun CalmCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -86,11 +88,11 @@ fun GlassCard(
     interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    GlassCardImpl(onClick, modifier, enabled, shape, colors, border, interactionSource, content)
+    CalmCardImpl(onClick, modifier, enabled, shape, colors, border, interactionSource, content)
 }
 
 @Composable
-private fun GlassCardImpl(
+private fun CalmCardImpl(
     onClick: (() -> Unit)?,
     modifier: Modifier,
     enabled: Boolean,
@@ -104,10 +106,10 @@ private fun GlassCardImpl(
     val contentColor = if (enabled) colors.contentColor else colors.disabledContentColor
     // Màu mặc định của Card (surfaceContainerHighest) -> giữ thẻ trắng nổi trên nền xám nhạt
     val isDefault = container == MaterialTheme.colorScheme.surfaceContainerHighest
-    LiquidGlass(
+    SoftSurface(
         modifier = modifier.then(if (border != null) Modifier.border(border, shape) else Modifier),
         shape = shape,
-        tint = if (isDefault) SolidColor(Color.Transparent) else glassTint(container),
+        tint = if (isDefault) NoTint else tintOf(container),
         elevation = 10.dp,
         contentAlignment = Alignment.TopStart,
         propagateMinConstraints = true,
@@ -123,7 +125,7 @@ private fun GlassCardImpl(
 
 /** Nút nổi mềm tô màu — thay cho androidx.compose.material3.Button. */
 @Composable
-fun GlassButton(
+fun CalmButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -137,12 +139,12 @@ fun GlassButton(
 ) {
     val container = if (enabled) colors.containerColor else colors.disabledContainerColor
     val contentColor = if (enabled) colors.contentColor else colors.disabledContentColor
-    GlassPressable(
+    SoftPressable(
         onClick = onClick,
         modifier = modifier.then(if (border != null) Modifier.border(border, shape) else Modifier),
         enabled = enabled,
         shape = shape,
-        tint = glassTint(container),
+        tint = tintOf(container),
         elevation = if (elevation == null) 0.dp else 8.dp,
         interactionSource = interactionSource
     ) {
@@ -164,7 +166,7 @@ fun GlassButton(
 
 /** FAB nổi mềm — thay cho androidx.compose.material3.FloatingActionButton. */
 @Composable
-fun GlassFloatingActionButton(
+fun CalmFloatingActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = FloatingActionButtonDefaults.shape,
@@ -174,11 +176,11 @@ fun GlassFloatingActionButton(
     interactionSource: MutableInteractionSource? = null,
     content: @Composable () -> Unit
 ) {
-    GlassPressable(
+    SoftPressable(
         onClick = onClick,
         modifier = modifier.defaultMinSize(56.dp, 56.dp),
         shape = shape,
-        tint = glassTint(containerColor),
+        tint = tintOf(containerColor),
         elevation = 14.dp,
         interactionSource = interactionSource
     ) {
@@ -190,7 +192,7 @@ fun GlassFloatingActionButton(
 
 /** Bề mặt bấm được: lún nhẹ khi nhấn (soft press 150 ms), không nảy. */
 @Composable
-private fun GlassPressable(
+private fun SoftPressable(
     onClick: () -> Unit,
     modifier: Modifier,
     enabled: Boolean = true,
@@ -207,7 +209,7 @@ private fun GlassPressable(
         animationSpec = tween(SoftPressMillis),
         label = "softPress"
     )
-    LiquidGlass(
+    SoftSurface(
         modifier = modifier.graphicsLayer {
             scaleX = 1f - 0.02f * press
             scaleY = 1f - 0.02f * press
@@ -227,20 +229,16 @@ private fun GlassPressable(
     }
 }
 
-/** Nền panel cho dialog: trắng, chữ gần đen luôn dễ đọc. */
-val GlassDialogTint: Brush = SolidColor(Color.Transparent)
-
 /** Panel nổi mềm cho Dialog tuỳ biến. */
 @Composable
-fun GlassDialogSurface(
+fun CalmDialogSurface(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(28.dp),
+    shape: Shape = CalmShapes.Dialog,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    LiquidGlass(
+    SoftSurface(
         modifier = modifier,
         shape = shape,
-        tint = GlassDialogTint,
         elevation = 24.dp,
         contentAlignment = Alignment.TopStart,
         propagateMinConstraints = true
@@ -253,7 +251,7 @@ fun GlassDialogSurface(
 
 /** AlertDialog nổi mềm — thay cho androidx.compose.material3.AlertDialog. */
 @Composable
-fun GlassAlertDialog(
+fun CalmAlertDialog(
     onDismissRequest: () -> Unit,
     confirmButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -270,7 +268,7 @@ fun GlassAlertDialog(
     properties: DialogProperties = DialogProperties()
 ) {
     Dialog(onDismissRequest = onDismissRequest, properties = properties) {
-        GlassDialogSurface(
+        CalmDialogSurface(
             modifier = modifier.widthIn(min = 280.dp, max = 560.dp),
             shape = shape
         ) {

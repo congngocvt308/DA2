@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.topic
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassButton
-import com.cong.smartalarm.core.designsystem.component.GlassAlertDialog
+import com.cong.smartalarm.core.designsystem.component.CalmButton
+import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.animation.AnimatedVisibility
@@ -105,7 +105,7 @@ fun TopicDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                HorizontalDivider(color = Calm.LavenderSoft, thickness = 1.dp, modifier = Modifier.width(100.dp))
+                HorizontalDivider(color = Calm.NeutralSoft, thickness = 1.dp, modifier = Modifier.width(100.dp))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -235,7 +235,7 @@ fun TopicDetailScreen(
         }
 
         if (showDeleteConfirmDialog) {
-            GlassAlertDialog(
+            CalmAlertDialog(
                 onDismissRequest = { showDeleteConfirmDialog = false },
                 title = { Text("Xóa chủ đề?") },
                 text = { Text("Bạn có chắc muốn xóa chủ đề '$currentTopicName' và tất cả câu hỏi bên trong không?") },
@@ -268,7 +268,7 @@ fun TopicDetailScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
         ) {
-            GlassButton(
+            CalmButton(
                 onClick = {
                     viewModel.resetDraft()
                     showAddDialog = true

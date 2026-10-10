@@ -2,7 +2,7 @@ package com.cong.smartalarm.feature.topic
 
 import androidx.compose.ui.graphics.Color
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.foundation.clickable
@@ -38,7 +38,7 @@ fun QuestionCard(
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()

@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.stats
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 
 import android.content.Context
 import androidx.compose.foundation.Canvas
@@ -210,7 +210,7 @@ fun StatsScreen(onNavigateToMuseum: () -> Unit) {
 // 🔥 COMPOSABLE BỘ THẺ "BẢO TÀNG KÝ ỨC" ĐƯỢC THIẾT KẾ ĐẸP MẮT
 @Composable
 fun MemoryMuseumCard(onClick: () -> Unit) {
-    GlassCard(
+    CalmCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
@@ -222,7 +222,7 @@ fun MemoryMuseumCard(onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.outlineVariant
         ),
         colors = CardDefaults.cardColors(
-            containerColor = Calm.LavenderMist
+            containerColor = Calm.NeutralMist
         )
     ) {
         Row(
@@ -265,10 +265,10 @@ fun SrsDistributionSection(
     val new = srsStats.find { it.status == "New" }?.count ?: 0
     // Thang màu dịu: mới (nhạt) -> đang học (lavender) -> đã thuộc (wellness)
     val srsMastered = Calm.Wellness
-    val srsLearning = Calm.Lavender
-    val srsNew = Calm.LavenderSoft
+    val srsLearning = Calm.Neutral
+    val srsNew = Calm.NeutralSoft
 
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -370,7 +370,7 @@ fun LearningPerformanceChart(stats: List<DayAccuracy>) {
     val daysWithData = stats.count { it.accuracy != null }
     val daysOnGoal = stats.count { (it.accuracy ?: 0f) >= goal }
 
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -455,8 +455,8 @@ fun LearningPerformanceChart(stats: List<DayAccuracy>) {
                                         when {
                                             acc == null -> Calm.Muted
                                             reached -> Calm.Wellness
-                                            acc == 0f -> Calm.LavenderSoft
-                                            else -> Calm.Lavender
+                                            acc == 0f -> Calm.NeutralSoft
+                                            else -> Calm.Neutral
                                         }
                                     )
                             )
@@ -515,7 +515,7 @@ fun StatCard(
     icon: ImageVector,
     color: Color
 ) {
-    GlassCard(
+    CalmCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -555,7 +555,7 @@ fun SmallStatCard(
     value: String,
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
+    CalmCard(
         modifier = modifier.padding(vertical = 4.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),

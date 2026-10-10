@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.topic
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.foundation.background
@@ -47,7 +47,7 @@ fun AddQuestionDialog(
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f)),
             contentAlignment = Alignment.Center
         ) {
-            GlassCard(
+            CalmCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
@@ -158,7 +158,7 @@ fun AddQuestionDialog(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    GlassButton(
+                    CalmButton(
                         onClick = {
                             viewModel.saveQuestion()
                             onSaveSuccess()

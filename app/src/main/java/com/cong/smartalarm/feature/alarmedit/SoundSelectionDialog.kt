@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.alarmedit
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
-import com.cong.smartalarm.core.designsystem.component.GlassAlertDialog
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
+import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.content.Intent
@@ -72,19 +72,19 @@ fun SoundSelectionDialog(
         }
     )
 
-    GlassAlertDialog(
+    CalmAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Chọn nhạc chuông") },
         text = {
             Column {
 
-                GlassButton(
+                CalmButton(
                     onClick = {
                         // Chỉ lọc lấy file âm thanh (mp3, wav...)
                         filePickerLauncher.launch(arrayOf("audio/*"))
                     },
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground)
+                    colors = ButtonDefaults.buttonColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground)
                 ) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
@@ -95,7 +95,7 @@ fun SoundSelectionDialog(
 
                 // --- PHẦN HIỂN THỊ FILE TÙY CHỈNH (Nếu đang chọn file ngoài) ---
                 if (isCustomFile) {
-                    GlassCard(
+                    CalmCard(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)

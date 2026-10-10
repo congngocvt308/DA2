@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.qr
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
-import com.cong.smartalarm.core.designsystem.component.GlassAlertDialog
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
+import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.Manifest
@@ -101,7 +101,7 @@ fun QRCodeManagementDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        GlassCard(
+        CalmCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
@@ -214,7 +214,7 @@ fun QRCodeManagementDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Calm.LavenderSoft
+                                tint = Calm.NeutralSoft
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
@@ -283,7 +283,7 @@ fun QRCodeManagementDialog(
     
     // Dialog xác nhận xóa
     showDeleteConfirm?.let { qrCode ->
-        GlassAlertDialog(
+        CalmAlertDialog(
             onDismissRequest = { showDeleteConfirm = null },
             title = { Text("Xóa mã?") },
             text = { Text("Bạn có chắc muốn xóa \"${qrCode.name}\"? Mã này sẽ bị hủy liên kết khỏi tất cả báo thức.") },
@@ -316,7 +316,7 @@ private fun AddMethodButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -361,7 +361,7 @@ private fun QRCodeItem(
     qrCode: QRCodeEntity,
     onDelete: () -> Unit
 ) {
-    GlassCard(
+    CalmCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -379,7 +379,7 @@ private fun QRCodeItem(
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (qrCode.codeType == "QR") 
-                            Calm.LavenderMist 
+                            Calm.NeutralMist 
                         else 
                             Calm.WellnessMist
                     ),
@@ -447,7 +447,7 @@ fun AddQRCodeDialog(
     val isFromScan = initialCode.isNotEmpty()
     
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(
+        CalmCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
@@ -569,7 +569,7 @@ fun AddQRCodeDialog(
                         Text("Hủy")
                     }
                     
-                    GlassButton(
+                    CalmButton(
                         onClick = { onSave(name, code, selectedType) },
                         enabled = name.isNotBlank() && code.isNotBlank(),
                         modifier = Modifier.weight(1f),

@@ -4,8 +4,8 @@ import com.cong.smartalarm.feature.alarmedit.AlarmSettingsViewModel
 import com.cong.smartalarm.feature.alarmedit.SoundSelectionDialog
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassFloatingActionButton
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
+import com.cong.smartalarm.core.designsystem.component.CalmFloatingActionButton
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import com.cong.smartalarm.feature.alarmlist.AlarmCard
@@ -307,7 +307,7 @@ fun FabSpeedDial(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 70.dp)
         ) {
-            LiquidGlass(
+            SoftSurface(
                 cornerRadius = 16.dp
             ) {
                 Column(
@@ -335,7 +335,7 @@ fun FabSpeedDial(
             }
         }
 
-        GlassFloatingActionButton(
+        CalmFloatingActionButton(
             onClick = onToggleMenu,
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(28.dp),

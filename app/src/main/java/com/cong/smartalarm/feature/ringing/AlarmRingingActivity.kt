@@ -34,7 +34,7 @@ import com.cong.smartalarm.feature.smile.FaceMissionViewModel
 import com.cong.smartalarm.feature.smile.FaceMissionViewModelFactory
 import com.cong.smartalarm.feature.stats.StatsViewModel
 import com.cong.smartalarm.feature.stats.StatsViewModelFactory
-import com.cong.smartalarm.core.designsystem.theme.MyApplicationTheme
+import com.cong.smartalarm.core.designsystem.theme.SmartAlarmTheme
 import kotlinx.coroutines.launch
 import kotlin.jvm.java
 
@@ -51,7 +51,7 @@ class AlarmRingingActivity : ComponentActivity() {
         val hasQRCodes = intent.getBooleanExtra("HAS_QR_CODES", false)
 
         setContent {
-            MyApplicationTheme {
+            SmartAlarmTheme {
                 // Khởi tạo NavController nội bộ
                 val context = LocalContext.current
                 val database = AppDatabase.getDatabase(context.applicationContext)

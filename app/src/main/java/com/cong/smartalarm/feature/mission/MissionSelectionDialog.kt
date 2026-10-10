@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.mission
 
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.foundation.background
@@ -93,7 +93,7 @@ fun MissionSelectionContent(
         uiState.topics.flatMap { it.questions }.count { it.isSelected }
     }
 
-    GlassCard(
+    CalmCard(
         modifier = Modifier.fillMaxWidth().heightIn(max = 700.dp),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -123,7 +123,7 @@ fun MissionSelectionContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Section: Slider chọn số lượng
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
@@ -152,7 +152,7 @@ fun MissionSelectionContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier
@@ -178,7 +178,7 @@ fun MissionSelectionContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            GlassButton(
+            CalmButton(
                 onClick = onConfirm,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(28.dp)

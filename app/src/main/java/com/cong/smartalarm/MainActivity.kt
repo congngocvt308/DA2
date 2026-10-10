@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.cong.smartalarm.navigation.MainScreen
 import com.cong.smartalarm.navigation.Screen
-import com.cong.smartalarm.core.designsystem.theme.MyApplicationTheme
+import com.cong.smartalarm.core.designsystem.theme.SmartAlarmTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
         checkIntent(intent)
 
         setContent {
-            MyApplicationTheme {
+            SmartAlarmTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

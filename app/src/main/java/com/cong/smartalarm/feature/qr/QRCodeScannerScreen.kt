@@ -1,9 +1,8 @@
 package com.cong.smartalarm.feature.qr
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
 import androidx.compose.runtime.CompositionLocalProvider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.rememberReducedMotion
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import android.util.Size
@@ -58,10 +57,7 @@ fun QRCodeScannerScreen(
     scannerTitle: String = "Quét mã QR/Barcode",
     scannerHint: String = "Đặt mã vào khung hình để quét"
 ) {
-    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
-    CompositionLocalProvider(LocalGlassBackdrop provides null) {
-        QRCodeScannerContent(onCodeScanned, onClose, scannerTitle, scannerHint)
-    }
+    QRCodeScannerContent(onCodeScanned, onClose, scannerTitle, scannerHint)
 }
 
 @Composable
@@ -224,7 +220,7 @@ private fun QRCodeScannerContent(
         }
         
         // Bottom instruction
-        GlassCard(
+        CalmCard(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
@@ -301,7 +297,7 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
         // Vẽ góc highlight
         val cornerLength = 40.dp.toPx()
         val cornerStroke = 6.dp.toPx()
-        val highlightColor = Calm.LavenderSoft
+        val highlightColor = Calm.NeutralSoft
         
         // Top-left corner
         drawLine(

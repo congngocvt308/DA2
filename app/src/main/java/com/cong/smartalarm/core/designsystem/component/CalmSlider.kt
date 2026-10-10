@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.cong.smartalarm.core.designsystem.theme.Calm
+import com.cong.smartalarm.core.designsystem.theme.SoftPressMillis
 
 /**
  * Thanh kéo soft UI dùng chung cho cả app (thay cho Material3 Slider).
@@ -109,7 +110,7 @@ private fun CalmSliderTrack(state: SliderState) {
         val h = size.height
         val radius = CornerRadius(h / 2, h / 2)
         // Rãnh trống: xám nhạt, viền mảnh như được khắc lõm vào bề mặt
-        drawRoundRect(Calm.LavenderMist, cornerRadius = radius)
+        drawRoundRect(Calm.NeutralMist, cornerRadius = radius)
         drawRoundRect(
             Calm.Border,
             topLeft = Offset(0.5f, 0.5f),
@@ -121,7 +122,7 @@ private fun CalmSliderTrack(state: SliderState) {
         val activeWidth = size.width * fraction
         if (activeWidth > 0f) {
             drawRoundRect(
-                Brush.horizontalGradient(listOf(Calm.Lavender, Calm.Primary), endX = activeWidth.coerceAtLeast(1f)),
+                Brush.horizontalGradient(listOf(Calm.Neutral, Calm.Primary), endX = activeWidth.coerceAtLeast(1f)),
                 size = Size(activeWidth.coerceAtLeast(h), h),
                 cornerRadius = radius
             )

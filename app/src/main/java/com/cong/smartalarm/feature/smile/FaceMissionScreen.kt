@@ -1,5 +1,4 @@
 package com.cong.smartalarm.feature.smile
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import androidx.compose.runtime.CompositionLocalProvider
 
@@ -98,7 +97,7 @@ fun CustomPaintProgressBar(
 
             // Dải màu dịu: xám -> đen -> xanh wellness
             val calmBrush = Brush.linearGradient(
-                colors = listOf(Calm.Lavender, Calm.Primary, Calm.Wellness),
+                colors = listOf(Calm.Neutral, Calm.Primary, Calm.Wellness),
                 start = Offset(0f, 0f),
                 end = Offset(size.width, 0f)
             )
@@ -106,7 +105,7 @@ fun CustomPaintProgressBar(
             if (innerWidth > 0f && innerHeight > 0f) {
                 // 1. NỀN BÊN TRONG: rãnh xám nhạt
                 drawRoundRect(
-                    color = Calm.LavenderMist,
+                    color = Calm.NeutralMist,
                     topLeft = Offset(innerLeft, innerTop),
                     size = Size(innerWidth, innerHeight),
                     cornerRadius = CornerRadius(innerRadius, innerRadius)
@@ -132,7 +131,7 @@ fun CustomPaintProgressBar(
             val borderRadius = borderHeightSize / 2
 
             drawRoundRect(
-                color = Calm.LavenderSoft,
+                color = Calm.NeutralSoft,
                 topLeft = Offset(borderLeft, borderTop),
                 size = Size(borderWidthSize, borderHeightSize),
                 cornerRadius = CornerRadius(borderRadius, borderRadius),
@@ -260,10 +259,7 @@ fun FaceFilterOverlay(
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> Unit) {
-    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
-    CompositionLocalProvider(LocalGlassBackdrop provides null) {
-        FaceMissionContent(viewModel, onLuongAComplete)
-    }
+    FaceMissionContent(viewModel, onLuongAComplete)
 }
 
 @Composable
@@ -355,7 +351,7 @@ private fun FaceMissionContent(viewModel: FaceMissionViewModel, onLuongAComplete
                     .fillMaxWidth()
                     .aspectRatio(0.9f)
                     .background(
-                        color = Calm.LavenderSoft, // Viền xám nhạt
+                        color = Calm.NeutralSoft, // Viền xám nhạt
                         shape = RoundedCornerShape(40.dp)
                     )
                     .padding(2.5.dp)

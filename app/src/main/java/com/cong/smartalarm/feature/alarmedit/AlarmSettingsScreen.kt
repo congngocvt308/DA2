@@ -1,7 +1,8 @@
 package com.cong.smartalarm.feature.alarmedit
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
+import com.cong.smartalarm.core.designsystem.component.CalmSwitch
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
+import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.activity.compose.BackHandler
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -55,12 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cong.smartalarm.core.designsystem.component.GlassBackdrop
-import com.cong.smartalarm.core.designsystem.component.GlassDialogSurface
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
-import com.cong.smartalarm.core.designsystem.component.LiquidGlassButton
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
-import com.cong.smartalarm.core.designsystem.component.LocalGlassLight
+import com.cong.smartalarm.core.designsystem.component.CalmDialogSurface
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
+import com.cong.smartalarm.core.designsystem.component.SoftSurfaceButton
 import com.cong.smartalarm.feature.smile.FaceMissionScreen
 import com.cong.smartalarm.feature.smile.FaceMissionViewModel
 import com.cong.smartalarm.feature.smile.FaceMissionViewModelFactory
@@ -76,16 +75,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import kotlin.math.abs
 
-// Bảng màu Calm (chữ tối trên bề mặt trắng/pastel)
-private val GlassText = Calm.Foreground
-private val GlassSubtle = Calm.MutedForeground
-private val GlassFill = Calm.LavenderMist
-private val GlassStroke = Calm.LavenderSoft
-private val GlassAccent = Calm.Primary
-private val GlassWarmTint = Brush.horizontalGradient(listOf(Calm.Primary, Calm.Primary))
-
-/** Gom hậu cảnh + hướng sáng để truyền xuống các section. */
-class GlassEnv(val backdrop: GlassBackdrop?, val light: () -> Offset)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,13 +85,10 @@ fun AlarmSettingsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val backdrop = LocalGlassBackdrop.current
-    val light = LocalGlassLight.current
-    val glass = remember(backdrop, light) { GlassEnv(backdrop, light) }
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = GlassText)
+            CircularProgressIndicator(color = Calm.Foreground)
         }
         return
     }
@@ -171,17 +157,15 @@ fun AlarmSettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LiquidGlassButton(
+                SoftSurfaceButton(
                     onClick = { showDiscardDialog = true },
-                    backdrop = backdrop,
-                    light = glass.light,
                     modifier = Modifier.size(44.dp)
                 ) {
-                    Icon(Icons.Default.Close, "Đóng", tint = GlassText)
+                    Icon(Icons.Default.Close, "Đóng", tint = Calm.Foreground)
                 }
                 Text(
                     text = "Chuông báo thức",
-                    color = GlassText,
+                    color = Calm.Foreground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -199,17 +183,14 @@ fun AlarmSettingsScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp)
             ){
                 item {
-                    LiquidGlass(
-                        backdrop = backdrop,
-                        light = glass.light,
+                    SoftSurface(
                         cornerRadius = 22.dp,
-                        refraction = 10.dp,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextField(
                             value = uiState.label,
                             onValueChange = { viewModel.onLabelChanged(it) },
-                            label = { Text("Tên báo thức", color = GlassSubtle) },
+                            label = { Text("Tên báo thức", color = Calm.MutedForeground) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             colors = TextFieldDefaults.colors(
@@ -217,9 +198,9 @@ fun AlarmSettingsScreen(
                                 unfocusedContainerColor = Color.Transparent,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
-                                focusedTextColor = GlassText,
-                                unfocusedTextColor = GlassText,
-                                cursorColor = GlassAccent
+                                focusedTextColor = Calm.Foreground,
+                                unfocusedTextColor = Calm.Foreground,
+                                cursorColor = Calm.Primary
                             ),
                             leadingIcon = {
                                 Image(
@@ -232,7 +213,7 @@ fun AlarmSettingsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Sửa tên",
-                                    tint = GlassSubtle
+                                    tint = Calm.MutedForeground
                                 )
                             },
                         )
@@ -241,7 +222,7 @@ fun AlarmSettingsScreen(
 
                 // --- 1. PHẦN CHỈNH THỜI GIAN (2 LazyColumn) + 2. ĐỔ CHUÔNG SAU ---
                 item {
-                    GlassSection(glass) {
+                    SettingsSection {
                         TimePickerSection(
                             hourListState = hourListState,
                             minuteListState = minuteListState,
@@ -252,7 +233,7 @@ fun AlarmSettingsScreen(
                         )
                         Text(
                             text = uiState.timeUntilAlarm,
-                            color = GlassSubtle,
+                            color = Calm.MutedForeground,
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
@@ -262,7 +243,7 @@ fun AlarmSettingsScreen(
 
                 //--- 3. CHỌN NGÀY ---
                 item {
-                    GlassSection(glass) {
+                    SettingsSection {
                         DaySelectorSection(
                             daysOfWeek = uiState.daysOfWeek,
                             onRepeatDailyChange = { isChecked ->
@@ -277,7 +258,7 @@ fun AlarmSettingsScreen(
 
                 // --- 4. NHIỆM VỤ BÁO THỨC ---
                 item {
-                    GlassSection(glass) {
+                    SettingsSection {
                         SettingsSectionHeader(
                             title = "Nhiệm vụ báo thức"
                         )
@@ -301,8 +282,7 @@ fun AlarmSettingsScreen(
 
                 // --- 5. ÂM THANH BÁO THỨC ---
                 item {
-                    GlassSoundSection(
-                        glass = glass,
+                    SoundSettingsSection(
                         currentSoundTitle = ringtoneTitle,
                         currentVolume = uiState.volume,
 
@@ -320,7 +300,6 @@ fun AlarmSettingsScreen(
                 // --- 7. CÀI ĐẶT TÙY CHỈNH ---
                 item {
                     SnoozeSettingsSection(
-                        glass = glass,
                         isSnoozeEnabled = uiState.isSnoozeEnabled,
                         snoozeDuration = uiState.snoozeDuration,
                         onSnoozeToggle = { viewModel.onSnoozeToggle(it) },
@@ -330,11 +309,9 @@ fun AlarmSettingsScreen(
             }
         }
         // --- NÚT LƯU: KÍNH NHUỘM MÀU NỔI ---
-        LiquidGlassButton(
+        SoftSurfaceButton(
             onClick = { viewModel.saveAlarm() },
-            backdrop = backdrop,
-            light = glass.light,
-            tint = GlassWarmTint,
+            tint = SolidColor(Calm.Primary),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 24.dp, vertical = 20.dp)
@@ -491,7 +468,7 @@ fun MissionTypeSelectionDialog(
     onQRCodeSelected: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        GlassDialogSurface(modifier = Modifier.fillMaxWidth()) {
+        CalmDialogSurface(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -500,28 +477,28 @@ fun MissionTypeSelectionDialog(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Chọn loại nhiệm vụ",
-                            color = GlassText,
+                            color = Calm.Foreground,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Hoàn thành nhiệm vụ để tắt chuông",
-                            color = GlassSubtle,
+                            color = Calm.MutedForeground,
                             fontSize = 13.sp
                         )
                     }
-                    // Nút đóng tròn dạng kính nhỏ
+                    // Nút đóng tròn nhỏ
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(GlassFill)
-                            .border(1.dp, GlassStroke, CircleShape)
+                            .background(Calm.NeutralMist)
+                            .border(1.dp, Calm.NeutralSoft, CircleShape)
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Đóng", tint = GlassText, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = "Đóng", tint = Calm.Foreground, modifier = Modifier.size(18.dp))
                     }
                 }
 
@@ -531,7 +508,7 @@ fun MissionTypeSelectionDialog(
                     title = "Giải trắc nghiệm",
                     description = "Giải các câu hỏi để tỉnh táo.",
                     icon = "🧮",
-                    accent = listOf(Calm.LavenderMist, Calm.LavenderMist),
+                    accent = listOf(Calm.NeutralMist, Calm.NeutralMist),
                     onClick = onQuizSelected
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -600,13 +577,13 @@ private fun MissionTypeItem(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = GlassText
+                color = Calm.Foreground
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = GlassSubtle
+                color = Calm.MutedForeground
             )
         }
 
@@ -614,7 +591,7 @@ private fun MissionTypeItem(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = GlassSubtle
+            tint = Calm.MutedForeground
         )
     }
 }
@@ -671,18 +648,14 @@ fun SoundSelectionRow() {
 }
 
 
-/** Thẻ kính bo 28dp dùng cho từng nhóm cài đặt. */
+/** Thẻ nổi mềm bo 28dp cho từng nhóm cài đặt. */
 @Composable
-private fun GlassSection(
-    glass: GlassEnv,
+private fun SettingsSection(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    LiquidGlass(
-        backdrop = glass.backdrop,
-        light = glass.light,
+    SoftSurface(
         cornerRadius = 28.dp,
-        refraction = 12.dp,
         contentAlignment = Alignment.TopStart,
         modifier = modifier.fillMaxWidth()
     ) {
@@ -690,9 +663,9 @@ private fun GlassSection(
     }
 }
 
-/** Hàng bấm được bên trong thẻ kính (nền trắng mờ nhẹ). */
+/** Hàng bấm được bên trong thẻ cài đặt (nền xám rất nhạt). */
 @Composable
-private fun GlassRow(
+private fun SettingsRow(
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -700,7 +673,7 @@ private fun GlassRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(GlassFill)
+            .background(Calm.NeutralMist)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -709,25 +682,24 @@ private fun GlassRow(
 }
 
 @Composable
-private fun GlassSoundSection(
-    glass: GlassEnv,
+private fun SoundSettingsSection(
     currentSoundTitle: String,
     currentVolume: Float,
     onVolumeChange: (Float) -> Unit,
     onSoundClick: () -> Unit
 ) {
-    GlassSection(glass) {
+    SettingsSection {
         SettingsSectionHeader(title = "Âm thanh báo thức")
         Spacer(modifier = Modifier.height(12.dp))
 
         // Dòng tên bài hát
-        GlassRow(onClick = onSoundClick) {
-            Icon(imageVector = Icons.Default.MusicNote, contentDescription = null, tint = GlassAccent)
+        SettingsRow(onClick = onSoundClick) {
+            Icon(imageVector = Icons.Default.MusicNote, contentDescription = null, tint = Calm.Primary)
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = currentSoundTitle,
                 style = MaterialTheme.typography.bodyLarge,
-                color = GlassText,
+                color = Calm.Foreground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
@@ -735,7 +707,7 @@ private fun GlassSoundSection(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = GlassSubtle
+                tint = Calm.MutedForeground
             )
         }
 
@@ -743,7 +715,7 @@ private fun GlassSoundSection(
 
         // Dòng Slider Volume
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Âm lượng", tint = GlassSubtle)
+            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Âm lượng", tint = Calm.MutedForeground)
             Spacer(modifier = Modifier.width(12.dp))
             CalmSlider(
                 value = currentVolume,
@@ -784,8 +756,8 @@ fun AlarmTaskSection(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(tileShape)
-                        .background(if (hasAnyMission) Calm.LavenderMist else Calm.Muted)
-                        .border(1.dp, GlassStroke, tileShape)
+                        .background(if (hasAnyMission) Calm.NeutralMist else Calm.Muted)
+                        .border(1.dp, Calm.NeutralSoft, tileShape)
                         .clickable(onClick = if (hasAnyMission) onEditClick else onAddClick),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -794,7 +766,7 @@ fun AlarmTaskSection(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(if (hasAnyMission) Calm.Surface else Calm.LavenderMist),
+                            .background(if (hasAnyMission) Calm.Surface else Calm.NeutralMist),
                         contentAlignment = Alignment.Center
                     ) {
                         when {
@@ -803,13 +775,13 @@ fun AlarmTaskSection(
                             hasQR -> Icon(
                                 Icons.Default.QrCodeScanner,
                                 contentDescription = null,
-                                tint = GlassAccent,
+                                tint = Calm.Primary,
                                 modifier = Modifier.size(20.dp)
                             )
                             else -> Icon(
                                 Icons.Default.Add,
                                 contentDescription = "Thêm nhiệm vụ",
-                                tint = GlassAccent
+                                tint = Calm.Primary
                             )
                         }
                     }
@@ -824,7 +796,7 @@ fun AlarmTaskSection(
                             else -> "Thêm"
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = GlassText,
+                        color = Calm.Foreground,
                         fontSize = 11.sp
                     )
                 }
@@ -924,7 +896,7 @@ fun TimePickerSection(
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(GlassFill)
+                .background(Calm.NeutralMist)
         )
         Row(
             modifier = Modifier
@@ -964,7 +936,7 @@ fun TimePickerSection(
                 Text(
                     text = ":",
                     style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "lnum, tnum, case"),
-                    color = GlassText,
+                    color = Calm.Foreground,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1054,12 +1026,11 @@ fun DaySelectorSection(
                 text = "Hàng ngày",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = GlassText
+                color = Calm.Foreground
             )
-            Switch(
+            CalmSwitch(
                 checked = isDaily,
-                onCheckedChange = { onRepeatDailyChange(it) },
-                colors = glassSwitchColors()
+                onCheckedChange = { onRepeatDailyChange(it) }
             )
         }
 
@@ -1094,13 +1065,13 @@ fun CustomDayChip(
         modifier = modifier
             .height(48.dp)
             .clip(shape)
-            .background(if (isSelected) GlassAccent else GlassFill)
-            .border(1.dp, if (isSelected) GlassAccent else GlassStroke, shape)
+            .background(if (isSelected) Calm.Primary else Calm.NeutralMist)
+            .border(1.dp, if (isSelected) Calm.Primary else Calm.NeutralSoft, shape)
             .selectable(selected = isSelected, role = Role.Checkbox, onClick = onClick)
     ) {
         Text(
             text = text,
-            color = if (isSelected) Color.White else GlassText,
+            color = if (isSelected) Color.White else Calm.Foreground,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,
@@ -1109,15 +1080,6 @@ fun CustomDayChip(
     }
 }
 
-@Composable
-private fun glassSwitchColors() = SwitchDefaults.colors(
-    checkedThumbColor = Color.White,
-    checkedTrackColor = MaterialTheme.colorScheme.primary,
-    checkedBorderColor = Color.Transparent,
-    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-    uncheckedTrackColor = Calm.Muted,
-    uncheckedBorderColor = MaterialTheme.colorScheme.outline
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1132,7 +1094,7 @@ fun SettingsSectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            color = GlassText,
+            color = Calm.Foreground,
             fontWeight = FontWeight.Bold,
             fontSize = 17.sp
         )
@@ -1149,7 +1111,7 @@ private fun TimePickerItem(
             text = text,
             style = MaterialTheme.typography.headlineLarge,
             fontSize = if (isSelected) 36.sp else 32.sp,
-            color = if (isSelected) GlassText else GlassSubtle,
+            color = if (isSelected) Calm.Foreground else Calm.MutedForeground,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -1157,13 +1119,12 @@ private fun TimePickerItem(
 
 @Composable
 fun SnoozeSettingsSection(
-    glass: GlassEnv,
     isSnoozeEnabled: Boolean,
     snoozeDuration: Int,
     onSnoozeToggle: (Boolean) -> Unit,
     onDurationClick: () -> Unit
 ) {
-    GlassSection(glass) {
+    SettingsSection {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1171,14 +1132,13 @@ fun SnoozeSettingsSection(
         ) {
             Text(
                 text = "Báo lại",
-                color = GlassText,
+                color = Calm.Foreground,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
-            Switch(
+            CalmSwitch(
                 checked = isSnoozeEnabled,
-                onCheckedChange = onSnoozeToggle,
-                colors = glassSwitchColors()
+                onCheckedChange = onSnoozeToggle
             )
         }
 
@@ -1189,16 +1149,16 @@ fun SnoozeSettingsSection(
         ) {
             Column {
                 Spacer(modifier = Modifier.height(12.dp))
-                GlassRow(onClick = onDurationClick) {
+                SettingsRow(onClick = onDurationClick) {
                     Text(
                         text = "Khoảng thời gian",
-                        color = GlassText,
+                        color = Calm.Foreground,
                         fontSize = 16.sp,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = "$snoozeDuration phút",
-                        color = GlassAccent,
+                        color = Calm.Primary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1206,7 +1166,7 @@ fun SnoozeSettingsSection(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                         contentDescription = null,
-                        tint = GlassAccent,
+                        tint = Calm.Primary,
                         modifier = Modifier.size(14.dp)
                     )
                 }
@@ -1225,7 +1185,7 @@ fun SnoozeDurationDialog(
     val options = listOf(5, 10, 15, 20, 25, 30)
 
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(
+        CalmCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.width(300.dp)
@@ -1249,7 +1209,7 @@ fun SnoozeDurationDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onDurationSelected(duration) }
-                                .background(if (isSelected) Calm.LavenderMist else Color.Transparent)
+                                .background(if (isSelected) Calm.NeutralMist else Color.Transparent)
                                 .padding(vertical = 12.dp, horizontal = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {

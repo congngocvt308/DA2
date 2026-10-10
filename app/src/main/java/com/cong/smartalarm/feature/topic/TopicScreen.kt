@@ -2,10 +2,10 @@ package com.cong.smartalarm.feature.topic
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
-import com.cong.smartalarm.core.designsystem.component.GlassFloatingActionButton
+import com.cong.smartalarm.core.designsystem.component.CalmFloatingActionButton
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -230,7 +230,7 @@ private fun FabSpeedDial(
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 70.dp)
         ) {
-            LiquidGlass(
+            SoftSurface(
                 cornerRadius = 16.dp,
                 tint = SolidColor(Color.Transparent)
             ) {
@@ -254,7 +254,7 @@ private fun FabSpeedDial(
             }
         }
 
-        GlassFloatingActionButton(
+        CalmFloatingActionButton(
             onClick = onToggleMenu,
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(28.dp),

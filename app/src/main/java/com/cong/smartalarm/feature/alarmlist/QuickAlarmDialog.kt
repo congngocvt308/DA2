@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.alarmlist
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 import androidx.compose.foundation.clickable
@@ -87,7 +87,7 @@ fun QuickAlarmContent(
             .format(DateTimeFormatter.ofPattern("HH:mm"))
     }
 
-    GlassCard(
+    CalmCard(
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
@@ -137,7 +137,7 @@ fun QuickAlarmContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- NÚT LƯU ---
-            GlassButton(
+            CalmButton(
                 onClick = { onSave(totalAddedMinutes) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(28.dp)
@@ -180,9 +180,9 @@ fun QuickTimePickerSection(
             options.chunked(3).forEach { row ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     row.forEach { min ->
-                        GlassButton(
+                        CalmButton(
                             onClick = { onAddMinutes(min) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground),
+                            colors = ButtonDefaults.buttonColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f).height(50.dp),
                             contentPadding = PaddingValues(0.dp)

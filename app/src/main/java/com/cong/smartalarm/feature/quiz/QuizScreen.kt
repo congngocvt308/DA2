@@ -1,5 +1,5 @@
 package com.cong.smartalarm.feature.quiz
-import com.cong.smartalarm.core.designsystem.component.LiquidGlass
+import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
@@ -139,7 +139,7 @@ fun QuizTopBar(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(6.dp),
             color = if (timerProgress < 0.3f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            trackColor = Calm.LavenderMist,
+            trackColor = Calm.NeutralMist,
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -191,7 +191,7 @@ fun QuizOptionButton(
 
     // Nút đáp án nổi mềm: màu trạng thái tô lên bề mặt trắng
     val contentColor = if (uiState.isAnswered && (answer.isCorrect || isSelected)) Color.White else MaterialTheme.colorScheme.onSurface
-    LiquidGlass(
+    SoftSurface(
         onClick = onSelect,
         enabled = !uiState.isAnswered && !uiState.isTimeOut,
         cornerRadius = 16.dp,

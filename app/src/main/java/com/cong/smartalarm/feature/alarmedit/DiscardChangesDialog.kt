@@ -1,7 +1,7 @@
 package com.cong.smartalarm.feature.alarmedit
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +20,7 @@ fun DiscardChangesDialog(
     onConfirmDiscard: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
-        GlassCard(
+        CalmCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
@@ -53,7 +53,7 @@ fun DiscardChangesDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    GlassButton(
+                    CalmButton(
                         onClick = onDismissRequest,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         shape = RoundedCornerShape(24.dp),
@@ -64,7 +64,7 @@ fun DiscardChangesDialog(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    GlassButton(
+                    CalmButton(
                         onClick = onConfirmDiscard,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         shape = RoundedCornerShape(24.dp),

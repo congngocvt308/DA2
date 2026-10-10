@@ -1,11 +1,10 @@
 package com.cong.smartalarm.feature.alarmedit
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
-import com.cong.smartalarm.core.designsystem.component.LocalGlassBackdrop
 import androidx.compose.runtime.CompositionLocalProvider
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
-import com.cong.smartalarm.core.designsystem.component.rememberReducedMotion
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
+import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import androidx.compose.animation.core.FastOutSlowInEasing
 
@@ -284,7 +283,7 @@ fun SmileChallengeConfigDialog(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
@@ -312,7 +311,7 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
@@ -341,9 +340,9 @@ fun SmileChallengeConfigDialog(
                                     .width(140.dp)
                                     .height(48.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                color = Calm.LavenderMist,
+                                color = Calm.NeutralMist,
                                 contentColor = Calm.Foreground,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.LavenderSoft)
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.NeutralSoft)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -444,7 +443,7 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
@@ -475,7 +474,7 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            GlassButton(
+            CalmButton(
                 onClick = {
                     val config = AlarmFaceMissionConfigEntity(
                         alarmId = initialConfig?.alarmId ?: 0,
@@ -567,7 +566,7 @@ fun SmileChallengeConfigDialog(
                 label = "scale"
             )
 
-            GlassCard(
+            CalmCard(
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.width(280.dp)
@@ -595,8 +594,8 @@ fun SmileChallengeConfigDialog(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(if (isActuallyRecording) Calm.DestructiveMist else Calm.LavenderMist)
-                            .border(2.dp, if (isActuallyRecording) Calm.Destructive else Calm.Lavender, CircleShape)
+                            .background(if (isActuallyRecording) Calm.DestructiveMist else Calm.NeutralMist)
+                            .border(2.dp, if (isActuallyRecording) Calm.Destructive else Calm.Neutral, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
@@ -609,7 +608,7 @@ fun SmileChallengeConfigDialog(
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     if (isActuallyRecording) {
-                        GlassButton(
+                        CalmButton(
                             onClick = {
                                 val path = recorder.stopRecording()
                                 isActuallyRecording = false
@@ -650,7 +649,7 @@ fun SmileChallengeConfigDialog(
                             ) {
                                 Text("Hủy")
                             }
-                            GlassButton(
+                            CalmButton(
                                 onClick = {
                                     recorder.startRecording("rec_${currentRecordingLabel.replace(" ", "_")}_${System.currentTimeMillis()}")
                                     isActuallyRecording = true
@@ -734,7 +733,7 @@ fun SoundPickerDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(
+        CalmCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -761,7 +760,7 @@ fun SoundPickerDialog(
                 )
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GlassButton(
+                    CalmButton(
                         onClick = onRecordNew, 
                         modifier = Modifier.weight(0.9f),
                         colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Color.White),
@@ -771,7 +770,7 @@ fun SoundPickerDialog(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Thu âm", fontSize = 12.sp)
                     }
-                    GlassButton(
+                    CalmButton(
                         onClick = onPickFromFile, 
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -798,7 +797,7 @@ fun SoundPickerDialog(
                         Surface(
                             onClick = { onSoundSelected(file.absolutePath) },
                             shape = RoundedCornerShape(12.dp),
-                            color = Calm.LavenderMist,
+                            color = Calm.NeutralMist,
                             contentColor = Calm.Foreground,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                         ) {
@@ -918,7 +917,7 @@ fun BackgroundSourcePickerDialog(
     onGallerySelected: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        GlassCard(
+        CalmCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -930,7 +929,7 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onDefaultSelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = Calm.LavenderMist,
+                    color = Calm.NeutralMist,
                     contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -954,7 +953,7 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onGallerySelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = Calm.LavenderMist,
+                    color = Calm.NeutralMist,
                     contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -986,10 +985,7 @@ fun BackgroundEditorDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
-    // Trình chỉnh ảnh có nền đen + ảnh: dùng kính "khói" thay vì khúc xạ nền aurora
-    CompositionLocalProvider(LocalGlassBackdrop provides null) {
-        BackgroundEditorContent(imageUri, onDismiss, onConfirm)
-    }
+    BackgroundEditorContent(imageUri, onDismiss, onConfirm)
 }
 
 @Composable
@@ -1097,7 +1093,7 @@ private fun BackgroundEditorContent(
             }
 
             // 4. NÚT LƯU (Dưới cùng)
-            GlassButton(
+            CalmButton(
                 onClick = {
                     if (originalBitmap != null && containerSize != IntSize.Zero) {
                         val resultPath = saveTransformedBitmap(context, originalBitmap, scale, offset, containerSize)

@@ -1,8 +1,8 @@
 package com.cong.smartalarm.feature.premium
 
 
-import com.cong.smartalarm.core.designsystem.component.GlassCard
-import com.cong.smartalarm.core.designsystem.component.GlassButton
+import com.cong.smartalarm.core.designsystem.component.CalmCard
+import com.cong.smartalarm.core.designsystem.component.CalmButton
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -84,7 +84,7 @@ fun PremiumPurchaseDialog(
             dismissOnClickOutside = purchaseState != PurchaseState.PROCESSING
         )
     ) {
-        GlassCard(
+        CalmCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
@@ -117,7 +117,7 @@ private fun InitialPurchaseContent(
 ) {
     // Bỏ vàng chói: dùng đen/xám trung tính
     val accentGradient = Brush.linearGradient(
-        colors = listOf(Calm.Primary, Calm.Lavender)
+        colors = listOf(Calm.Primary, Calm.Neutral)
     )
     
     Column(
@@ -184,7 +184,7 @@ private fun InitialPurchaseContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Calm.LavenderMist)
+                .background(Calm.NeutralMist)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -227,7 +227,7 @@ private fun InitialPurchaseContent(
         Spacer(modifier = Modifier.height(24.dp))
         
         // Purchase button
-        GlassButton(
+        CalmButton(
             onClick = onPurchaseClick,
             modifier = Modifier
                 .fillMaxWidth()
@@ -430,7 +430,7 @@ private fun FailedContent(
                 Text("Hủy")
             }
             
-            GlassButton(
+            CalmButton(
                 onClick = onRetry,
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 shape = RoundedCornerShape(12.dp),
