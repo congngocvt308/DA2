@@ -3,9 +3,13 @@ package com.cong.smartalarm.feature.qr
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
 import com.cong.smartalarm.core.database.entity.AlarmQRLinkEntity
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.data.repository.QRCodeRepository
 import com.cong.smartalarm.core.database.entity.QRCodeEntity
 import com.cong.smartalarm.core.camera.BarcodeScannerProvider
 import com.cong.smartalarm.core.media.BitmapDecodeUtils
@@ -28,12 +32,13 @@ data class QRCodeUiState(
     val scannedType: String? = null
 )
 
-class QRCodeViewModel(application: Application) : AndroidViewModel(application) {
-    
-    private val dao = AppDatabase.getDatabase(application).appDao()
+class QRCodeViewModel(
+    application: Application,
+    private val qrCodeRepository: QRCodeRepository
+) : AndroidViewModel(application) {
     
     // Danh sách tất cả QR codes đã lưu
-    val allQRCodes: StateFlow<List<QRCodeEntity>> = dao.getAllQRCodes()
+    val allQRCodes: StateFlow<List<QRCodeEntity>> = qrCodeRepository.getAllQRCodes()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     
     private val _uiState = MutableStateFlow(QRCodeUiState())
@@ -42,6 +47,13 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
     companion object {
         const val MAX_QR_CODES = 5
         const val MAX_QR_PER_ALARM = 3
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                QRCodeViewModel(app, app.container.qrCodeRepository)
+            }
+        }
     }
     
     /**
@@ -57,14 +69,14 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 // Kiểm tra số lượng
-                val currentCount = dao.getQRCodeCount()
+                val currentCount = qrCodeRepository.getQRCodeCount()
                 if (currentCount >= MAX_QR_CODES) {
                     onError("Bạn chỉ có thể lưu tối đa $MAX_QR_CODES mã. Vui lòng xóa bớt mã cũ.")
                     return@launch
                 }
                 
                 // Kiểm tra trùng lặp
-                val existing = dao.getQRCodeByValue(codeValue)
+                val existing = qrCodeRepository.getQRCodeByValue(codeValue)
                 if (existing != null) {
                     onError("Mã này đã được lưu với tên \"${existing.name}\"")
                     return@launch
@@ -76,7 +88,7 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
                     codeType = codeType
                 )
                 
-                dao.insertQRCode(qrCode)
+                qrCodeRepository.insertQRCode(qrCode)
                 onSuccess()
             } catch (e: Exception) {
                 onError("Lỗi khi lưu mã: ${e.message}")
@@ -90,7 +102,7 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteQRCode(qrCode: QRCodeEntity, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             try {
-                dao.deleteQRCode(qrCode)
+                qrCodeRepository.deleteQRCode(qrCode)
                 onComplete()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(errorMessage = "Lỗi khi xóa: ${e.message}")
@@ -104,7 +116,7 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
     fun updateQRCodeName(qrCode: QRCodeEntity, newName: String) {
         viewModelScope.launch {
             try {
-                dao.updateQRCode(qrCode.copy(name = newName.trim()))
+                qrCodeRepository.updateQRCode(qrCode.copy(name = newName.trim()))
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(errorMessage = "Lỗi khi cập nhật: ${e.message}")
             }
@@ -117,13 +129,13 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
     fun linkQRToAlarm(alarmId: Int, qrId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val currentCount = dao.getQRLinkCountForAlarm(alarmId)
+                val currentCount = qrCodeRepository.getQRLinkCountForAlarm(alarmId)
                 if (currentCount >= MAX_QR_PER_ALARM) {
                     onError("Mỗi báo thức chỉ có thể sử dụng tối đa $MAX_QR_PER_ALARM mã")
                     return@launch
                 }
                 
-                dao.insertAlarmQRLink(AlarmQRLinkEntity(alarmId, qrId))
+                qrCodeRepository.insertAlarmQRLink(AlarmQRLinkEntity(alarmId, qrId))
                 onSuccess()
             } catch (e: Exception) {
                 onError("Lỗi khi liên kết: ${e.message}")
@@ -136,20 +148,20 @@ class QRCodeViewModel(application: Application) : AndroidViewModel(application) 
      */
     fun unlinkQRFromAlarm(alarmId: Int, qrId: Int) {
         viewModelScope.launch {
-            dao.deleteAlarmQRLink(alarmId, qrId)
+            qrCodeRepository.deleteAlarmQRLink(alarmId, qrId)
         }
     }
     
     /**
      * Lấy danh sách QR codes cho một báo thức
      */
-    fun getQRCodesForAlarm(alarmId: Int) = dao.getQRCodesForAlarm(alarmId)
+    fun getQRCodesForAlarm(alarmId: Int) = qrCodeRepository.getQRCodesForAlarm(alarmId)
     
     /**
      * Kiểm tra xem mã quét có hợp lệ để tắt báo thức không
      */
     suspend fun validateQRForAlarm(alarmId: Int, scannedCode: String): Boolean {
-        return dao.isQRCodeValidForAlarm(alarmId, scannedCode)
+        return qrCodeRepository.isQRCodeValidForAlarm(alarmId, scannedCode)
     }
     
     /**

@@ -8,7 +8,7 @@ import android.net.Uri
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.cong.smartalarm.R
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 import com.cong.smartalarm.MainActivity
 import com.cong.smartalarm.feature.ringing.AlarmRingingActivity
 import com.cong.smartalarm.feature.ringing.AlarmRingingScreen
@@ -45,7 +45,7 @@ class AlarmService : Service() {
 
         // 3. Việc check DB để cập nhật Notification có QR hay không thì làm sau
         serviceScope.launch {
-            val dao = AppDatabase.getDatabase(applicationContext).appDao()
+            val dao = appContainer.alarmRepository
             val qrCodeCount = if (alarmId > 0) dao.getQRLinkCountForAlarm(alarmId) else 0
             val hasQRCodes = qrCodeCount > 0
             

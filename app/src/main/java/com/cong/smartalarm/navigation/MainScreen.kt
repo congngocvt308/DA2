@@ -89,10 +89,10 @@ import com.cong.smartalarm.feature.ringing.AlarmRingingScreen
 import com.cong.smartalarm.feature.alarmlist.AlarmScreen
 import com.cong.smartalarm.feature.alarmedit.AlarmSettingsScreen
 import com.cong.smartalarm.feature.quiz.QuizScreen
+import com.cong.smartalarm.feature.quiz.QuizViewModel
 import com.cong.smartalarm.core.designsystem.component.PermissionItem
 import com.cong.smartalarm.feature.smile.FaceMissionScreen
 import com.cong.smartalarm.feature.smile.FaceMissionViewModel
-import com.cong.smartalarm.feature.smile.FaceMissionViewModelFactory
 import com.cong.smartalarm.feature.museum.MemoryMuseumScreen
 import com.cong.smartalarm.feature.stats.StatsScreen
 import com.cong.smartalarm.feature.topic.TopicDetailScreen
@@ -278,7 +278,7 @@ fun MainScreen(initialExternalRoute: String? = null) {
                 composable(Screen.QUIZ_SCREEN) {
 
                     QuizScreen(
-                        viewModel = viewModel(),
+                        viewModel = viewModel(factory = QuizViewModel.Factory),
                         onBack = {
                             navController.popBackStack()
                         },
@@ -322,7 +322,7 @@ fun MainScreen(initialExternalRoute: String? = null) {
                 ) { backStackEntry ->
                     val alarmId = backStackEntry.arguments?.getInt("alarmId") ?: -1
                     val faceViewModel: FaceMissionViewModel = viewModel(
-                        factory = FaceMissionViewModelFactory(context, alarmId)
+                        factory = FaceMissionViewModel.factory(alarmId)
                     )
 
                     FaceMissionScreen(

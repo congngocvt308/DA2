@@ -2,12 +2,16 @@ package com.cong.smartalarm.feature.alarmlist
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import com.cong.smartalarm.core.alarm.AlarmScheduler
 import com.cong.smartalarm.feature.alarmlist.AlarmData
 import com.cong.smartalarm.core.database.entity.AlarmEntity
 import com.cong.smartalarm.feature.alarmedit.AlarmSettingData
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.AlarmRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,10 +29,12 @@ import java.util.Calendar
 
 enum class SortType{ DEFAULT, ACTIVE_FIRST}
 
-class AlarmViewModel(application: Application) : AndroidViewModel(application) {
+class AlarmViewModel(
+    application: Application,
+    private val alarmRepository: AlarmRepository,
+    private val alarmScheduler: AlarmScheduler
+) : AndroidViewModel(application) {
 
-    private val alarmDao = AppDatabase.getDatabase(application).appDao()
-    private val alarmScheduler = AlarmScheduler(application)
     private val _sortType = MutableStateFlow(SortType.DEFAULT)
     private val tickerFlow = flow {
         while (true) {
@@ -38,7 +44,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     val timeUntilNextAlarms: StateFlow<String> = combine(
-        alarmDao.getAllAlarms(), // Luồng 1: Dữ liệu DB
+        alarmRepository.getAllAlarms(), // Luồng 1: Dữ liệu DB
         tickerFlow               // Luồng 2: Thời gian trôi
     ) { entities, now ->         // 'now' được lấy từ tickerFlow
 
@@ -95,7 +101,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
     val alarms: StateFlow<List<AlarmData>> = combine(
-        alarmDao.getAllAlarms(),
+        alarmRepository.getAllAlarms(),
         _sortType
     ){ entities, sortType ->
         val dataList = entities.map{ it.toAlarmData()}
@@ -114,9 +120,9 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleAlarm(id: Int, isEnabled: Boolean) {
         viewModelScope.launch {
-            val alarm = alarmDao.getAlarmById(id) ?: return@launch
+            val alarm = alarmRepository.getAlarmById(id) ?: return@launch
             val updatedAlarm = alarm.copy(isEnabled = isEnabled)
-            alarmDao.updateAlarm(updatedAlarm)
+            alarmRepository.updateAlarm(updatedAlarm)
 
             if (isEnabled) {
                 alarmScheduler.schedule(updatedAlarm)
@@ -183,15 +189,24 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteAlarm(id: Int) {
         viewModelScope.launch {
-            val alarm = alarmDao.getAlarmById(id) ?: return@launch
+            val alarm = alarmRepository.getAlarmById(id) ?: return@launch
             // 1. Tắt lịch hẹn trong hệ thống trước
             alarmScheduler.cancel(alarm)
             // 2. Xóa dữ liệu trong DB sau
-            alarmDao.deleteAlarm(alarm)
+            alarmRepository.deleteAlarm(alarm)
         }
     }
 
     fun deleteInactiveAlarms(){
-        viewModelScope.launch {alarmDao.deleteInactiveAlarms()}
+        viewModelScope.launch {alarmRepository.deleteInactiveAlarms()}
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                AlarmViewModel(app, app.container.alarmRepository, app.container.alarmScheduler)
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@ package com.cong.smartalarm.core.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,9 +16,9 @@ import kotlinx.coroutines.launch
  */
 object AlarmRescheduler {
     suspend fun rescheduleAll(context: Context) {
-        val dao = AppDatabase.getDatabase(context).appDao()
-        val scheduler = AlarmScheduler(context)
-        dao.getEnabledAlarms().forEach { scheduler.schedule(it) }
+        val alarms = context.appContainer.alarmRepository
+        val scheduler = context.appContainer.alarmScheduler
+        alarms.getEnabledAlarms().forEach { scheduler.schedule(it) }
     }
 }
 

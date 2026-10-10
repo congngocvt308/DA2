@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ fun QRDismissScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val dao = remember { AppDatabase.getDatabase(context).appDao() }
+    val qrCodeRepository = remember { context.appContainer.qrCodeRepository }
     
     var isScanning by remember { mutableStateOf(true) }
     var scanResult by remember { mutableStateOf<ScanResult?>(null) }
@@ -47,7 +47,7 @@ fun QRDismissScreen(
     
     // Load các mã QR yêu cầu cho báo thức này
     LaunchedEffect(alarmId) {
-        val qrCodes = dao.getQRCodesForAlarmOnce(alarmId)
+        val qrCodes = qrCodeRepository.getQRCodesForAlarmOnce(alarmId)
         requiredCodes = qrCodes.map { it.name }
     }
     
@@ -59,7 +59,7 @@ fun QRDismissScreen(
                 isScanning = false
                 
                 scope.launch {
-                    val isValid = dao.isQRCodeValidForAlarm(alarmId, code)
+                    val isValid = qrCodeRepository.isQRCodeValidForAlarm(alarmId, code)
                     
                     if (isValid) {
                         scanResult = ScanResult.Success(code)

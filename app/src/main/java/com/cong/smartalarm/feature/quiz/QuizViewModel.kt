@@ -2,14 +2,18 @@ package com.cong.smartalarm.feature.quiz
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
 import com.cong.smartalarm.core.database.entity.AlarmHistoryEntity
 import com.cong.smartalarm.feature.quiz.AnswerData
-import com.cong.smartalarm.core.database.AppDatabase
 import com.cong.smartalarm.feature.quiz.QuestionData
 import com.cong.smartalarm.feature.quiz.QuizUiStateData
-// 1. IMPORT CLASS THUẬT TOÁN
-import com.cong.smartalarm.domain.QuestionAlgorithmManager
+import com.cong.smartalarm.data.repository.AlarmRepository
+import com.cong.smartalarm.data.repository.LearningRepository
+import com.cong.smartalarm.domain.SrsEngine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,16 +27,17 @@ import kotlin.math.abs
 const val QUESTION_DURATION_MS = 15000L
 const val TICK_INTERVAL_MS = 50L
 
-class QuizViewModel(application: Application) : AndroidViewModel(application) {
+class QuizViewModel(
+    application: Application,
+    private val alarmRepository: AlarmRepository,
+    private val learningRepository: LearningRepository,
+    // Bộ não thuật toán SRS (dùng chung từ AppContainer)
+    private val algorithmManager: SrsEngine
+) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(QuizUiStateData())
     val uiState: StateFlow<QuizUiStateData> = _uiState.asStateFlow()
     private var timerJob: Job? = null
-    private val dao = AppDatabase.getDatabase(application).appDao()
-
-    // 2. KHỞI TẠO BỘ NÃO THUẬT TOÁN
-    private val algorithmManager = QuestionAlgorithmManager(dao)
-
     private var alarmId: Int = -1
 
     private var currentAlarmHistoryId: Int? = null
@@ -48,7 +53,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(isLoading = true) }
 
             // BƯỚC A: KIỂM TRA SỐ LƯỢNG CÂU HỎI NGƯỜI DÙNG CÀI ĐẶT
-            val alarm = if (alarmId != -1) dao.getAlarmById(alarmId) else null
+            val alarm = if (alarmId != -1) alarmRepository.getAlarmById(alarmId) else null
             val targetCount = alarm?.questionCount ?: 0 // Mặc định 3 nếu không tìm thấy
 
             // Nếu người dùng chọn 0 câu hỏi -> Tắt báo thức ngay lập tức
@@ -72,7 +77,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
                     isDismissed = false
                 )
                 // Insert và lấy ID về để dùng cập nhật sau này
-                currentAlarmHistoryId = dao.insertAlarmHistory(newHistory).toInt()
+                currentAlarmHistoryId = learningRepository.insertAlarmHistory(newHistory).toInt()
             }
 
             // BƯỚC B: GỌI THUẬT TOÁN ĐỂ LẤY DANH SÁCH CÂU HỎI (SRS)
@@ -111,7 +116,7 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 } else {
                     // Xử lý câu hỏi từ Database (ID dương)
-                    val entity = dao.getQuestionById(missionQ.id)
+                    val entity = learningRepository.getQuestionById(missionQ.id)
                     if (entity != null) {
                         val correctAns = AnswerData(answerIdCounter++, entity.correctAnswer, true)
                         // Tách chuỗi options (giả sử đang lưu dạng JSON String hoặc String thường)
@@ -294,15 +299,29 @@ class QuizViewModel(application: Application) : AndroidViewModel(application) {
     private fun finishAlarmHistory() {
         if (currentAlarmHistoryId != null) {
             viewModelScope.launch {
-                val history = dao.getAlarmHistoryById(currentAlarmHistoryId!!)
+                val history = learningRepository.getAlarmHistoryById(currentAlarmHistoryId!!)
                 if (history != null) {
-                    dao.updateAlarmHistory(
+                    learningRepository.updateAlarmHistory(
                         history.copy(
                             dismissalTime = java.util.Date(), // Ghi nhận thời gian tắt
                             isDismissed = true
                         )
                     )
                 }
+            }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                QuizViewModel(
+                    app,
+                    app.container.alarmRepository,
+                    app.container.learningRepository,
+                    app.container.srsEngine
+                )
             }
         }
     }

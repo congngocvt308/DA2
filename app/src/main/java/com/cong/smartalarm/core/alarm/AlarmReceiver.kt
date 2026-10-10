@@ -3,7 +3,7 @@ package com.cong.smartalarm.core.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,9 +16,9 @@ class AlarmReceiver : BroadcastReceiver() {
         // 🚨 QUAN TRỌNG: Sử dụng goAsync() để làm việc với Coroutine trong Receiver
         val pendingResult = goAsync()
 
-        val db = AppDatabase.getDatabase(context)
-        val alarmDao = db.appDao()
-        val scheduler = AlarmScheduler(context)
+        val container = context.appContainer
+        val alarmDao = container.alarmRepository
+        val scheduler = container.alarmScheduler
 
         CoroutineScope(Dispatchers.IO).launch {
             try {

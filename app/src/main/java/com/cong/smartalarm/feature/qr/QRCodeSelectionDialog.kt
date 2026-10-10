@@ -44,7 +44,7 @@ fun QRCodeSelectionDialog(
     onDismiss: () -> Unit,
     onConfirm: (List<Int>) -> Unit,
     onManageQRCodes: () -> Unit,
-    viewModel: QRCodeViewModel = viewModel()
+    viewModel: QRCodeViewModel = viewModel(factory = QRCodeViewModel.Factory)
 ) {
     val context = LocalContext.current
     val allQRCodes by viewModel.allQRCodes.collectAsStateWithLifecycle()

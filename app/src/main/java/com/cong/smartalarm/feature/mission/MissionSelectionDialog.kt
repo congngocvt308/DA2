@@ -44,7 +44,7 @@ fun MissionSelectionDialog(
     initialTopicIds: Set<Int>,
     onDismiss: () -> Unit,
     onConfirm: (Int, List<MissionQuestion>, List<MissionTopic>) -> Unit,
-    viewModel: MissionViewModel = viewModel()
+    viewModel: MissionViewModel = viewModel(factory = MissionViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

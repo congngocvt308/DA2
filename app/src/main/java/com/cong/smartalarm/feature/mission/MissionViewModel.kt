@@ -1,9 +1,12 @@
 package com.cong.smartalarm.feature.mission
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.TopicRepository
 import com.cong.smartalarm.feature.mission.MissionQuestion
 import com.cong.smartalarm.feature.mission.MissionTopic
 import com.cong.smartalarm.feature.mission.MissionUiState
@@ -13,8 +16,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class MissionViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = AppDatabase.getDatabase(application).appDao()
+class MissionViewModel(
+    private val topicRepository: TopicRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(MissionUiState())
     val uiState: StateFlow<MissionUiState> = _uiState.asStateFlow()
 
@@ -25,12 +29,19 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             MissionQuestion(id = -2, text = "Thủ đô Việt Nam?", isSelected = false),
             MissionQuestion(id = -3, text = "2 x 2 = ?", isSelected = false)
         )
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                MissionViewModel(app.container.topicRepository)
+            }
+        }
     }
 
     // Khởi tạo dữ liệu lần đầu
     fun initData(initialCount: Int, selectedIds: Set<Int>, initialTopicIds: Set<Int>) {
         viewModelScope.launch {
-            dao.getTopicsWithQuestions().collect { dbList ->
+            topicRepository.getTopicsWithQuestions().collect { dbList ->
                 val allTopics = mutableListOf<MissionTopic>()
 
                 // 1. Thêm Topic mặc định

@@ -4,10 +4,14 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.TopicRepository
 import androidx.lifecycle.viewModelScope
-import com.cong.smartalarm.core.network.AiApiService
 import com.cong.smartalarm.feature.quiz.AnswerData
-import com.cong.smartalarm.core.database.AppDatabase
 import com.cong.smartalarm.core.network.GenerateQuestionsRequest
 import com.cong.smartalarm.feature.quiz.QuestionData
 import com.cong.smartalarm.core.database.entity.QuestionEntity
@@ -20,19 +24,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
-import kotlin.jvm.java
 import org.json.JSONObject
 import org.json.JSONArray
 
 class TopicDetailViewModel(
     application: Application,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val topicRepository: TopicRepository
 ) : AndroidViewModel(application) {
-    private val topicDao = AppDatabase.getDatabase(application).appDao()
     private val topicId: Int = savedStateHandle.get<Int>("topicId") ?: -1
 
     private val _isStreamingActive = MutableStateFlow(false)
@@ -82,7 +81,7 @@ class TopicDetailViewModel(
 
     private fun loadTopicInfo() {
         viewModelScope.launch {
-            val name = topicDao.getTopicNameById(topicId)
+            val name = topicRepository.getTopicNameById(topicId)
             if (name != null) {
                 _topicName.value = name
             }
@@ -91,21 +90,21 @@ class TopicDetailViewModel(
 
     fun renameTopic(newName: String) {
         viewModelScope.launch {
-            topicDao.updateTopicName(topicId, newName)
+            topicRepository.updateTopicName(topicId, newName)
             _topicName.value = newName
         }
     }
 
     fun deleteCurrentTopic(onDeleted: () -> Unit) {
         viewModelScope.launch {
-            topicDao.deleteTopicById(topicId)
+            topicRepository.deleteTopicById(topicId)
             onDeleted()
         }
     }
 
     private fun loadQuestions() {
         viewModelScope.launch {
-            topicDao.getQuestionsByTopic(topicId).collect { entities ->
+            topicRepository.getQuestionsByTopic(topicId).collect { entities ->
                 val mappedList = entities.map { entity ->
                     val correctAns = AnswerData(0, entity.correctAnswer, true)
                     val wrongAns = entity.options.mapIndexed { index, text ->
@@ -121,9 +120,9 @@ class TopicDetailViewModel(
 
     fun deleteQuestion(questionId: Int) {
         viewModelScope.launch {
-            val questionEntity = topicDao.getQuestionById(questionId)
+            val questionEntity = topicRepository.getQuestionById(questionId)
             if (questionEntity != null) {
-                topicDao.deleteQuestion(questionEntity)
+                topicRepository.deleteQuestion(questionEntity)
             }
         }
     }
@@ -211,9 +210,9 @@ class TopicDetailViewModel(
                 options = answers.filterIndexed { i, _ -> i != correctIndex }.map { it.text }
             )
             if (editingQuestionId == -1) {
-                topicDao.insertQuestion(questionEntity)
+                topicRepository.insertQuestion(questionEntity)
             } else {
-                topicDao.updateQuestion(questionEntity)
+                topicRepository.updateQuestion(questionEntity)
             }
             resetDraft()
             loadQuestions()
@@ -228,23 +227,8 @@ class TopicDetailViewModel(
             _streamNotificationMessage.value = "AI đang bắt đầu tạo câu hỏi toán học..."
 
             try {
-                // 1. Khởi tạo OkHttpClient kiên nhẫn tăng timeout bảo vệ luồng dữ liệu dài
-                val okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(60, TimeUnit.SECONDS)
-                    .build()
-
-                val retrofit = Retrofit.Builder()
-                    .baseUrl("http://192.168.1.219:3000/") // Khớp với IP mạng Wi-Fi Local của bạn
-                    .client(okHttpClient)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build()
-
-                val aiApiService = retrofit.create(AiApiService::class.java)
-
                 // 2. Bắn cấu hình Slider và chuỗi đệm văn bản lên Endpoint hạ nguồn
-                val response = aiApiService.generateQuestionsStream(
+                val response = topicRepository.generateQuestionsStream(
                     GenerateQuestionsRequest(
                         extractedText = extractedText,
                         easyCount = easy,
@@ -336,7 +320,7 @@ class TopicDetailViewModel(
 
                                                 // Tiến hành Insert ngay vào DB để Room Flow bắn lên UI cập nhật thời gian thực
                                                 viewModelScope.launch(Dispatchers.IO) {
-                                                    topicDao.insertQuestion(finalQuestion)
+                                                    topicRepository.insertQuestion(finalQuestion)
                                                 }
 
                                                 // Giải phóng bộ đệm của câu hỏi này
@@ -372,4 +356,12 @@ class TopicDetailViewModel(
         _streamNotificationMessage.value = null
     }
 
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                TopicDetailViewModel(app, createSavedStateHandle(), app.container.topicRepository)
+            }
+        }
+    }
 }

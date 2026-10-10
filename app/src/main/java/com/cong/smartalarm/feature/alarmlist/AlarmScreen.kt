@@ -50,8 +50,8 @@ import com.cong.smartalarm.core.media.SoundPlayer
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmScreen(
-    viewModel: AlarmViewModel = viewModel(),
-    settingsViewModel: AlarmSettingsViewModel = viewModel(),
+    viewModel: AlarmViewModel = viewModel(factory = AlarmViewModel.Factory),
+    settingsViewModel: AlarmSettingsViewModel = viewModel(factory = AlarmSettingsViewModel.Factory),
     onNavigateToSettings: (Int) -> Unit,
     navController: NavHostController
 ) {

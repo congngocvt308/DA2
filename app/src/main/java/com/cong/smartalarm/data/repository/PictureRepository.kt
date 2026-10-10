@@ -3,14 +3,14 @@ package com.cong.smartalarm.data.repository
 import com.cong.smartalarm.core.database.dao.AppDao
 import com.cong.smartalarm.core.database.entity.PictureEntity
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
-class PictureRepository @Inject constructor(
-    private val appDao: AppDao
-) {
+/** Ảnh nụ cười trong Bảo tàng nụ cười. */
+class PictureRepository(private val appDao: AppDao) {
     fun getAllPicturesByUser(userId: Int = 1): Flow<List<PictureEntity>> {
         return appDao.getAllPicturesByUser(userId)
     }
+
+    suspend fun insertPicture(picture: PictureEntity): Long = appDao.insertPicture(picture)
 
     suspend fun savePicture(imageUri: String, alarmHistoryId: Int? = null, description: String? = null): Long {
         val picture = PictureEntity(

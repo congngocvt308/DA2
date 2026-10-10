@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicDetailScreen(
-    viewModel: TopicDetailViewModel = viewModel(),
+    viewModel: TopicDetailViewModel = viewModel(factory = TopicDetailViewModel.Factory),
     onBackClick: () -> Unit,
 ) {
     val allQuestions by viewModel.questions.collectAsStateWithLifecycle()

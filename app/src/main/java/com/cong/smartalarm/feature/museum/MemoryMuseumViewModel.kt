@@ -1,10 +1,15 @@
-package com.cong.smartalarm.feature.museum
+package com.cong.smartalarm.feature.museum
+
 
 import com.cong.smartalarm.data.repository.PictureRepository
 
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
 import com.cong.smartalarm.feature.museum.MemoryMuseumUiState
 import com.cong.smartalarm.core.database.entity.PictureEntity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,6 +70,15 @@ class MemoryMuseumViewModel(
     fun onUpdateDescription(picture: PictureEntity, newDescription: String) {
         viewModelScope.launch {
             repository.updateDescription(picture, newDescription)
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                MemoryMuseumViewModel(app.container.pictureRepository)
+            }
         }
     }
 }

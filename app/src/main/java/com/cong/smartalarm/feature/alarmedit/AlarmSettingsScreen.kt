@@ -64,7 +64,6 @@ import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import com.cong.smartalarm.core.designsystem.component.SoftSurfaceButton
 import com.cong.smartalarm.feature.smile.FaceMissionScreen
 import com.cong.smartalarm.feature.smile.FaceMissionViewModel
-import com.cong.smartalarm.feature.smile.FaceMissionViewModelFactory
 import com.cong.smartalarm.feature.mission.MissionSelectionDialog
 import com.cong.smartalarm.feature.qr.QRCodeManagementDialog
 import com.cong.smartalarm.feature.qr.QRCodeScannerScreen
@@ -81,7 +80,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmSettingsScreen(
-    viewModel: AlarmSettingsViewModel = viewModel(),
+    viewModel: AlarmSettingsViewModel = viewModel(factory = AlarmSettingsViewModel.Factory),
     onBackClick: () -> Unit,
     onMissionSettingClick: () -> Unit
 ) {
@@ -120,7 +119,7 @@ fun AlarmSettingsScreen(
     if (showFaceMissionTest) {
         // Gọi ViewModel tương ứng của ông
         val faceViewModel: FaceMissionViewModel = viewModel(
-            factory = FaceMissionViewModelFactory(context, uiState.id)
+            factory = FaceMissionViewModel.factory(uiState.id)
         )
 
         FaceMissionScreen(

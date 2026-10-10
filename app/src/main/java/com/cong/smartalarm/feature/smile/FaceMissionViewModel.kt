@@ -14,9 +14,11 @@ import android.graphics.PointF
 import android.media.AudioManager
 import android.os.Bundle
 import androidx.lifecycle.viewModelScope
-import com.cong.smartalarm.core.database.dao.AppDao
-import com.cong.smartalarm.core.database.AppDatabase
-import com.cong.smartalarm.core.database.entity.AlarmFaceMissionConfigEntity
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.AlarmRepository
+import com.cong.smartalarm.data.repository.PictureRepository
 import com.cong.smartalarm.feature.smile.FaceMissionConfig
 import com.cong.smartalarm.core.database.entity.PictureEntity
 import com.cong.smartalarm.core.media.SoundPlayer
@@ -27,7 +29,8 @@ import kotlinx.coroutines.launch
 class FaceMissionViewModel(
     context: Context,
     private val alarmId: Int = -1,
-    private val appDao: AppDao = AppDatabase.getDatabase(context).appDao(),
+    private val alarmRepository: AlarmRepository,
+    private val pictureRepository: PictureRepository,
     initialBgUri: String? = null
 ) : ViewModel(), TextToSpeech.OnInitListener {
 
@@ -49,7 +52,7 @@ class FaceMissionViewModel(
     private fun loadAlarmConfig() {
         viewModelScope.launch {
             if (alarmId != -1) {
-                val config = appDao.getFaceMissionConfigByAlarmId(alarmId)
+                val config = alarmRepository.getFaceMissionConfigByAlarmId(alarmId)
                 config?.let { c ->
                     targetScore = (c.requiredHoldDurationSec * 20f).coerceAtLeast(20f)
                     _uiState.update { it.copy(
@@ -81,7 +84,7 @@ class FaceMissionViewModel(
                 description = description,
                 createdAt = System.currentTimeMillis()
             )
-            appDao.insertPicture(picture)
+            pictureRepository.insertPicture(picture)
         }
     }
 
@@ -192,18 +195,20 @@ class FaceMissionViewModel(
 
     override fun onInit(status: Int) { if (status == TextToSpeech.SUCCESS) tts.language = Locale("vi", "VN") }
     override fun onCleared() { tts.stop(); tts.shutdown(); super.onCleared() }
-}
 
-class FaceMissionViewModelFactory(
-    private val context: Context,
-    private val alarmId: Int = -1,
-    private val initialBgUri: String? = null
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(FaceMissionViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return FaceMissionViewModel(context, alarmId, initialBgUri = initialBgUri) as T
+    companion object {
+        // TextToSpeech cần Context -> dùng Application để không giữ Activity
+        fun factory(alarmId: Int, initialBgUri: String? = null): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                FaceMissionViewModel(
+                    context = app,
+                    alarmId = alarmId,
+                    alarmRepository = app.container.alarmRepository,
+                    pictureRepository = app.container.pictureRepository,
+                    initialBgUri = initialBgUri
+                )
+            }
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

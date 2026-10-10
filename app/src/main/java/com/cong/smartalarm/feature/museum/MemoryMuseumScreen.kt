@@ -1,8 +1,9 @@
-package com.cong.smartalarm.feature.museum
+package com.cong.smartalarm.feature.museum
+
+
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-import com.cong.smartalarm.data.repository.PictureRepository
 import androidx.compose.runtime.CompositionLocalProvider
 
 import com.cong.smartalarm.core.designsystem.component.CalmCard
@@ -54,7 +55,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cong.smartalarm.R
-import com.cong.smartalarm.core.database.AppDatabase
 import com.cong.smartalarm.core.database.entity.PictureEntity
 import com.cong.smartalarm.feature.museum.component.CustomAlarmCard
 import com.cong.smartalarm.feature.museum.component.FeaturedPolaroidCard
@@ -71,11 +70,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun MemoryMuseumScreen(
     onBackClick: () -> Unit,
-    viewModel: MemoryMuseumViewModel = viewModel(
-        factory = MemoryMuseumViewModelFactory(
-            PictureRepository(AppDatabase.getDatabase(LocalContext.current).appDao())
-        )
-    )
+    viewModel: MemoryMuseumViewModel = viewModel(factory = MemoryMuseumViewModel.Factory)
 ) {
     MemoryMuseumContent(onBackClick, viewModel)
 }

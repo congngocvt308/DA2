@@ -3,9 +3,12 @@ package com.cong.smartalarm.feature.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.StatsRepository
 import com.cong.smartalarm.core.database.model.DailyStat
 import com.cong.smartalarm.core.database.entity.QuestionEntity
-import com.cong.smartalarm.core.database.dao.StatisticsDao
 import com.cong.smartalarm.core.database.entity.UserStatsEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,12 +35,12 @@ data class DayAccuracy(
     val isToday: Boolean
 )
 
-class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
+class StatsViewModel(private val statsRepository: StatsRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
             // Khởi tạo user mặc định nếu chưa tồn tại
-            statsDao.initializeUserStats(UserStatsEntity(userId = 1))
+            statsRepository.initializeUserStats(UserStatsEntity(userId = 1))
         }
     }
 
@@ -46,7 +49,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
     // (trước đây cố định lúc tạo ViewModel nên cột ngày cũ nhất bị mất buổi sáng và không sang ngày mới).
     val weeklyAccuracy: Flow<List<DayAccuracy>> = flow { emit(startOfDay(daysAgo = 6)) }
         .flatMapLatest { since ->
-            statsDao.getWeeklyAccuracy(since - 1).map { list -> buildLast7Days(list) }
+            statsRepository.getWeeklyAccuracy(since - 1).map { list -> buildLast7Days(list) }
         }
 
     private fun buildLast7Days(list: List<DailyStat>): List<DayAccuracy> {
@@ -75,7 +78,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
-    val srsDistribution = statsDao.getSrsDistribution()
+    val srsDistribution = statsRepository.getSrsDistribution()
 
     // 2. Logic tính Wake-up Score
     private val _wakeUpScore = MutableStateFlow(0f)
@@ -84,13 +87,13 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
     private val _selectedStatus = MutableStateFlow<String?>(null)
     val selectedStatus = _selectedStatus.asStateFlow()
 
-    // 🚨 ĐÃ FIX: Chỉ định rõ <QuestionEntity> và gọi qua statsDao
+    // 🚨 ĐÃ FIX: Chỉ định rõ <QuestionEntity> và gọi qua statsRepository
     val filteredQuestions = _selectedStatus.flatMapLatest { status ->
         if (status == null) {
             flowOf(emptyList<com.cong.smartalarm.core.database.entity.QuestionEntity>())
         } else {
-            // Gọi hàm từ statsDao
-            statsDao.getQuestionsBySrsStatus(status)
+            // Gọi hàm từ statsRepository
+            statsRepository.getQuestionsBySrsStatus(status)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -98,7 +101,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
         initialValue = emptyList()
     )
 
-    val userStats = statsDao.getUserStats()
+    val userStats = statsRepository.getUserStats()
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     fun selectSrsStatus(status: String?) {
@@ -107,7 +110,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
 
     fun calculateWakeUpPerformance() {
         viewModelScope.launch {
-            val histories = statsDao.getRecentAlarmHistory()
+            val histories = statsRepository.getRecentAlarmHistory()
             if (histories.isNotEmpty()) {
                 val avg = histories.map { h ->
                     val delayMin = ((h.dismissalTime?.time ?: 0L) - h.firstRingTime.time) / 60000f
@@ -120,7 +123,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
 
     fun updatePerformanceAfterAlarm() {
         viewModelScope.launch {
-            val currentStats = statsDao.getUserStatsSynchronous() ?: UserStatsEntity(userId = 1)
+            val currentStats = statsRepository.getUserStatsSynchronous() ?: UserStatsEntity(userId = 1)
             val today = System.currentTimeMillis()
 
             // Giả sử mỗi lần hoàn thành báo thức được 10 điểm
@@ -136,7 +139,7 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
                 lastActiveDate = today,
                 totalAlarmsDismissed = currentStats.totalAlarmsDismissed + 1
             )
-            statsDao.updateUserStats(updatedStats)
+            statsRepository.updateUserStats(updatedStats)
         }
     }
 
@@ -147,14 +150,13 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
         return calLast.get(Calendar.YEAR) == calYesterday.get(Calendar.YEAR) &&
                 calLast.get(Calendar.DAY_OF_YEAR) == calYesterday.get(Calendar.DAY_OF_YEAR)
     }
-}
 
-class StatsViewModelFactory(private val statsDao: StatisticsDao) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(StatsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return StatsViewModel(statsDao) as T
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                StatsViewModel(app.container.statsRepository)
+            }
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -2,7 +2,7 @@ package com.cong.smartalarm.core.alarm
 
 import android.content.Context
 import android.content.Intent
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 
 object AlarmDismissHelper {
 
@@ -14,8 +14,8 @@ object AlarmDismissHelper {
     suspend fun onAlarmDismissed(context: Context, alarmId: Int) {
         if (alarmId <= 0) return
         val appContext = context.applicationContext
-        val dao = AppDatabase.getDatabase(appContext).appDao()
-        val scheduler = AlarmScheduler(appContext)
+        val dao = appContext.appContainer.alarmRepository
+        val scheduler = appContext.appContainer.alarmScheduler
         val alarm = dao.getAlarmById(alarmId) ?: return
 
         // Chỉ báo thức một lần (nhanh / không lặp): hủy lịch + xóa khỏi danh sách.

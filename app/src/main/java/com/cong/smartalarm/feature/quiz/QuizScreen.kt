@@ -36,7 +36,7 @@ fun QuizScreen(
     alarmId: Int = -1,
     onBack: () -> Unit,
     onQuizCompleted: () -> Unit,
-    viewModel: QuizViewModel = viewModel()
+    viewModel: QuizViewModel = viewModel(factory = QuizViewModel.Factory)
 ) {
     // Set alarmId khi khởi tạo
     LaunchedEffect(alarmId) {

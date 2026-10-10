@@ -1,4 +1,5 @@
-package com.cong.smartalarm.feature.ringing
+package com.cong.smartalarm.feature.ringing
+
 
 import com.cong.smartalarm.feature.quiz.QuizScreen
 
@@ -26,14 +27,12 @@ import androidx.navigation.compose.rememberNavController
 import com.cong.smartalarm.core.alarm.AlarmDismissHelper
 import com.cong.smartalarm.core.alarm.AlarmReceiver
 import com.cong.smartalarm.core.alarm.AlarmService
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.core.di.appContainer
 import com.cong.smartalarm.navigation.Screen
 import com.cong.smartalarm.feature.qr.QRDismissScreen
 import com.cong.smartalarm.feature.smile.FaceMissionScreen
 import com.cong.smartalarm.feature.smile.FaceMissionViewModel
-import com.cong.smartalarm.feature.smile.FaceMissionViewModelFactory
 import com.cong.smartalarm.feature.stats.StatsViewModel
-import com.cong.smartalarm.feature.stats.StatsViewModelFactory
 import com.cong.smartalarm.core.designsystem.theme.SmartAlarmTheme
 import kotlinx.coroutines.launch
 import kotlin.jvm.java
@@ -54,13 +53,12 @@ class AlarmRingingActivity : ComponentActivity() {
             SmartAlarmTheme {
                 // Khởi tạo NavController nội bộ
                 val context = LocalContext.current
-                val database = AppDatabase.getDatabase(context.applicationContext)
-                val statsDao = database.statisticsDao()
-                val appDao = database.appDao()
+                val alarmRepository = remember { context.appContainer.alarmRepository }
+                val statsRepository = remember { context.appContainer.statsRepository }
 
                 // Khởi tạo ViewModel giống như ở màn hình Stats
                 val statsViewModel: StatsViewModel = viewModel(
-                    factory = StatsViewModelFactory(statsDao)
+                    factory = StatsViewModel.Factory
                 )
 
                 val navController = rememberNavController()
@@ -75,7 +73,7 @@ class AlarmRingingActivity : ComponentActivity() {
                         
                         LaunchedEffect(alarmId) {
                             if (alarmId != -1) {
-                                val alarm = appDao.getAlarmById(alarmId)
+                                val alarm = alarmRepository.getAlarmById(alarmId)
                                 isSnoozeEnabled = alarm?.snoozeEnabled ?: true
                             }
                         }
@@ -86,12 +84,12 @@ class AlarmRingingActivity : ComponentActivity() {
                             isSnoozeEnabled = isSnoozeEnabled,
                             onSnooze = {
                                 lifecycleScope.launch {
-                                    // 1. Dùng AppDao để lấy cấu hình báo thức (thời gian báo lại)
-                                    val alarm = appDao.getAlarmById(alarmId)
+                                    // 1. Dùng AlarmRepository để lấy cấu hình báo thức (thời gian báo lại)
+                                    val alarm = alarmRepository.getAlarmById(alarmId)
                                     val snoozeDuration = alarm?.snoozeDuration ?: 5 // Mặc định 5p nếu không tìm thấy
 
-                                    // 2. Dùng StatisticsDao để ghi nhận số lần snooze (phục vụ tính điểm tỉnh táo)
-                                    statsDao.incrementSnoozeCount(alarmId)
+                                    // 2. Dùng StatsRepository để ghi nhận số lần snooze (phục vụ tính điểm tỉnh táo)
+                                    statsRepository.incrementSnoozeCount(alarmId)
 
                                     // 3. Gọi hàm đặt lịch reo lại với đúng thời gian đã lấy từ DB
                                     scheduleSnoozeAlarm(alarmId, label, snoozeDuration)
@@ -101,8 +99,8 @@ class AlarmRingingActivity : ComponentActivity() {
                             },
                             onNavigateToQuiz = {
                                 lifecycleScope.launch {
-                                    val faceConfig = appDao.getFaceMissionConfigByAlarmId(alarmId)
-                                    val alarm = appDao.getAlarmById(alarmId)
+                                    val faceConfig = alarmRepository.getFaceMissionConfigByAlarmId(alarmId)
+                                    val alarm = alarmRepository.getAlarmById(alarmId)
                                     
                                     when {
                                         faceConfig != null -> {
@@ -151,7 +149,7 @@ class AlarmRingingActivity : ComponentActivity() {
                     composable("face_mission_screen?bgUri={bgUri}") { backStackEntry ->
                         val bgUri = backStackEntry.arguments?.getString("bgUri")
                         val faceViewModel: FaceMissionViewModel = viewModel(
-                            factory = FaceMissionViewModelFactory(context, alarmId, bgUri)
+                            factory = FaceMissionViewModel.factory(alarmId, bgUri)
                         )
                         FaceMissionScreen(
                             viewModel = faceViewModel,

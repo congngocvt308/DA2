@@ -5,11 +5,13 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.TopicRepository
 import androidx.lifecycle.viewModelScope
-import com.cong.smartalarm.core.network.AiApiService
 import com.cong.smartalarm.feature.topic.model.AiMatrixConfig
-import com.cong.smartalarm.core.database.AppDatabase
-import com.cong.smartalarm.core.network.GenerateQuestionsRequest
 import com.cong.smartalarm.core.database.model.TopicData
 import com.cong.smartalarm.core.database.entity.TopicEntity
 import com.cong.smartalarm.feature.topic.model.SelectedDocument
@@ -27,13 +29,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.util.concurrent.TimeUnit
 
-class TopicViewModel(application: Application) : AndroidViewModel(application) {
+class TopicViewModel(
+    application: Application,
+    private val topicRepository: TopicRepository
+) : AndroidViewModel(application) {
 
-    private val topicDao = AppDatabase.getDatabase(application).appDao()
     private val context = application.applicationContext
     private val documentCompressor = DocumentCompressor(context)
 
@@ -57,7 +59,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- LUỒNG TÌM KIẾM CHỦ ĐỀ TRÊN THƯ VIỆN CÓ SẴN ---
     val filteredTopics: StateFlow<List<TopicData>> = combine(
-        topicDao.getAllTopicsWithCount(),
+        topicRepository.getAllTopicsWithCount(),
         searchQuery
     ) { entities, query ->
         val mappedTopics = entities.map { entity ->
@@ -179,22 +181,8 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                     MultipartBody.Part.createFormData("files", fileData.fileName, requestBody)
                 }
 
-                val okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(60, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(60, TimeUnit.SECONDS)
-                    .build()
-
-                val retrofit = retrofit2.Retrofit.Builder()
-                    .baseUrl("http://192.168.1.219:3000/")
-                    .client(okHttpClient)
-                    .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
-                    .build()
-
-                val aiApiService = retrofit.create(AiApiService::class.java)
-
                 // Bắn Request
-                val response = aiApiService.uploadDocuments(multipartParts)
+                val response = topicRepository.uploadDocuments(multipartParts)
 
                 if (response.isSuccessful && response.body() != null) {
                     val ocrResult = response.body()!!
@@ -245,7 +233,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
     fun addNewTopic(name: String) {
         viewModelScope.launch {
             val newTopic = TopicEntity(topicName = name)
-            topicDao.insertTopic(newTopic)
+            topicRepository.insertTopic(newTopic)
         }
     }
 
@@ -269,7 +257,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
             val cleanTopicName = config.suggestedTopic.trim()
 
             try {
-                val currentTopicsList = topicDao.getAllTopicsWithCount().first()
+                val currentTopicsList = topicRepository.getAllTopicsWithCount().first()
                 val existingTopic = currentTopicsList.find {
                     it.topicName.equals(cleanTopicName, ignoreCase = true)
                 }
@@ -279,7 +267,7 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
                     existingTopic.topicId
                 } else {
                     val newEntity = TopicEntity(topicName = cleanTopicName)
-                    val newId = topicDao.insertTopic(newEntity)
+                    val newId = topicRepository.insertTopic(newEntity)
                     Log.d("AiOcrTest", "   ➔ Khởi tạo chủ đề mới. INSERT thành công dòng với ID: $newId")
                     newId.toInt()
                 }
@@ -316,6 +304,15 @@ class TopicViewModel(application: Application) : AndroidViewModel(application) {
             context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length } ?: 1L
         } catch (e: Exception) {
             1L
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                TopicViewModel(app, app.container.topicRepository)
+            }
         }
     }
 }

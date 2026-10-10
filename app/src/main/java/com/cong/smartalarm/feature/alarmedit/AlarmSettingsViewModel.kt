@@ -4,6 +4,10 @@ import android.app.Application
 import android.media.RingtoneManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import com.cong.smartalarm.core.alarm.AlarmScheduler
 import com.cong.smartalarm.core.database.entity.AlarmEntity
@@ -12,7 +16,9 @@ import com.cong.smartalarm.core.database.entity.AlarmQRLinkEntity
 import com.cong.smartalarm.core.database.entity.AlarmSelectedQuestionEntity
 import com.cong.smartalarm.feature.alarmedit.AlarmSettingData
 import com.cong.smartalarm.core.database.entity.AlarmTopicLink
-import com.cong.smartalarm.core.database.AppDatabase
+import com.cong.smartalarm.SmartAlarmApp
+import com.cong.smartalarm.data.repository.AlarmRepository
+import com.cong.smartalarm.data.repository.TopicRepository
 import com.cong.smartalarm.feature.mission.MissionQuestion
 import com.cong.smartalarm.feature.mission.MissionTopic
 import com.cong.smartalarm.feature.mission.MissionViewModel
@@ -29,9 +35,11 @@ import kotlin.collections.filter
 
 class AlarmSettingsViewModel(
     application: Application,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val alarmRepository: AlarmRepository,
+    private val topicRepository: TopicRepository,
+    private val alarmScheduler: AlarmScheduler
 ) : AndroidViewModel(application) {
-    private val alarmDao = AppDatabase.getDatabase(application).appDao()
     private val alarmId: Int = savedStateHandle.get<Int>("alarmId") ?: -1
     private val _uiState = MutableStateFlow(AlarmSettingData())
     val uiState: StateFlow<AlarmSettingData> = _uiState.asStateFlow()
@@ -43,10 +51,10 @@ class AlarmSettingsViewModel(
     private fun loadAlarm() {
         viewModelScope.launch {
             if (alarmId != -1) {
-                val alarm = alarmDao.getAlarmById(alarmId)
+                val alarm = alarmRepository.getAlarmById(alarmId)
                 if (alarm != null) {
                     // 1. Load các câu hỏi lẻ (Manual Selection)
-                    val selectedQuestionEntities = alarmDao.getSelectedQuestionsForAlarmOnce(alarmId)
+                    val selectedQuestionEntities = alarmRepository.getSelectedQuestionsForAlarmOnce(alarmId)
                     val selectedQuestions = selectedQuestionEntities.map { entity ->
                         if (entity.questionId < 0) {
                             // Câu hỏi mặc định
@@ -58,7 +66,7 @@ class AlarmSettingsViewModel(
                             )
                         } else {
                             // Câu hỏi từ database
-                            val question = alarmDao.getQuestionById(entity.questionId)
+                            val question = topicRepository.getQuestionById(entity.questionId)
                             MissionQuestion(
                                 id = entity.questionId,
                                 text = question?.prompt ?: "Câu hỏi đã bị xóa",
@@ -68,15 +76,15 @@ class AlarmSettingsViewModel(
                     }
 
                     // 2. Load các Topic đã chọn Full (Quan trọng: Phải load cả câu hỏi bên trong)
-                    val selectedTopicLinks = alarmDao.getTopicLinksForAlarmOnce(alarmId)
+                    val selectedTopicLinks = alarmRepository.getTopicLinksForAlarmOnce(alarmId)
 
                     val restoredTopics = selectedTopicLinks.map { link ->
                         // Lấy tên Topic
-                        val topicName = alarmDao.getTopicNameById(link.topicId) ?: ""
+                        val topicName = topicRepository.getTopicNameById(link.topicId) ?: ""
 
                         // 🚨 QUAN TRỌNG: Lấy danh sách câu hỏi của Topic này từ DB
-                        // Dùng .first() để lấy giá trị hiện tại từ Flow mà AppDao trả về
-                        val questionsEntities = alarmDao.getQuestionsByTopic(link.topicId).first()
+                        // Dùng .first() để lấy giá trị hiện tại từ Flow mà TopicRepository trả về
+                        val questionsEntities = topicRepository.getQuestionsByTopic(link.topicId).first()
 
                         val topicQuestions = questionsEntities.map { q ->
                             MissionQuestion(id = q.questionId, text = q.prompt, isSelected = true)
@@ -92,11 +100,11 @@ class AlarmSettingsViewModel(
                     }
 
                     // 3. Load selected QR codes
-                    val selectedQRCodes = alarmDao.getQRCodesForAlarmOnce(alarmId)
+                    val selectedQRCodes = alarmRepository.getQRCodesForAlarmOnce(alarmId)
                     val selectedQRCodeIds = selectedQRCodes.map { it.qrId }
 
                     // 4. Load Face Mission Config
-                    val faceConfig = alarmDao.getFaceMissionConfigByAlarmId(alarmId)
+                    val faceConfig = alarmRepository.getFaceMissionConfigByAlarmId(alarmId)
 
                     _uiState.update {
                         it.copy(
@@ -270,8 +278,6 @@ class AlarmSettingsViewModel(
 
     fun saveAlarm() {
         viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
-            val scheduler = AlarmScheduler(context)
             val state = _uiState.value
             var alarmEntity = AlarmEntity(
                 alarmId = if (state.id == -1) 0 else state.id,
@@ -286,11 +292,11 @@ class AlarmSettingsViewModel(
                 ringtoneUri = state.ringtoneUri
             )
             val finalAlarmId = if (state.id == -1) {
-                val newId = alarmDao.insertAlarm(alarmEntity).toInt()
+                val newId = alarmRepository.insertAlarm(alarmEntity).toInt()
                 alarmEntity = alarmEntity.copy(alarmId = newId)
                 newId
             } else {
-                alarmDao.updateAlarm(alarmEntity)
+                alarmRepository.updateAlarm(alarmEntity)
                 state.id
             }
             
@@ -302,12 +308,12 @@ class AlarmSettingsViewModel(
 
             // 5. Lưu hoặc Xóa sạch cấu hình Nụ cười cũ
             if (state.faceMissionConfig != null) {
-                alarmDao.insertOrUpdateFaceMissionConfig(state.faceMissionConfig.copy(alarmId = finalAlarmId))
+                alarmRepository.insertOrUpdateFaceMissionConfig(state.faceMissionConfig.copy(alarmId = finalAlarmId))
             } else {
-                alarmDao.deleteFaceMissionConfigByAlarmId(finalAlarmId)
+                alarmRepository.deleteFaceMissionConfigByAlarmId(finalAlarmId)
             }
 
-            scheduler.schedule(alarmEntity)
+            alarmScheduler.schedule(alarmEntity)
 
             _uiState.update { it.copy(isSaved = true, id = finalAlarmId) }
         }
@@ -315,7 +321,7 @@ class AlarmSettingsViewModel(
     
     private suspend fun saveSelectedQuestions(alarmId: Int, questions: List<MissionQuestion>) {
         // Xóa các câu hỏi cũ của báo thức này
-        alarmDao.clearSelectedQuestionsForAlarm(alarmId)
+        alarmRepository.clearSelectedQuestionsForAlarm(alarmId)
         
         // Lưu các câu hỏi mới được chọn
         questions.forEach { question ->
@@ -325,7 +331,7 @@ class AlarmSettingsViewModel(
                 questionId = question.id, // Dùng trực tiếp question.id kiểu Int
                 topicId = null
             )
-            alarmDao.insertSelectedQuestion(entity)
+            alarmRepository.insertSelectedQuestion(entity)
         }
     }
 
@@ -381,11 +387,11 @@ class AlarmSettingsViewModel(
     
     private suspend fun saveSelectedQRCodes(alarmId: Int, qrCodeIds: List<Int>) {
         // Xóa các liên kết cũ
-        alarmDao.clearQRLinksForAlarm(alarmId)
+        alarmRepository.clearQRLinksForAlarm(alarmId)
         
         // Lưu các liên kết mới
         qrCodeIds.forEach { qrId ->
-            alarmDao.insertAlarmQRLink(AlarmQRLinkEntity(alarmId = alarmId, qrId = qrId))
+            alarmRepository.insertAlarmQRLink(AlarmQRLinkEntity(alarmId = alarmId, qrId = qrId))
         }
     }
 
@@ -396,8 +402,8 @@ class AlarmSettingsViewModel(
         questions: List<MissionQuestion>,
         topics: List<MissionTopic>
     ) {
-        alarmDao.clearSelectedQuestionsForAlarm(alarmId)
-        alarmDao.clearAlarmTopicLinks(alarmId)
+        alarmRepository.clearSelectedQuestionsForAlarm(alarmId)
+        alarmRepository.clearAlarmTopicLinks(alarmId)
 
         val fullSelectedTopicIds = topics.filter { it.isSelected }
             .map { it.id }
@@ -405,7 +411,7 @@ class AlarmSettingsViewModel(
 
         fullSelectedTopicIds.forEach { topicId ->
             if (topicId != MissionViewModel.DEFAULT_TOPIC_ID) {
-                alarmDao.insertAlarmTopicLink(
+                alarmRepository.insertAlarmTopicLink(
                     AlarmTopicLink(alarmId = alarmId, topicId = topicId)
                 )
             }
@@ -422,14 +428,29 @@ class AlarmSettingsViewModel(
 
             if (isDefault) {
                 // Câu hỏi mặc định luôn lưu vào bảng SelectedQuestion
-                alarmDao.insertSelectedQuestion(
+                alarmRepository.insertSelectedQuestion(
                     AlarmSelectedQuestionEntity(alarmId = alarmId, questionId = question.id)
                 )
             } else if (parentTopic != null && !fullSelectedTopicIds.contains(parentTopic.id)) {
                 // CHỈ LƯU vào bảng này nếu Topic cha của nó KHÔNG được chọn toàn bộ
                 // (Tức là người dùng chỉ chọn vài câu lẻ trong Topic đó)
-                alarmDao.insertSelectedQuestion(
+                alarmRepository.insertSelectedQuestion(
                     AlarmSelectedQuestionEntity(alarmId = alarmId, questionId = question.id)
+                )
+            }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as SmartAlarmApp
+                AlarmSettingsViewModel(
+                    app,
+                    createSavedStateHandle(),
+                    app.container.alarmRepository,
+                    app.container.topicRepository,
+                    app.container.alarmScheduler
                 )
             }
         }

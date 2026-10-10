@@ -54,7 +54,7 @@ fun QRCodeManagementDialog(
     onScanCamera: () -> Unit,
     scannedCodeFromCamera: Pair<String, String>? = null,
     onClearScannedCode: () -> Unit = {},
-    viewModel: QRCodeViewModel = viewModel()
+    viewModel: QRCodeViewModel = viewModel(factory = QRCodeViewModel.Factory)
 ) {
     val context = LocalContext.current
     val qrCodes by viewModel.allQRCodes.collectAsStateWithLifecycle()

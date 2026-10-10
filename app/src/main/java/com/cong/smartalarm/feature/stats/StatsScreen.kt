@@ -54,7 +54,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -63,7 +62,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cong.smartalarm.core.database.AppDatabase
 import com.cong.smartalarm.core.database.model.SrsStat
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import com.cong.smartalarm.feature.museum.MemoryMuseumScreen // 🔥 Import màn hình Bảo tàng ký ức
@@ -71,14 +69,7 @@ import com.cong.smartalarm.feature.museum.MemoryMuseumScreen // 🔥 Import màn
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(onNavigateToMuseum: () -> Unit) {
-    val context = LocalContext.current
-    val statsDao = remember(context) {
-        AppDatabase.getDatabase(context).statisticsDao()
-    }
-
-    val viewModel: StatsViewModel = viewModel(
-        factory = StatsViewModelFactory(statsDao)
-    )
+    val viewModel: StatsViewModel = viewModel(factory = StatsViewModel.Factory)
 
     val score by viewModel.wakeUpScore.collectAsStateWithLifecycle()
     val weeklyStats by viewModel.weeklyAccuracy.collectAsStateWithLifecycle(initialValue = emptyList())

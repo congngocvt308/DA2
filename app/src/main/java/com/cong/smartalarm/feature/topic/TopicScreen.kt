@@ -46,7 +46,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun TopicScreen(
-    viewModel: TopicViewModel = viewModel(),
+    viewModel: TopicViewModel = viewModel(factory = TopicViewModel.Factory),
     onNavigateToDetail: (Int) -> Unit
 ) {
     var isSearching by remember { mutableStateOf(false) }
