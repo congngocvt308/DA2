@@ -34,15 +34,16 @@
 
 ## 🎨 Giao diện
 
-Giao diện theo phong cách **"Mental Health App"** của bộ quy tắc [UI UX Pro Max](https://uupm.cc/): *Neumorphism + Accessible & Ethical*, tông màu dịu để thức dậy nhẹ nhàng.
+Chủ đề **"Đêm → Bình minh"**, dựa trên mục *Alarm & World Clock* của bộ quy tắc [UI UX Pro Max](https://uupm.cc/): nền tối, điểm nhấn hổ phách, tránh nền trắng thuần. App được mở chủ yếu lúc tối trước khi ngủ nên giao diện dịu mắt; riêng màn chuông reo là bầu trời bình minh sáng ấm để đánh thức.
 
-- **Màu:** đơn sắc đen / xám trung tính, nhấn xanh lá wellness `#059669`; nền sáng `#FAFAFA`.
-- **Bề mặt nổi mềm (soft UI):** thẻ và nút trắng với hai lớp bóng mềm, lún nhẹ khi nhấn (150 ms, không nảy).
+- **Màu:** nền xanh đêm `#0F172A`, thẻ `#1E293B`; màu chính hổ phách `#F59E0B` (chữ tối trên nền hổ phách); phụ chàm `#818CF8`; thành công xanh lá `#34D399`; chữ `#F1F5F9` / `#94A3B8`.
+- **Nền:** bầu trời đêm có sao mờ và quầng bình minh ở đáy "thở" chậm; màn chuông reo dùng bộ màu `Dawn` (đào → cam, chữ nâu đậm).
+- **Bề mặt nổi mềm (soft UI):** thẻ và nút có bóng tối mềm và viền sáng rất mảnh phía trên, lún nhẹ khi nhấn (150 ms, không nảy).
 - **Chữ:** Lora (tiêu đề) + Raleway (nội dung), hỗ trợ đầy đủ tiếng Việt; số giờ luôn thẳng hàng.
 - **Chuyển động tiết chế:** nền "thở" chậm theo nhịp 8 giây; tự đứng yên khi bật *Giảm chuyển động* trong cài đặt hệ thống.
 - **Trợ năng:** chữ đạt độ tương phản ≥ 4.5:1, vùng chạm ≥ 48dp, trạng thái không chỉ thể hiện bằng màu, có mô tả cho TalkBack.
 
-Token màu nằm trong `object Calm` (`core/designsystem/theme/Color.kt`); các component dùng chung nằm trong `core/designsystem/component/` (`CalmCard`, `CalmButton`, `CalmAlertDialog`, `CalmSwitch`, `CalmSlider`, `SoftSurface`…).
+Token màu nằm trong `object Calm` và `object Dawn` (`core/designsystem/theme/Color.kt`); các component dùng chung nằm trong `core/designsystem/component/` (`CalmCard`, `CalmButton`, `CalmAlertDialog`, `CalmSwitch`, `CalmSlider`, `SoftSurface`…).
 
 ---
 

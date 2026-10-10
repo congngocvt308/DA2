@@ -40,7 +40,7 @@ fun MemoryMuseumCard(onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.outlineVariant
         ),
         colors = CardDefaults.cardColors(
-            containerColor = Calm.NeutralMist
+            containerColor = Calm.Raised
         )
     ) {
         Row(

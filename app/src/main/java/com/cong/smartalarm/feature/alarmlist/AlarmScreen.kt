@@ -129,7 +129,7 @@ fun AlarmScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Calm.Foreground.copy(alpha = 0.16f)) // lớp phủ xám nhạt
+                    .background(Calm.ShadowDark.copy(alpha = 0.55f)) // lớp phủ tối khi mở menu
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null

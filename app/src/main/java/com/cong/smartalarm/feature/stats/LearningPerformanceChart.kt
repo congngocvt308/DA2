@@ -129,8 +129,8 @@ fun LearningPerformanceChart(stats: List<DayAccuracy>) {
                                         when {
                                             acc == null -> Calm.Muted
                                             reached -> Calm.Wellness
-                                            acc == 0f -> Calm.NeutralSoft
-                                            else -> Calm.Neutral
+                                            acc == 0f -> Calm.Subtle
+                                            else -> Calm.Accent
                                         }
                                     )
                             )

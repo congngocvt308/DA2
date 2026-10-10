@@ -27,7 +27,7 @@ import com.cong.smartalarm.core.designsystem.theme.BreathCycleMillis
 import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import com.cong.smartalarm.core.designsystem.component.SoftSurfaceButton
 import com.cong.smartalarm.core.designsystem.theme.rememberReducedMotion
-import com.cong.smartalarm.core.designsystem.theme.Calm
+import com.cong.smartalarm.core.designsystem.theme.Dawn
 import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -107,7 +107,7 @@ fun AlarmRingingScreen(
 
             Text(
                 text = currentDate.replaceFirstChar { it.uppercase() },
-                color = Calm.MutedForeground,
+                color = Dawn.MutedText,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -120,14 +120,14 @@ fun AlarmRingingScreen(
                     val r = size.width * 0.5f * (0.92f + 0.06f * b)
                     drawCircle(
                         Brush.radialGradient(
-                            listOf(Calm.NeutralMist.copy(alpha = 0.55f + 0.2f * b), Calm.NeutralMist.copy(alpha = 0f)),
+                            listOf(Color.White.copy(alpha = 0.45f + 0.2f * b), Color.White.copy(alpha = 0f)),
                             center = center,
                             radius = r
                         ),
                         radius = r
                     )
                     drawCircle(
-                        Calm.Neutral.copy(alpha = 0.10f + 0.10f * b),
+                        Dawn.Sun.copy(alpha = 0.25f + 0.2f * b),
                         radius = r * 0.82f,
                         style = Stroke(width = 1.5.dp.toPx())
                     )
@@ -135,7 +135,7 @@ fun AlarmRingingScreen(
             ) {
                 Text(
                     text = currentTime,
-                    color = Calm.Foreground,
+                    color = Dawn.Text,
                     fontSize = 104.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-3).sp
@@ -146,6 +146,8 @@ fun AlarmRingingScreen(
 
             // --- NHÃN BÁO THỨC TRONG VIÊN KÍNH ---
             SoftSurface(
+                tint = SolidColor(Dawn.Surface),
+                elevation = 8.dp,
                 modifier = Modifier.height(52.dp)
             ) {
                 Row(
@@ -155,13 +157,13 @@ fun AlarmRingingScreen(
                     Icon(
                         imageVector = Icons.Default.WbSunny,
                         contentDescription = null,
-                        tint = Calm.Warm,
+                        tint = Dawn.SunIcon,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = alarmLabel.ifBlank { "Báo thức" },
-                        color = Calm.Foreground,
+                        color = Dawn.Text,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -176,31 +178,32 @@ fun AlarmRingingScreen(
             if (isSnoozeEnabled) {
                 SoftSurfaceButton(
                     onClick = onSnooze,
+                    tint = SolidColor(Dawn.Surface),
                     modifier = Modifier
                         .width(200.dp)
                         .height(60.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Snooze, contentDescription = null, tint = Calm.Primary, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Default.Snooze, contentDescription = null, tint = Dawn.Text, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Báo lại", color = Calm.Foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Báo lại", color = Dawn.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // --- NÚT TẮT BÁO THỨC: NÚT CHÍNH MÀU TÍM ---
+            // --- NÚT TẮT BÁO THỨC: nâu đậm trên trời sáng -> nổi bật nhất màn hình ---
             SoftSurfaceButton(
                 onClick = onNavigateToQuiz,
-                tint = SolidColor(Calm.Primary),
+                tint = SolidColor(Dawn.Text),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(76.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AlarmOff, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
+                    Icon(Icons.Default.AlarmOff, contentDescription = null, tint = Dawn.SkyTop, modifier = Modifier.size(26.dp))
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Tắt báo thức", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text("Tắt báo thức", color = Dawn.SkyTop, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -209,15 +212,15 @@ fun AlarmRingingScreen(
 }
 
 // ---------------------------------------------------------------------------
-// Nền bình minh dịu: trời xám bạc nhạt chuyển dần sang hồng đào / kem ở chân trời,
-// vài đốm sáng mờ và mặt trời toả sáng nhẹ. Mọi chuyển động đều rất chậm.
+// Bầu trời bình minh: phía trên còn chút chàm của đêm, chuyển dần sang đào / cam ở chân trời,
+// vài sao cuối cùng mờ dần và mặt trời ló lên ở đáy. Mọi chuyển động đều rất chậm.
 // ---------------------------------------------------------------------------
 
 private class Star(val x: Float, val y: Float, val r: Float, val twinkle: Float)
 
 private fun generateStars(): List<Star> {
     val rnd = Random(7)
-    return List(28) { Star(rnd.nextFloat(), rnd.nextFloat() * 0.45f, 0.6f + rnd.nextFloat() * 1.4f, rnd.nextFloat() * 6.28f) }
+    return List(18) { Star(rnd.nextFloat(), rnd.nextFloat() * 0.25f, 0.6f + rnd.nextFloat() * 1.2f, rnd.nextFloat() * 6.28f) }
 }
 
 private fun DrawScope.drawSunrise(canvas: Size, phase: Float, stars: List<Star>) {
@@ -227,16 +230,16 @@ private fun DrawScope.drawSunrise(canvas: Size, phase: Float, stars: List<Star>)
 
     drawRect(
         Brush.verticalGradient(
-            0f to Color(0xFFF4F4F5),
-            0.4f to Color(0xFFF7F7F8),
-            0.72f to Color(0xFFFDEFF0),
-            1f to Color(0xFFFFE9D6),
+            0f to Color(0xFFC3C6F2),
+            0.35f to Dawn.SkyTop,
+            0.7f to Dawn.SkyMid,
+            1f to Dawn.SkyHorizon,
             endY = h
         ),
         size = canvas
     )
 
-    // Đốm sáng mờ còn sót lại của đêm, lấp lánh rất chậm
+    // Sao cuối cùng của đêm, mờ dần
     stars.forEach { s ->
         val a = 0.35f + 0.25f * (0.5f + 0.5f * sin(phase * 4f + s.twinkle))
         drawCircle(Color.White.copy(alpha = a), radius = s.r * density, center = Offset(s.x * w, s.y * h))
@@ -249,17 +252,16 @@ private fun DrawScope.drawSunrise(canvas: Size, phase: Float, stars: List<Star>)
             center = Offset(cx, cy)
         )
     }
-    blob(Calm.NeutralSoft.copy(alpha = 0.35f), w * (0.2f + 0.05f * sin(phase)), h * (0.22f + 0.02f * cos(phase)), w * 0.7f)
-    blob(Color(0xFFE4E4E7).copy(alpha = 0.30f), w * (0.85f + 0.04f * cos(phase)), h * (0.55f + 0.02f * sin(phase)), w * 0.6f)
-    blob(Color(0xFFE4E4E7).copy(alpha = 0.30f), w * (0.55f + 0.06f * sin(phase + 2f)), h * 0.08f, w * 0.55f)
+    blob(Color(0xFFFFF1E0).copy(alpha = 0.45f), w * (0.2f + 0.05f * sin(phase)), h * (0.42f + 0.02f * cos(phase)), w * 0.7f)
+    blob(Color(0xFFFFCFA0).copy(alpha = 0.35f), w * (0.85f + 0.04f * cos(phase)), h * (0.6f + 0.02f * sin(phase)), w * 0.6f)
 
     // Mặt trời mọc: quầng sáng ấm, viền mềm
-    val sunCenter = Offset(w * 0.5f, h * (0.95f - 0.01f * sin(phase)))
-    val sunR = w * 0.34f
-    blob(Color(0xFFFFD8B5).copy(alpha = 0.55f), sunCenter.x, sunCenter.y, sunR * 2.4f)
+    val sunCenter = Offset(w * 0.5f, h * (0.98f - 0.01f * sin(phase)))
+    val sunR = w * 0.36f
+    blob(Dawn.Sun.copy(alpha = 0.55f), sunCenter.x, sunCenter.y, sunR * 2.4f)
     drawCircle(
         Brush.radialGradient(
-            listOf(Color(0xFFFFF4E0), Color(0xFFFFE2C2), Color(0xFFFFD3B0).copy(alpha = 0f)),
+            listOf(Color(0xFFFFF8E7), Color(0xFFFFE0A3), Dawn.Sun.copy(alpha = 0f)),
             center = sunCenter,
             radius = sunR
         ),

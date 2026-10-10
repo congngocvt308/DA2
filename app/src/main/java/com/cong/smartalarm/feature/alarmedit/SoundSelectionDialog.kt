@@ -84,7 +84,7 @@ fun SoundSelectionDialog(
                         filePickerLauncher.launch(arrayOf("audio/*"))
                     },
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground)
+                    colors = ButtonDefaults.buttonColors(containerColor = Calm.Raised, contentColor = Calm.Foreground)
                 ) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))

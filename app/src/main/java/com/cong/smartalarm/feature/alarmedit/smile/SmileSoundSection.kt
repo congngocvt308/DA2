@@ -70,9 +70,9 @@ internal fun SmileSoundSection(
                             .width(140.dp)
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color = Calm.NeutralMist,
+                        color = Calm.Raised,
                         contentColor = Calm.Foreground,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Calm.NeutralSoft)
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Subtle)
                     ) {
                         Row(
                             modifier = Modifier

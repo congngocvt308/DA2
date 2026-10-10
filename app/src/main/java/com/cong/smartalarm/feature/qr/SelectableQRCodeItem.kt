@@ -43,7 +43,7 @@ internal fun SelectableQRCodeItem(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
-                Calm.NeutralMist
+                Calm.Raised
             else
                 Calm.Surface
         ),
@@ -99,7 +99,7 @@ internal fun SelectableQRCodeItem(
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (qrCode.codeType == "QR")
-                            Calm.NeutralMist
+                            Calm.Raised
                         else
                             Calm.WellnessMist
                     ),

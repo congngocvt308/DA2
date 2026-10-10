@@ -107,7 +107,7 @@ private fun ScanResultScreen(
                 .padding(top = 48.dp, start = 16.dp)
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Calm.NeutralMist)
+                .background(Calm.Raised)
         ) {
             Icon(
                 Icons.Default.ArrowBack,
@@ -150,7 +150,7 @@ private fun SuccessContent() {
             Icon(
                 Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = Calm.OnWellness,
                 modifier = Modifier.size(60.dp)
             )
         }

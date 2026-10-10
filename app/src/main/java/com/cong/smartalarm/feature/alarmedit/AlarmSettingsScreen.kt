@@ -244,7 +244,7 @@ fun AlarmSettingsScreen(
                 .fillMaxWidth()
                 .height(58.dp)
         ) {
-            Text("Lưu", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Lưu", color = Calm.OnPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         if (showDiscardDialog) {
             DiscardChangesDialog(

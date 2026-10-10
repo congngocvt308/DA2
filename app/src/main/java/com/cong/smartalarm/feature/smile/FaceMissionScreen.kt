@@ -140,7 +140,7 @@ private fun FaceMissionContent(viewModel: FaceMissionViewModel, onLuongAComplete
                     .fillMaxWidth()
                     .aspectRatio(0.9f)
                     .background(
-                        color = Calm.NeutralSoft, // Viền xám nhạt
+                        color = Calm.Subtle, // Viền xám nhạt
                         shape = RoundedCornerShape(40.dp)
                     )
                     .padding(2.5.dp)

@@ -89,8 +89,8 @@ fun BottomNavBar(navController: NavHostController) {
                         .width(itemWidth - 12.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(32.dp))
-                        .background(Calm.NeutralMist) // Viên chỉ báo tab đang chọn
-                        .border(1.dp, Calm.NeutralSoft, RoundedCornerShape(32.dp))
+                        .background(Calm.Primary.copy(alpha = 0.16f)) // Viên chỉ báo tab đang chọn: hổ phách nhạt
+                        .border(1.dp, Calm.Primary.copy(alpha = 0.28f), RoundedCornerShape(32.dp))
                 )
 
                 Row(

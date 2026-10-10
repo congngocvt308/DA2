@@ -46,7 +46,7 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onDefaultSelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = Calm.NeutralMist,
+                    color = Calm.Raised,
                     contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -70,7 +70,7 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onGallerySelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = Calm.NeutralMist,
+                    color = Calm.Raised,
                     contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {

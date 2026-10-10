@@ -121,7 +121,7 @@ fun TopicScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     // Lớp phủ tím nhạt dịu thay cho nền đen
-                    .background(Calm.Foreground.copy(alpha = 0.18f))
+                    .background(Calm.ShadowDark.copy(alpha = 0.55f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null

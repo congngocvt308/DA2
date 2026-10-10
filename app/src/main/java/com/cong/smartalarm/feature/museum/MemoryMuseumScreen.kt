@@ -246,7 +246,7 @@ private fun EmptyMuseumCard() {
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Calm.NeutralMist),
+                        .background(Calm.Raised),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -382,12 +382,12 @@ private fun TapGuideOverlay(reducedMotion: Boolean) {
                 ) {
                     Text(
                         text = "Chạm để mở kỷ niệm",
-                        color = Color.White,
+                        color = Calm.OnPrimary,
                         style = MaterialTheme.typography.labelLarge
                     )
                     Text(
                         text = "Xem ảnh lớn & đặt tên cho nụ cười",
-                        color = Color.White.copy(alpha = 0.82f),
+                        color = Calm.OnPrimary.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )

@@ -216,7 +216,7 @@ fun TopicItemRow(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = if (topic.isSelected) "Bỏ chọn cả chủ đề" else "Chọn cả chủ đề",
-                    tint = if (topic.isSelected) Color.White else Color.Transparent,
+                    tint = if (topic.isSelected) Calm.OnPrimary else Color.Transparent,
                     modifier = Modifier
                         .size(24.dp)
                         .background(
@@ -270,7 +270,7 @@ fun QuestionItemRow(
         Icon(
             imageVector = Icons.Default.Check,
             contentDescription = if (question.isSelected) "Đã chọn" else "Chưa chọn",
-            tint = if (question.isSelected) Color.White else Color.Transparent,
+            tint = if (question.isSelected) Calm.OnPrimary else Color.Transparent,
             modifier = Modifier
                 .size(20.dp)
                 .background(

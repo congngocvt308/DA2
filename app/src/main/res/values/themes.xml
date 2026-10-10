@@ -7,7 +7,7 @@
         <item name="postSplashScreenTheme">@style/Theme.Alarm</item>
     </style>
 
-    <style name="Theme.Alarm" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Alarm" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/calm_background</item>
     </style>
 </resources>

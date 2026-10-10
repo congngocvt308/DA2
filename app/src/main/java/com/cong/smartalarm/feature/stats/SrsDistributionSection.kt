@@ -48,8 +48,8 @@ fun SrsDistributionSection(
     val new = srsStats.find { it.status == "New" }?.count ?: 0
     // Thang màu dịu: mới (nhạt) -> đang học (lavender) -> đã thuộc (wellness)
     val srsMastered = Calm.Wellness
-    val srsLearning = Calm.Neutral
-    val srsNew = Calm.NeutralSoft
+    val srsLearning = Calm.Accent
+    val srsNew = Calm.Subtle
 
     CalmCard(
         modifier = Modifier

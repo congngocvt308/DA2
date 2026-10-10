@@ -204,7 +204,7 @@ fun QRCodeManagementDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Calm.NeutralSoft
+                                tint = Calm.Subtle
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(

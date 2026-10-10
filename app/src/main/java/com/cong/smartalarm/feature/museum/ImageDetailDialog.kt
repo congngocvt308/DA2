@@ -124,7 +124,7 @@ private fun ImageDetailDialogContent(
                 // 1. HIỂN THỊ ẢNH CHÍNH
                 CalmCard(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Calm.NeutralMist),
+                    colors = CardDefaults.cardColors(containerColor = Calm.Raised),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     modifier = Modifier
                         .fillMaxWidth()

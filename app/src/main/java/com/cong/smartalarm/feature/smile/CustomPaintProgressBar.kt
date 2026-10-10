@@ -43,7 +43,7 @@ fun CustomPaintProgressBar(
 
             // Dải màu dịu: xám -> đen -> xanh wellness
             val calmBrush = Brush.linearGradient(
-                colors = listOf(Calm.Neutral, Calm.Primary, Calm.Wellness),
+                colors = listOf(Calm.Accent, Calm.Primary, Calm.Wellness),
                 start = Offset(0f, 0f),
                 end = Offset(size.width, 0f)
             )
@@ -51,7 +51,7 @@ fun CustomPaintProgressBar(
             if (innerWidth > 0f && innerHeight > 0f) {
                 // 1. NỀN BÊN TRONG: rãnh xám nhạt
                 drawRoundRect(
-                    color = Calm.NeutralMist,
+                    color = Calm.Raised,
                     topLeft = Offset(innerLeft, innerTop),
                     size = Size(innerWidth, innerHeight),
                     cornerRadius = CornerRadius(innerRadius, innerRadius)
@@ -77,7 +77,7 @@ fun CustomPaintProgressBar(
             val borderRadius = borderHeightSize / 2
 
             drawRoundRect(
-                color = Calm.NeutralSoft,
+                color = Calm.Subtle,
                 topLeft = Offset(borderLeft, borderTop),
                 size = Size(borderWidthSize, borderHeightSize),
                 cornerRadius = CornerRadius(borderRadius, borderRadius),

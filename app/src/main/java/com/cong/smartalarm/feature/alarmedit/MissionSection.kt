@@ -53,8 +53,8 @@ fun AlarmTaskSection(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(tileShape)
-                        .background(if (hasAnyMission) Calm.NeutralMist else Calm.Muted)
-                        .border(1.dp, Calm.NeutralSoft, tileShape)
+                        .background(if (hasAnyMission) Calm.Raised else Calm.Muted)
+                        .border(1.dp, Calm.Subtle, tileShape)
                         .clickable(onClick = if (hasAnyMission) onEditClick else onAddClick),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -63,7 +63,7 @@ fun AlarmTaskSection(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(if (hasAnyMission) Calm.Surface else Calm.NeutralMist),
+                            .background(if (hasAnyMission) Calm.Surface else Calm.Raised),
                         contentAlignment = Alignment.Center
                     ) {
                         when {
@@ -113,7 +113,7 @@ fun AlarmTaskSection(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Xóa nhiệm vụ",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.padding(4.dp)
                         )
                     }

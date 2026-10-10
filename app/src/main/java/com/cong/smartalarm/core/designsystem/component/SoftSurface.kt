@@ -39,8 +39,8 @@ import com.cong.smartalarm.core.designsystem.theme.Calm
 import com.cong.smartalarm.core.designsystem.theme.SoftPressMillis
 
 /**
- * Bề mặt "soft UI" (neumorphism): hai bóng mềm (xám lệch xuống-phải, trắng lệch lên-trái),
- * một dải sáng lồi rất nhẹ và viền mảnh, như được nặn nổi lên từ nền.
+ * Bề mặt "soft UI" trên nền đêm: bóng tối mềm đổ xuống dưới, viền sáng rất mảnh phía trên
+ * (như ánh trăng hắt lên mép) và dải lồi nhẹ, để thẻ nổi khỏi bầu trời mà không chói.
  * Khi nhấn, bóng thu lại (bề mặt "lún") trong [SoftPressMillis] — không nảy.
  *
  * Hiệu năng: Outline, Paint và Brush được tạo một lần mỗi khi kích thước đổi (drawWithCache);
@@ -63,8 +63,9 @@ internal fun Modifier.softShadows(shape: Shape, elevation: Dp, depth: () -> Floa
     )
     else this.drawWithCache {
         val outline = shape.createOutline(size, layoutDirection, this)
-        val darkColor = Calm.ShadowDark.copy(alpha = 0.26f).toArgb()
-        val lightColor = Calm.ShadowLight.copy(alpha = 0.95f).toArgb()
+        val darkColor = Calm.ShadowDark.copy(alpha = 0.6f).toArgb()
+        // Trên nền tối, bóng sáng chỉ còn như một vầng rất nhạt — mạnh hơn sẽ thành vệt bẩn
+        val lightColor = Calm.ShadowLight.copy(alpha = 0.035f).toArgb()
         val paint = Paint().also {
             it.asFrameworkPaint().isAntiAlias = true
             it.asFrameworkPaint().color = Calm.Background.toArgb()
@@ -78,9 +79,9 @@ internal fun Modifier.softShadows(shape: Shape, elevation: Dp, depth: () -> Floa
             val blur = maxBlur * (0.4f + 0.6f * d)
             val framework = paint.asFrameworkPaint()
             drawIntoCanvas { canvas ->
-                framework.setShadowLayer(blur, distance, distance, darkColor)
+                framework.setShadowLayer(blur, distance * 0.4f, distance * 1.2f, darkColor)
                 canvas.drawOutline(outline, paint)
-                framework.setShadowLayer(blur, -distance, -distance, lightColor)
+                framework.setShadowLayer(blur, -distance * 0.4f, -distance, lightColor)
                 canvas.drawOutline(outline, paint)
             }
         }
@@ -91,17 +92,17 @@ private fun Modifier.softFace(shape: Shape, tint: Brush, press: () -> Float): Mo
     val outline = shape.createOutline(size, layoutDirection, this)
     val stroke = 1.dp.toPx()
     val convex = Brush.linearGradient(
-        0f to Color.White.copy(alpha = 0.22f),
+        0f to Color.White.copy(alpha = 0.05f),
         0.5f to Color.Transparent,
-        1f to Calm.ShadowDark.copy(alpha = 0.06f),
+        1f to Calm.ShadowDark.copy(alpha = 0.18f),
         start = Offset.Zero,
-        end = Offset(size.width, size.height)
+        end = Offset(0f, size.height)
     )
-    val rimBrush = Brush.linearGradient(
-        0f to Color.White.copy(alpha = 0.9f),
-        1f to Calm.ShadowDark.copy(alpha = 0.12f),
-        start = Offset.Zero,
-        end = Offset(size.width, size.height)
+    // Viền "ánh trăng": sáng ở mép trên, tan dần xuống dưới
+    val rimBrush = Brush.verticalGradient(
+        0f to Color.White.copy(alpha = 0.12f),
+        0.4f to Color.White.copy(alpha = 0.04f),
+        1f to Color.White.copy(alpha = 0.02f)
     )
     val canDrawRim = size.minDimension > stroke * 2
     val rim = if (canDrawRim) {
@@ -114,7 +115,7 @@ private fun Modifier.softFace(shape: Shape, tint: Brush, press: () -> Float): Mo
         drawOutline(outline, tint)
         drawOutline(outline, convex)
         val p = press()
-        if (p > 0f) drawOutline(outline, Calm.ShadowDark.copy(alpha = 0.08f * p))
+        if (p > 0f) drawOutline(outline, Calm.ShadowDark.copy(alpha = 0.18f * p))
         if (rim != null) translate(stroke / 2, stroke / 2) { drawOutline(rim, rimBrush, style = Stroke(stroke)) }
     }
 }

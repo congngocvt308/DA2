@@ -53,7 +53,7 @@ internal fun ConfigureMatrixLayout(
         val chipColors = FilterChipDefaults.filterChipColors(
             containerColor = Calm.Surface,
             labelColor = Calm.MutedForeground,
-            selectedContainerColor = Calm.NeutralMist,
+            selectedContainerColor = Calm.Raised,
             selectedLabelColor = Calm.Foreground,
             selectedLeadingIconColor = Calm.Primary
         )

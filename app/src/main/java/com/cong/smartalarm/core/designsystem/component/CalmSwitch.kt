@@ -10,12 +10,11 @@ import androidx.compose.ui.graphics.Color
 import com.cong.smartalarm.core.designsystem.theme.Calm
 
 /**
- * Màu công tắc dùng chung: bật = rãnh đen, nút trắng; tắt = rãnh xám nhạt có viền,
- * nút xám (nút trắng trên rãnh nhạt gần như không thấy).
+ * Màu công tắc dùng chung: bật = rãnh hổ phách, nút tối; tắt = rãnh tối có viền xám, nút xám.
  */
 @Composable
 fun calmSwitchColors(): SwitchColors = SwitchDefaults.colors(
-    checkedThumbColor = Color.White,
+    checkedThumbColor = Calm.OnPrimary,
     checkedTrackColor = MaterialTheme.colorScheme.primary,
     checkedBorderColor = Color.Transparent,
     uncheckedThumbColor = MaterialTheme.colorScheme.outline,

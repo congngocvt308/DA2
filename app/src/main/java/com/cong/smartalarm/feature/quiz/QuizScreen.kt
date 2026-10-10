@@ -141,7 +141,7 @@ fun QuizTopBar(
             progress = { timerProgress },
             modifier = Modifier.fillMaxWidth().height(6.dp),
             color = if (timerProgress < 0.3f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            trackColor = Calm.NeutralMist,
+            trackColor = Calm.Raised,
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -166,9 +166,9 @@ fun QuizOptionButton(
     val isWrongAndSelected = uiState.isAnswered && isSelected && !answer.isCorrect
 
     // 🎯 1. ĐỊNH NGHĨA BẢNG MÀU CHUẨN (Calm)
-    val colorSuccess = Calm.WellnessText // Xanh lá đậm: chữ trắng đủ tương phản
+    val colorSuccess = Calm.Wellness
     val colorError = Calm.Destructive    // Đỏ
-    val colorDefault = Calm.Surface.copy(alpha = 0f) // Giữ bề mặt trắng nổi (trắng trong suốt để chuyển màu không bị xám)
+    val colorDefault = Calm.Surface.copy(alpha = 0f) // Giữ nguyên bề mặt thẻ (trong suốt để chuyển màu mượt)
     val colorSelected = MaterialTheme.colorScheme.primaryContainer
 
     val targetColor = when {
@@ -192,7 +192,12 @@ fun QuizOptionButton(
     )
 
     // Nút đáp án nổi mềm: màu trạng thái tô lên bề mặt trắng
-    val contentColor = if (uiState.isAnswered && (answer.isCorrect || isSelected)) Color.White else MaterialTheme.colorScheme.onSurface
+    // Nền xanh lá / đỏ sáng trên giao diện tối -> chữ tối
+    val contentColor = when {
+        isCorrectAndAnswered -> Calm.OnWellness
+        isWrongAndSelected -> Calm.OnDestructive
+        else -> MaterialTheme.colorScheme.onSurface
+    }
     SoftSurface(
         onClick = onSelect,
         enabled = !uiState.isAnswered && !uiState.isTimeOut,

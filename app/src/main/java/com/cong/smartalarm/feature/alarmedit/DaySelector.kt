@@ -81,13 +81,13 @@ fun CustomDayChip(
         modifier = modifier
             .height(48.dp)
             .clip(shape)
-            .background(if (isSelected) Calm.Primary else Calm.NeutralMist)
-            .border(1.dp, if (isSelected) Calm.Primary else Calm.NeutralSoft, shape)
+            .background(if (isSelected) Calm.Primary else Calm.Raised)
+            .border(1.dp, if (isSelected) Calm.Primary else Calm.Subtle, shape)
             .selectable(selected = isSelected, role = Role.Checkbox, onClick = onClick)
     ) {
         Text(
             text = text,
-            color = if (isSelected) Color.White else Calm.Foreground,
+            color = if (isSelected) Calm.OnPrimary else Calm.Foreground,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,

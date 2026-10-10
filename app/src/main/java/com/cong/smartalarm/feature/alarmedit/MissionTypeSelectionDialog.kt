@@ -59,8 +59,8 @@ fun MissionTypeSelectionDialog(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Calm.NeutralMist)
-                            .border(1.dp, Calm.NeutralSoft, CircleShape)
+                            .background(Calm.Raised)
+                            .border(1.dp, Calm.Subtle, CircleShape)
                             .clickable { onDismiss() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -74,7 +74,7 @@ fun MissionTypeSelectionDialog(
                     title = "Giải trắc nghiệm",
                     description = "Giải các câu hỏi để tỉnh táo.",
                     icon = "🧮",
-                    accent = listOf(Calm.NeutralMist, Calm.NeutralMist),
+                    accent = listOf(Calm.Raised, Calm.Raised),
                     onClick = onQuizSelected
                 )
                 Spacer(modifier = Modifier.height(10.dp))

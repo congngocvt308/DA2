@@ -34,8 +34,8 @@ import com.cong.smartalarm.core.designsystem.theme.SoftPressMillis
 
 /**
  * Thanh kéo soft UI dùng chung cho cả app (thay cho Material3 Slider).
- * - Rãnh dày 10dp bo tròn, phần đã chọn tô dải đen đậm dần, rãnh trống xám nhạt có viền mảnh.
- * - Nút kéo trắng nổi (bóng mềm), tâm đen; phồng nhẹ khi đang kéo.
+ * - Rãnh dày 10dp bo tròn, phần đã chọn tô dải chàm -> hổ phách, rãnh trống tối có viền mảnh.
+ * - Nút kéo sáng nổi (bóng mềm), tâm hổ phách; phồng nhẹ khi đang kéo.
  * - Có [steps] thì vẽ chấm mốc trên rãnh (bỏ qua nếu quá dày).
  * Vùng chạm vẫn ≥ 48dp như Slider gốc.
  */
@@ -85,9 +85,9 @@ private fun CalmSliderThumb(active: Float) {
             .softShadows(CircleShape, 6.dp) { 1f }
             .drawBehind {
                 val r = size.minDimension / 2
-                drawCircle(Calm.Surface, r)
-                drawCircle(Calm.Border, r - 0.5.dp.toPx(), style = Stroke(1.dp.toPx()))
-                // Tâm đen nở ra khi kéo: báo hiệu đang giữ
+                drawCircle(Calm.Foreground, r)
+                drawCircle(Calm.Subtle, r - 0.5.dp.toPx(), style = Stroke(1.dp.toPx()))
+                // Tâm hổ phách nở ra khi kéo: báo hiệu đang giữ
                 drawCircle(Calm.Primary, r * (0.34f + 0.08f * active))
             },
         contentAlignment = Alignment.Center
@@ -109,8 +109,8 @@ private fun CalmSliderTrack(state: SliderState) {
     ) {
         val h = size.height
         val radius = CornerRadius(h / 2, h / 2)
-        // Rãnh trống: xám nhạt, viền mảnh như được khắc lõm vào bề mặt
-        drawRoundRect(Calm.NeutralMist, cornerRadius = radius)
+        // Rãnh trống: tối, viền mảnh như được khắc lõm vào bề mặt
+        drawRoundRect(Calm.Raised, cornerRadius = radius)
         drawRoundRect(
             Calm.Border,
             topLeft = Offset(0.5f, 0.5f),
@@ -118,11 +118,11 @@ private fun CalmSliderTrack(state: SliderState) {
             cornerRadius = radius,
             style = Stroke(1.dp.toPx())
         )
-        // Phần đã chọn: dải xám đậm -> đen
+        // Phần đã chọn: dải chàm -> hổ phách
         val activeWidth = size.width * fraction
         if (activeWidth > 0f) {
             drawRoundRect(
-                Brush.horizontalGradient(listOf(Calm.Neutral, Calm.Primary), endX = activeWidth.coerceAtLeast(1f)),
+                Brush.horizontalGradient(listOf(Calm.Accent, Calm.Primary), endX = activeWidth.coerceAtLeast(1f)),
                 size = Size(activeWidth.coerceAtLeast(h), h),
                 cornerRadius = radius
             )
@@ -134,7 +134,7 @@ private fun CalmSliderTrack(state: SliderState) {
                 val x = size.width * i / (steps + 1)
                 val onActive = x <= activeWidth
                 drawCircle(
-                    color = if (onActive) Color.White.copy(alpha = 0.85f) else Color(0xFFA1A1AA),
+                    color = if (onActive) Calm.OnPrimary.copy(alpha = 0.7f) else Calm.MutedForeground,
                     radius = dot,
                     center = Offset(x.coerceIn(h / 2, size.width - h / 2), h / 2)
                 )

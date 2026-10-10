@@ -110,7 +110,7 @@ fun QRCodeSelectionDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Calm.NeutralSoft
+                                tint = Calm.Subtle
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
@@ -197,7 +197,7 @@ fun QRCodeSelectionDialog(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Calm.NeutralMist
+                            containerColor = Calm.Raised
                         )
                     ) {
                         Row(

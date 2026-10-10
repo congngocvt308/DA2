@@ -79,7 +79,7 @@ fun TimePickerSection(
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Calm.NeutralMist)
+                .background(Calm.Raised)
         )
         Row(
             modifier = Modifier

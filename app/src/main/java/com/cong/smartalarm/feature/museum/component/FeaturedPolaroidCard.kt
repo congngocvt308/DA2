@@ -73,7 +73,7 @@ fun FeaturedPolaroidCard(
         ) {
             Text(
                 text = displayName,
-                color = Calm.Foreground,
+                color = Calm.OnLight, // chữ trên giấy ảnh polaroid
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,

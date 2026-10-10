@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.topic
 
+import com.cong.smartalarm.core.designsystem.theme.Calm
+
 import android.annotation.SuppressLint
 import android.view.View
 import android.webkit.WebSettings
@@ -19,7 +21,7 @@ fun MathText(
     latexText: String,
     modifier: Modifier = Modifier,
     fontSize: Int = 16,
-    textColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color(0xFF18181B),
+    textColor: androidx.compose.ui.graphics.Color = Calm.Foreground,
     isBold: Boolean = false,
     textAlign: String = "left",
     maxLines: Int? = null

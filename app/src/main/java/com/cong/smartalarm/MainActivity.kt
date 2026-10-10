@@ -21,10 +21,10 @@ class MainActivity : ComponentActivity() {
     private var pendingNavigation = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Nền Calm luôn sáng -> icon thanh trạng thái/điều hướng luôn tối
+        // Nền đêm luôn tối -> icon thanh trạng thái/điều hướng luôn sáng
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
         super.onCreate(savedInstanceState)
         installSplashScreen()

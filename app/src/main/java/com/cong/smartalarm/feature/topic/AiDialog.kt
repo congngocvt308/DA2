@@ -79,7 +79,7 @@ fun AiCreateQuestionBottomSheet(
                 modifier = Modifier
                     .width(40.dp)
                     .height(4.dp)
-                    .background(Calm.NeutralSoft, RoundedCornerShape(2.dp))
+                    .background(Calm.Subtle, RoundedCornerShape(2.dp))
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -176,7 +176,7 @@ private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(if (isCompact) 64.dp else 130.dp), // Tự động co giãn diện tích dựa theo trạng thái hàng chờ
-        colors = CardDefaults.cardColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground),
+        colors = CardDefaults.cardColors(containerColor = Calm.Raised, contentColor = Calm.Foreground),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(

@@ -105,7 +105,7 @@ fun TopicDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                HorizontalDivider(color = Calm.NeutralSoft, thickness = 1.dp, modifier = Modifier.width(100.dp))
+                HorizontalDivider(color = Calm.Subtle, thickness = 1.dp, modifier = Modifier.width(100.dp))
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -42,7 +42,7 @@ internal fun QRCodeItem(
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (qrCode.codeType == "QR") 
-                            Calm.NeutralMist 
+                            Calm.Raised 
                         else 
                             Calm.WellnessMist
                     ),

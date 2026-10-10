@@ -168,7 +168,7 @@ fun AlarmSoundSection(
             Surface(
                 onClick = onSoundClick,
                 shape = RoundedCornerShape(12.dp),
-                color = Calm.NeutralMist,
+                color = Calm.Raised,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Row(

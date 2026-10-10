@@ -78,7 +78,7 @@ fun SoundPickerDialog(
                     CalmButton(
                         onClick = onRecordNew,
                         modifier = Modifier.weight(0.9f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Calm.OnDestructive),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Mic, null, modifier = Modifier.size(18.dp))
@@ -112,7 +112,7 @@ fun SoundPickerDialog(
                         Surface(
                             onClick = { onSoundSelected(file.absolutePath) },
                             shape = RoundedCornerShape(12.dp),
-                            color = Calm.NeutralMist,
+                            color = Calm.Raised,
                             contentColor = Calm.Foreground,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                         ) {

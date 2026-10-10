@@ -297,7 +297,7 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
         // Vẽ góc highlight
         val cornerLength = 40.dp.toPx()
         val cornerStroke = 6.dp.toPx()
-        val highlightColor = Calm.NeutralSoft
+        val highlightColor = Calm.Subtle
         
         // Top-left corner
         drawLine(

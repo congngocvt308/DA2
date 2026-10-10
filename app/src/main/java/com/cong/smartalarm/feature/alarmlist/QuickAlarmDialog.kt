@@ -182,7 +182,7 @@ fun QuickTimePickerSection(
                     row.forEach { min ->
                         CalmButton(
                             onClick = { onAddMinutes(min) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Calm.NeutralMist, contentColor = Calm.Foreground),
+                            colors = ButtonDefaults.buttonColors(containerColor = Calm.Raised, contentColor = Calm.Foreground),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f).height(50.dp),
                             contentPadding = PaddingValues(0.dp)

@@ -119,7 +119,7 @@ private fun InitialPurchaseContent(
 ) {
     // Bỏ vàng chói: dùng đen/xám trung tính
     val accentGradient = Brush.linearGradient(
-        colors = listOf(Calm.Primary, Calm.Neutral)
+        colors = listOf(Calm.Primary, Calm.Accent)
     )
     
     Column(
@@ -156,7 +156,7 @@ private fun InitialPurchaseContent(
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = Color.White,
+                tint = Calm.OnPrimary,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -186,7 +186,7 @@ private fun InitialPurchaseContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Calm.NeutralMist)
+                .background(Calm.Raised)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -275,7 +275,7 @@ private fun PremiumFeatureItem(text: String) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = Calm.OnWellness,
                 modifier = Modifier.size(12.dp)
             )
         }
@@ -348,7 +348,7 @@ private fun SuccessContent() {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = Calm.OnWellness,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -394,7 +394,7 @@ private fun FailedContent(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = null,
-                tint = Color.White,
+                tint = Calm.OnDestructive,
                 modifier = Modifier.size(40.dp)
             )
         }

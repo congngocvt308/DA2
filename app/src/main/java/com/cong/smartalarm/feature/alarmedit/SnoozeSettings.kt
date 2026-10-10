@@ -119,7 +119,7 @@ fun SnoozeDurationDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onDurationSelected(duration) }
-                                .background(if (isSelected) Calm.NeutralMist else Color.Transparent)
+                                .background(if (isSelected) Calm.Raised else Color.Transparent)
                                 .padding(vertical = 12.dp, horizontal = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {

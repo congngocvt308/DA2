@@ -126,7 +126,7 @@ fun CustomAlarmCard(
                         .clip(RoundedCornerShape(16.dp))
                         .border(
                             width = 1.dp,
-                            color = Calm.NeutralSoft,
+                            color = Calm.Subtle,
                             shape = RoundedCornerShape(16.dp)
                         )
                 )
@@ -151,7 +151,8 @@ fun CustomAlarmCard(
             ) {
                 Text(
                     text = title.ifBlank { "Kỷ niệm" },
-                    color = Calm.Foreground,
+                    // Nền chú thích là màu pastel sáng của khung ảnh -> chữ tối
+                    color = Calm.OnLight,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     lineHeight = 18.sp,

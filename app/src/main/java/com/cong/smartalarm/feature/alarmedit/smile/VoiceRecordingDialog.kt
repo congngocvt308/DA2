@@ -96,8 +96,8 @@ internal fun VoiceRecordingDialog(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(if (isRecording) Calm.DestructiveMist else Calm.NeutralMist)
-                        .border(2.dp, if (isRecording) Calm.Destructive else Calm.Neutral, CircleShape)
+                        .background(if (isRecording) Calm.DestructiveMist else Calm.Raised)
+                        .border(2.dp, if (isRecording) Calm.Destructive else Calm.Accent, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Mic,
@@ -112,7 +112,7 @@ internal fun VoiceRecordingDialog(
                 if (isRecording) {
                     CalmButton(
                         onClick = onStopAndSave,
-                        colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Calm.OnDestructive),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
