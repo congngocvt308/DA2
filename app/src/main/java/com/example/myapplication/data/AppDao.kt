@@ -8,6 +8,9 @@ interface AppDao {
     @Query("SELECT * FROM alarms")
     fun getAllAlarms(): Flow<List<AlarmEntity>>
 
+    @Query("SELECT * FROM alarms WHERE isEnabled = 1")
+    suspend fun getEnabledAlarms(): List<AlarmEntity>
+
     @Query("SELECT * FROM alarms WHERE alarmId = :id")
     suspend fun getAlarmById(id: Int): AlarmEntity?
 
