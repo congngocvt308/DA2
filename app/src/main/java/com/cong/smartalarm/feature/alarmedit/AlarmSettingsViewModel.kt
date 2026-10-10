@@ -1,5 +1,6 @@
 package com.cong.smartalarm.feature.alarmedit
 
+import com.cong.smartalarm.core.alarm.NextAlarmTime
 import android.app.Application
 import android.media.RingtoneManager
 import androidx.lifecycle.AndroidViewModel
@@ -215,10 +216,10 @@ class AlarmSettingsViewModel(
     private fun updateTimeUntilAlarm() {
         val state = _uiState.value
         val now = LocalDateTime.now()
-        val nextAlarmTime = findNextAlarmTime(
+        val nextAlarmTime = NextAlarmTime.after(
             now = now,
-            targetHour = state.hour,
-            targetMinute = state.minute,
+            hour = state.hour,
+            minute = state.minute,
             daysOfWeek = state.daysOfWeek
         )
         val duration = Duration.between(now, nextAlarmTime)
@@ -236,45 +237,9 @@ class AlarmSettingsViewModel(
         _uiState.update { it.copy(timeUntilAlarm = message) }
     }
 
-    private fun findNextAlarmTime(
-        now: LocalDateTime,
-        targetHour: Int,
-        targetMinute: Int,
-        daysOfWeek: Set<String>
-    ): LocalDateTime {
-        var target = now.withHour(targetHour).withMinute(targetMinute).withSecond(0).withNano(0)
-        if (daysOfWeek.isEmpty()) {
-            if (target.isBefore(now) || target.isEqual(now)) {
-                target = target.plusDays(1)
-            }
-            return target
-        }
-        for (i in 0..7) {
-            val dayCode = getDayCode(target.dayOfWeek)
-            if (daysOfWeek.contains(dayCode) && target.isAfter(now)) {
-                return target
-            }
-            target = target.plusDays(1)
-        }
-        return target
-    }
-
-    private fun getDayCode(dayOfWeek: java.time.DayOfWeek): String {
-        return when (dayOfWeek) {
-            java.time.DayOfWeek.MONDAY -> "T2"
-            java.time.DayOfWeek.TUESDAY -> "T3"
-            java.time.DayOfWeek.WEDNESDAY -> "T4"
-            java.time.DayOfWeek.THURSDAY -> "T5"
-            java.time.DayOfWeek.FRIDAY -> "T6"
-            java.time.DayOfWeek.SATURDAY -> "T7"
-            java.time.DayOfWeek.SUNDAY -> "CN"
-        }
-    }
-
     fun onSnoozeToggle(enabled: Boolean) {
         _uiState.update { it.copy(isSnoozeEnabled = enabled) }
     }
-
 
     fun saveAlarm() {
         viewModelScope.launch {

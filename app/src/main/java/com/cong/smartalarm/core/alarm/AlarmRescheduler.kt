@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 /**
  * Đặt lại lịch cho mọi báo thức đang bật.
  * AlarmManager mất hết lịch khi khởi động lại máy, và lịch cũ trỏ tới tên lớp Receiver cũ
- * sau khi cập nhật app — nên gọi lại khi mở app, khi máy khởi động và khi app vừa được cập nhật.
- * Đặt lại nhiều lần không sao: cùng requestCode nên lịch mới ghi đè lịch cũ.
+ * sau khi cập nhật app — nên gọi lại khi máy khởi động và khi app vừa được cập nhật.
+ * Không gọi mỗi lần mở app: cùng requestCode nên sẽ ghi đè lịch báo lại (snooze) đang chờ.
  */
 object AlarmRescheduler {
     suspend fun rescheduleAll(context: Context) {

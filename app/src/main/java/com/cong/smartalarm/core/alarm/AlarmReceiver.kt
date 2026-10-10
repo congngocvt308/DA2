@@ -3,6 +3,7 @@ package com.cong.smartalarm.core.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import java.time.LocalDateTime
 import com.cong.smartalarm.core.di.appContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,8 +32,9 @@ class AlarmReceiver : BroadcastReceiver() {
                         // Báo thức 1 lần -> Tắt Switch trên màn hình
                         alarmDao.updateAlarmEnabledStatus(alarm.alarmId, false)
                     } else {
-                        // Báo thức lặp lại -> Đặt lịch cho ngày kế tiếp dựa trên daysOfWeek
-                        scheduler.schedule(alarm)
+                        // Báo thức lặp lại -> đặt lịch cho ngày lặp kế tiếp; tìm từ sau phút hiện tại
+                        // để chắc chắn không đặt lại đúng lần vừa reo
+                        scheduler.schedule(alarm, from = LocalDateTime.now().plusMinutes(1))
                     }
 
                     // 3. KHỞI CHẠY SERVICE (Logic cũ của bạn)

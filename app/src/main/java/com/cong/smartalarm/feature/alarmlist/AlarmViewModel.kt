@@ -1,5 +1,6 @@
 package com.cong.smartalarm.feature.alarmlist
 
+import com.cong.smartalarm.core.alarm.NextAlarmTime
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -56,7 +57,7 @@ class AlarmViewModel(
         } else {
             // Tính thời gian reo của TẤT CẢ báo thức đang bật
             val nextRingTimes = activeAlarms.map { alarm ->
-                findNextAlarmTime(
+                NextAlarmTime.after(
                     now,
                     alarm.hour,
                     alarm.minute,
@@ -117,7 +118,6 @@ class AlarmViewModel(
         initialValue = emptyList()
     )
 
-
     fun toggleAlarm(id: Int, isEnabled: Boolean) {
         viewModelScope.launch {
             val alarm = alarmRepository.getAlarmById(id) ?: return@launch
@@ -147,44 +147,6 @@ class AlarmViewModel(
 
     fun setSortType(type: SortType){
         _sortType.value = type
-    }
-
-    fun findNextAlarmTime(
-        now: LocalDateTime,
-        targetHour: Int,
-        targetMinute: Int,
-        daysOfWeek: Set<String>
-    ): LocalDateTime {
-        var target = now.withHour(targetHour).withMinute(targetMinute).withSecond(0).withNano(0)
-        if (daysOfWeek.isEmpty()) {
-            if (target.isBefore(now) || target.isEqual(now)) {
-                target = target.plusDays(1)
-            }
-            return target
-        }
-        for (i in 0..7) {
-            val candidateDate = target.plusDays(i.toLong())
-            val dayCode = getDayCode(candidateDate.dayOfWeek)
-            if (daysOfWeek.contains(dayCode)) {
-                if (i == 0 && candidateDate.isBefore(now)) {
-                    continue
-                }
-                return candidateDate
-            }
-        }
-        return target
-    }
-
-    private fun getDayCode(dayOfWeek: java.time.DayOfWeek): String {
-        return when (dayOfWeek) {
-            java.time.DayOfWeek.MONDAY -> "T2"
-            java.time.DayOfWeek.TUESDAY -> "T3"
-            java.time.DayOfWeek.WEDNESDAY -> "T4"
-            java.time.DayOfWeek.THURSDAY -> "T5"
-            java.time.DayOfWeek.FRIDAY -> "T6"
-            java.time.DayOfWeek.SATURDAY -> "T7"
-            java.time.DayOfWeek.SUNDAY -> "CN"
-        }
     }
 
     fun deleteAlarm(id: Int) {
