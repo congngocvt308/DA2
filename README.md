@@ -42,7 +42,7 @@ Giao diện theo phong cách **"Mental Health App"** của bộ quy tắc [UI UX
 - **Chuyển động tiết chế:** nền "thở" chậm theo nhịp 8 giây; tự đứng yên khi bật *Giảm chuyển động* trong cài đặt hệ thống.
 - **Trợ năng:** chữ đạt độ tương phản ≥ 4.5:1, vùng chạm ≥ 48dp, trạng thái không chỉ thể hiện bằng màu, có mô tả cho TalkBack.
 
-Token màu nằm trong `object Calm` (`theme/Theme.kt`); các component dùng chung nằm trong `ui/theme/components/` (`GlassCard`, `GlassButton`, `GlassAlertDialog`, `CalmSlider`…).
+Token màu nằm trong `object Calm` (`core/designsystem/theme/Color.kt`); các component dùng chung nằm trong `core/designsystem/component/` (`CalmCard`, `CalmButton`, `CalmAlertDialog`, `CalmSwitch`, `CalmSlider`, `SoftSurface`…).
 
 ---
 
@@ -62,24 +62,42 @@ Token màu nằm trong `object Calm` (`theme/Theme.kt`); các component dùng ch
 
 ## 📂 Cấu trúc thư mục
 
+Chia theo tính năng (feature) + lớp dùng chung (core). Package gốc `com.cong.smartalarm`, thư mục khớp package.
+
 ```
-app/src/main/java/com/example/myapplication/      (package com.cong.smartalarm)
-├─ alarm_logic/        AlarmScheduler, AlarmReceiver, AlarmService, AlarmDismissHelper
-├─ data/               Room: AppDatabase, Entities, DAO, model dữ liệu, AiApiService
-├─ logic/              QuestionAlgorithmManager (thuật toán SRS)
-├─ utils/              SoundPlayer, RingtoneUtils
-└─ ui/theme/
-   ├─ theme/           Theme.kt — bảng màu Calm, font Lora/Raleway
-   ├─ components/      Component dùng chung (bề mặt nổi mềm, CalmSlider, …)
-   ├─ navigation/      MainScreen (thanh điều hướng dưới), Screen
-   ├─ alarm/           Danh sách, cài đặt, màn hình reo, quiz, nụ cười
-   ├─ facedetection/   Nhiệm vụ khuôn mặt, Bảo tàng nụ cười
-   ├─ qrcode/          Quản lý / quét mã QR
-   ├─ topic/           Chủ đề, câu hỏi, sinh câu hỏi bằng AI
-   ├─ mission/         Chọn nhiệm vụ cho báo thức
-   └─ stats/           Thống kê
-docs/                  Báo cáo OOAD, báo cáo chống giả mạo khuôn mặt, sơ đồ PlantUML
+app/src/main/java/com/cong/smartalarm/
+├─ SmartAlarmApp.kt        Application: giữ AppContainer, đặt lại lịch báo thức khi mở app
+├─ MainActivity.kt
+├─ navigation/             NavHost, thanh điều hướng dưới, hộp thoại xin quyền
+├─ core/
+│  ├─ di/                  AppContainer — DI thủ công: database, mạng, repository dùng chung
+│  ├─ designsystem/
+│  │  ├─ theme/            Color (token Calm), Type (Lora/Raleway), Motion, Dimens, SmartAlarmTheme
+│  │  └─ component/        SoftSurface, CalmCard/Button/Dialog, CalmSwitch, CalmSlider, CalmBackground…
+│  ├─ database/            Room: AppDatabase, dao/, entity/, model/
+│  ├─ network/             AiApiService, NetworkModule (OkHttp/Retrofit dùng chung), NetworkConfig
+│  ├─ alarm/               AlarmScheduler, AlarmReceiver, AlarmService, AlarmRescheduler (khởi động máy / cập nhật app)
+│  ├─ media/               SoundPlayer, RingtoneUtils, VoiceRecorder
+│  └─ camera/              BarcodeScannerProvider
+├─ data/repository/        Alarm, Topic, QRCode, Picture, Learning, Stats
+├─ domain/                 SrsEngine + SrsMath (thuật toán lặp lại ngắt quãng)
+└─ feature/
+   ├─ alarmlist/           Danh sách báo thức, báo thức nhanh
+   ├─ alarmedit/           Sửa báo thức (bánh xe giờ, ngày lặp, âm thanh, nhiệm vụ, báo lại) + smile/
+   ├─ ringing/             Màn hình báo thức reo, màn hình thành công
+   ├─ quiz/                Giải trắc nghiệm để tắt chuông
+   ├─ smile/               Thử thách nụ cười (camera + ML Kit)
+   ├─ museum/              Bảo tàng nụ cười
+   ├─ qr/                  Quản lý / quét mã QR
+   ├─ mission/             Chọn câu hỏi cho báo thức
+   ├─ topic/               Chủ đề, câu hỏi, sinh câu hỏi bằng AI
+   ├─ stats/               Thống kê
+   └─ premium/             Gói Premium (đang phát triển)
+app/src/test/              Unit test (SrsMath, biểu đồ 7 ngày)
+docs/                      Báo cáo OOAD, báo cáo chống giả mạo khuôn mặt, sơ đồ PlantUML
 ```
+
+**Quy ước:** màn hình chỉ dùng token màu `Calm` / `MaterialTheme`, không viết `Color(0x…)` trực tiếp; ViewModel nhận repository qua `XxxViewModel.Factory`, không tự mở database; file giữ dưới ~400 dòng.
 
 ---
 
@@ -93,15 +111,17 @@ docs/                  Báo cáo OOAD, báo cáo chống giả mạo khuôn mặ
    ```bash
    ./gradlew :app:assembleDebug      # build APK debug
    ./gradlew :app:installDebug       # cài lên máy đang kết nối
+   ./gradlew :app:testDebugUnitTest  # chạy unit test
    ```
 
-**Máy chủ AI (tuỳ chọn):** tính năng sinh câu hỏi gọi tới máy chủ trong mạng nội bộ, địa chỉ đang đặt cứng `http://192.168.1.219:3000/` trong `TopicViewModel.kt` và `TopicDetailViewModel.kt`. Đổi thành IP máy chạy server của bạn; các tính năng khác hoạt động không cần mạng.
+**Máy chủ AI (tuỳ chọn):** tính năng sinh câu hỏi gọi tới máy chủ trong mạng nội bộ, địa chỉ đặt tại `NetworkConfig.AI_BASE_URL` (`core/network/NetworkModule.kt`), mặc định `http://192.168.1.219:3000/`. Đổi thành IP máy chạy server của bạn; các tính năng khác hoạt động không cần mạng.
 
 ### Quyền ứng dụng
 
 | Quyền | Dùng cho |
 |---|---|
 | `SCHEDULE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, `WAKE_LOCK` | Báo thức đúng giờ, hiện toàn màn hình khi khoá máy |
+| `RECEIVE_BOOT_COMPLETED` | Đặt lại lịch báo thức sau khi khởi động lại máy |
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `VIBRATE` | Phát chuông và rung |
 | `POST_NOTIFICATIONS` | Thông báo báo thức |
 | `CAMERA` | Thử thách nụ cười, quét mã QR |
