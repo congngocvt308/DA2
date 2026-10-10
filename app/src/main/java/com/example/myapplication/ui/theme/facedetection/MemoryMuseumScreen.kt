@@ -1,6 +1,20 @@
-package com.cong.smartalarm.ui.theme.facedetection
+package com.cong.smartalarm.ui.theme.facedetection
+import com.cong.smartalarm.ui.theme.components.LocalGlassBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.rememberReducedMotion
+import com.cong.smartalarm.ui.theme.theme.Calm
+import androidx.compose.ui.graphics.Brush
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -57,6 +71,17 @@ fun MemoryMuseumScreen(
         )
     )
 ) {
+    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
+        MemoryMuseumContent(onBackClick, viewModel)
+    }
+}
+
+@Composable
+private fun MemoryMuseumContent(
+    onBackClick: () -> Unit,
+    viewModel: MemoryMuseumViewModel
+) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
 
@@ -76,27 +101,7 @@ fun MemoryMuseumScreen(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "HandGuideAnimation")
-
-    val handScale by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 550, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "HandScale"
-    )
-
-    val handAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 550),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "HandAlpha"
-    )
+    val reducedMotion = rememberReducedMotion()
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -110,7 +115,7 @@ fun MemoryMuseumScreen(
             }
         }
     ) {
-        // 1. Background
+        // 1. Background: tranh phòng trưng bày
         Image(
             painter = painterResource(id = R.drawable.bg_gallery),
             contentDescription = null,
@@ -122,7 +127,7 @@ fun MemoryMuseumScreen(
         if (uiState.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
-                color = Color(0xFFFF4081)
+                color = MaterialTheme.colorScheme.primary
             )
         } else {
             if (uiState.pictures.isEmpty()) {
@@ -163,45 +168,11 @@ fun MemoryMuseumScreen(
 
                                 AnimatedVisibility(
                                     visible = showGuidanceOverlay,
-                                    enter = fadeIn(animationSpec = tween(300)),
-                                    exit = fadeOut(animationSpec = tween(400))
+                                    modifier = Modifier.matchParentSize(),
+                                    enter = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.92f),
+                                    exit = fadeOut(tween(400))
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(220.dp)
-                                            .height(260.dp)
-                                    ) {
-                                        // 🗨️ BONG BÓNG CHAT HƯỚNG DẪN
-                                        Surface(
-                                            shape = RoundedCornerShape(16.dp),
-                                            color = Color.White,
-                                            shadowElevation = 8.dp,
-                                            modifier = Modifier
-                                                .align(Alignment.TopCenter)
-                                                .offset(y = (-35).dp)
-                                        ) {
-                                            Text(
-                                                text = "Chạm vào ảnh để xem &\nsửa tên kỷ niệm nhé! ✨",
-                                                color = Color(0xFF222222),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                            )
-                                        }
-
-                                        // 👆 ICON BÀN TAY TRỎ VÀO ẢNH (NHẤP NHÁY + PHẬP PHỒNG ZOOM IN/OUT)
-                                        Icon(
-                                            imageVector = Icons.Default.TouchApp,
-                                            contentDescription = "Chạm vào đây",
-                                            tint = Color(0xFFFFD1A4).copy(alpha = handAlpha),
-                                            modifier = Modifier
-                                                .size(54.dp)
-                                                .align(Alignment.Center)
-                                                .scale(handScale)
-                                                .graphicsLayer { rotationZ = -15f }
-                                        )
-                                    }
+                                    TapGuideOverlay(reducedMotion = reducedMotion)
                                 }
                                 Spacer(modifier = Modifier.height(12.dp))
                             }
@@ -270,12 +241,12 @@ fun MemoryMuseumScreen(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(top = 40.dp, start = 16.dp)
-                .background(Color.Black.copy(alpha = 0.3f), shape = CircleShape)
+                .background(Calm.Surface, shape = CircleShape)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Quay lại",
-                tint = Color.White
+                tint = Calm.Foreground
             )
         }
 
@@ -301,9 +272,9 @@ private fun EmptyMuseumCard() {
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Card(
+        GlassCard(
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E162B).copy(alpha = 0.88f)),
+            colors = CardDefaults.cardColors(containerColor = Calm.Surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
             modifier = Modifier.fillMaxWidth(0.92f)
         ) {
@@ -318,13 +289,13 @@ private fun EmptyMuseumCard() {
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFF4081).copy(alpha = 0.15f)),
+                        .background(Calm.LavenderMist),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
                         contentDescription = null,
-                        tint = Color(0xFFFF4081),
+                        tint = Calm.Primary,
                         modifier = Modifier.size(44.dp)
                     )
                 }
@@ -333,7 +304,7 @@ private fun EmptyMuseumCard() {
 
                 Text(
                     text = "Bảo Tàng Đang Trống ✨",
-                    color = Color.White,
+                    color = Calm.Foreground,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -343,7 +314,7 @@ private fun EmptyMuseumCard() {
 
                 Text(
                     text = "Hãy chụp ảnh lại khi thực hiện thử thách nụ cười để có những bức ảnh ký ức nhé!",
-                    color = Color(0xFFD1C4E9),
+                    color = Calm.MutedForeground,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Center
@@ -367,3 +338,105 @@ private fun SmallCardPhotoItem(
         modifier = Modifier.fillMaxWidth()
     )
 }
+
+/**
+ * Hướng dẫn "chạm vào ảnh" kiểu coach mark: gợn sóng lan ra từ điểm chạm, nút tay trắng nổi
+ * nhấn nhẹ theo nhịp, và thẻ chú thích đen có mũi nhọn chỉ lên điểm chạm.
+ * Giảm chuyển động: giữ một vòng gợn tĩnh, tay không nhấn.
+ */
+@Composable
+private fun TapGuideOverlay(reducedMotion: Boolean) {
+    val transition = rememberInfiniteTransition(label = "TapGuide")
+    val cycle by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1800, easing = LinearEasing)),
+        label = "TapCycle"
+    )
+    val t = if (reducedMotion) 0.45f else cycle
+    // Nhấn trong 0..18% đầu nhịp rồi nhả, phần còn lại đứng yên cho dịu mắt
+    val press = if (reducedMotion) 0f else when {
+        t < 0.09f -> t / 0.09f
+        t < 0.18f -> 1f - (t - 0.09f) / 0.09f
+        else -> 0f
+    }
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(104.dp)
+                    .drawBehind {
+                        val center = Offset(size.width / 2, size.height / 2)
+                        val minR = 26.dp.toPx()
+                        val maxR = size.minDimension / 2
+                        // Hai vòng gợn lệch nửa nhịp
+                        listOf(t, (t + 0.5f) % 1f).forEach { p ->
+                            val r = minR + (maxR - minR) * p
+                            val a = (1f - p) * 0.55f
+                            drawCircle(Color.White.copy(alpha = a * 0.45f), r, center)
+                            drawCircle(Color.White.copy(alpha = a), r, center, style = Stroke(2.dp.toPx()))
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = Calm.Surface,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .graphicsLayer {
+                            scaleX = 1f - 0.1f * press
+                            scaleY = 1f - 0.1f * press
+                        }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.TouchApp,
+                            contentDescription = null,
+                            tint = Calm.Primary,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .graphicsLayer { translationY = 2.dp.toPx() * press }
+                        )
+                    }
+                }
+            }
+
+            // Mũi nhọn chỉ lên nút tay
+            Canvas(Modifier.size(width = 16.dp, height = 8.dp)) {
+                val path = Path().apply {
+                    moveTo(size.width / 2, 0f)
+                    lineTo(size.width, size.height)
+                    lineTo(0f, size.height)
+                    close()
+                }
+                drawPath(path, Calm.Primary)
+            }
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Calm.Primary,
+                shadowElevation = 6.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Chạm để mở kỷ niệm",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    Text(
+                        text = "Xem ảnh lớn & đặt tên cho nụ cười",
+                        color = Color.White.copy(alpha = 0.82f),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+

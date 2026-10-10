@@ -1,8 +1,15 @@
 package com.cong.smartalarm.ui.theme.alarm
 
+
+import com.cong.smartalarm.ui.theme.components.GlassFloatingActionButton
+import com.cong.smartalarm.ui.theme.components.LiquidGlass
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import com.cong.smartalarm.ui.theme.alarm.AlarmCard
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -24,7 +31,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
@@ -118,7 +124,7 @@ fun AlarmScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.4f))
+                    .background(Calm.Foreground.copy(alpha = 0.16f)) // lớp phủ xám nhạt
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -224,7 +230,7 @@ private fun AlarmTopBar(
                 expanded = isMenuOpen,
                 onDismissRequest = onDismissMenu,
                 offset = DpOffset(x = 0.dp, y = 0.dp),
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
                 DropdownMenuItem(
                     text = { Text("Sắp xếp", color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp) },
@@ -240,7 +246,7 @@ private fun AlarmTopBar(
                     },
                     trailingIcon = {
                         if(currentSortType == SortType.DEFAULT)
-                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
                         else null
                     }
                 )
@@ -253,20 +259,20 @@ private fun AlarmTopBar(
                     },
                     trailingIcon = {
                         if(currentSortType == SortType.ACTIVE_FIRST)
-                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.secondary)
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
                         else null
                     }
                 )
 
-                HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.surface)
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                 DropdownMenuItem(
-                    text = { Text("Xóa báo thức không hoạt động", color = MaterialTheme.colorScheme.primary) },
+                    text = { Text("Xóa báo thức không hoạt động", color = Calm.Destructive) },
                     onClick = {
                         onDeleteInactive()
                         onDismissMenu()
                     },
-                    trailingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.primary )}
+                    trailingIcon = { Icon(Icons.Default.Delete, null, tint = Calm.Destructive)}
                 )
             }
         }
@@ -283,6 +289,7 @@ fun FabSpeedDial(
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isMenuOpen) 45f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "FabRotation"
     )
 
@@ -297,10 +304,8 @@ fun FabSpeedDial(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 70.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shadowElevation = 4.dp
+            LiquidGlass(
+                cornerRadius = 16.dp
             ) {
                 Column(
                     modifier = Modifier.width(250.dp),
@@ -327,7 +332,7 @@ fun FabSpeedDial(
             }
         }
 
-        FloatingActionButton(
+        GlassFloatingActionButton(
             onClick = onToggleMenu,
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(28.dp),
@@ -364,6 +369,6 @@ fun FabMenuItem(
 
         Spacer(modifier = Modifier.width(15.dp))
 
-        Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp)
     }
 }

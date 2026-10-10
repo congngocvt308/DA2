@@ -19,7 +19,7 @@ fun MathText(
     latexText: String,
     modifier: Modifier = Modifier,
     fontSize: Int = 16,
-    textColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.White,
+    textColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color(0xFF18181B),
     isBold: Boolean = false,
     textAlign: String = "left",
     maxLines: Int? = null

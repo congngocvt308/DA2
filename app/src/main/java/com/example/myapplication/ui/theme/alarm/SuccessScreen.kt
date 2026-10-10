@@ -9,13 +9,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cong.smartalarm.ui.theme.components.BreathCycleMillis
+import com.cong.smartalarm.ui.theme.components.rememberReducedMotion
+import com.cong.smartalarm.ui.theme.theme.Calm
 import kotlinx.coroutines.delay
 
 @Composable
@@ -28,31 +31,42 @@ fun SuccessScreen(
         onFinished()
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "SuccessPulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "IconScale"
-    )
+    // 🌬️ Biểu tượng "thở" nhẹ theo nhịp 8 giây; đứng yên nếu bật giảm chuyển động
+    val reducedMotion = rememberReducedMotion()
+    val scale = if (reducedMotion) 1f else {
+        val infiniteTransition = rememberInfiniteTransition(label = "SuccessBreath")
+        val s by infiniteTransition.animateFloat(
+            initialValue = 0.96f,
+            targetValue = 1.04f,
+            animationSpec = infiniteRepeatable(
+                animation = tween((BreathCycleMillis / 2).toInt(), easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "IconScale"
+        )
+        s
+    }
 
-    val backgroundGradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFFFFD54F), Color(0xFFFF8A65))
-    )
-
+    // Nền pastel của app hiện qua (không còn gradient vàng cam)
     Box(
-        modifier = Modifier.fillMaxSize().background(backgroundGradient),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-            Icon(Icons.Default.AutoAwesome, null, tint = Color.White, modifier = Modifier.size(100.dp).scale(scale))
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .scale(scale)
+                    .clip(CircleShape)
+                    .background(Calm.WellnessMist),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.AutoAwesome, null, tint = Calm.Wellness, modifier = Modifier.size(72.dp))
+            }
             Spacer(modifier = Modifier.height(32.dp))
-            Text("KHỞI ĐẦU TUYỆT VỜI!", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text("KHỞI ĐẦU TUYỆT VỜI!", color = Calm.Foreground, fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Bạn đã chinh phục thử thách.\nChúc bạn một ngày tràn đầy năng lượng! 🚀", color = Color.White.copy(alpha = 0.9f), fontSize = 18.sp, textAlign = TextAlign.Center, lineHeight = 26.sp)
+            Text("Bạn đã chinh phục thử thách.\nChúc bạn một ngày tràn đầy năng lượng! 🚀", color = Calm.MutedForeground, fontSize = 18.sp, textAlign = TextAlign.Center, lineHeight = 26.sp)
         }
     }
 }

@@ -1,5 +1,10 @@
 package com.cong.smartalarm.ui.theme.topic
 
+
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.components.GlassAlertDialog
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -100,7 +105,7 @@ fun TopicDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.tertiary, thickness = 1.dp, modifier = Modifier.width(100.dp))
+                HorizontalDivider(color = Calm.LavenderSoft, thickness = 1.dp, modifier = Modifier.width(100.dp))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -208,7 +213,7 @@ fun TopicDetailScreen(
                                 Icon(
                                     Icons.Default.Delete,
                                     null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -230,7 +235,7 @@ fun TopicDetailScreen(
         }
 
         if (showDeleteConfirmDialog) {
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = { showDeleteConfirmDialog = false },
                 title = { Text("Xóa chủ đề?") },
                 text = { Text("Bạn có chắc muốn xóa chủ đề '$currentTopicName' và tất cả câu hỏi bên trong không?") },
@@ -242,17 +247,17 @@ fun TopicDetailScreen(
                         },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Text("Xóa", color = MaterialTheme.colorScheme.primary)
+                        Text("Xóa", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                        Text("Hủy", color = MaterialTheme.colorScheme.tertiary)
+                        Text("Hủy", color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
-                textContentColor = MaterialTheme.colorScheme.tertiary
+                textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -263,7 +268,7 @@ fun TopicDetailScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
         ) {
-            Button(
+            GlassButton(
                 onClick = {
                     viewModel.resetDraft()
                     showAddDialog = true

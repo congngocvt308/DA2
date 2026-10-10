@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.cong.smartalarm.R
+import com.cong.smartalarm.ui.theme.theme.Calm
 import com.cong.smartalarm.data.PictureEntity
 
 @Composable
@@ -73,7 +73,7 @@ fun FeaturedPolaroidCard(
         ) {
             Text(
                 text = displayName,
-                color = Color(0xFF2B2B2B),
+                color = Calm.Foreground,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,

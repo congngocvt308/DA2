@@ -1,4 +1,10 @@
 package com.cong.smartalarm.ui.theme.qrcode
+import com.cong.smartalarm.ui.theme.components.LocalGlassBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.rememberReducedMotion
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 import android.util.Size
 import androidx.camera.core.CameraSelector
@@ -51,6 +57,19 @@ fun QRCodeScannerScreen(
     onClose: () -> Unit,
     scannerTitle: String = "Quét mã QR/Barcode",
     scannerHint: String = "Đặt mã vào khung hình để quét"
+) {
+    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
+        QRCodeScannerContent(onCodeScanned, onClose, scannerTitle, scannerHint)
+    }
+}
+
+@Composable
+private fun QRCodeScannerContent(
+    onCodeScanned: (code: String, type: String) -> Unit,
+    onClose: () -> Unit,
+    scannerTitle: String,
+    scannerHint: String
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -151,12 +170,12 @@ fun QRCodeScannerScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(Calm.Surface)
             ) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "Đóng",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = Calm.Foreground
                 )
             }
             
@@ -169,17 +188,17 @@ fun QRCodeScannerScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(if (isFlashOn) Calm.WarmMist else Calm.Surface)
             ) {
                 Icon(
                     if (isFlashOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
                     contentDescription = "Đèn flash",
-                    tint = if (isFlashOn) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurface
+                    tint = if (isFlashOn) Calm.Warm else Calm.Foreground
                 )
             }
         }
         
-        // Title and hint
+        // Title and hint (nằm trên lớp phủ tối -> chữ trắng)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,7 +210,7 @@ fun QRCodeScannerScreen(
                 text = scannerTitle,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -199,20 +218,20 @@ fun QRCodeScannerScreen(
             Text(
                 text = scannerHint,
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
         }
         
         // Bottom instruction
-        Card(
+        GlassCard(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
                 .padding(horizontal = 32.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                containerColor = Calm.Surface
             )
         ) {
             Text(
@@ -228,16 +247,19 @@ fun QRCodeScannerScreen(
 
 @Composable
 private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) {
+    // Vạch quét trôi chậm, êm; đứng yên giữa khung khi giảm chuyển động
+    val reducedMotion = rememberReducedMotion()
     val infiniteTransition = rememberInfiniteTransition(label = "scanner_line")
-    val scanLineY by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+    val scanLineAnim by infiniteTransition.animateFloat(
+        initialValue = 0.05f,
+        targetValue = 0.95f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            animation = tween(2400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
         label = "scan_line"
     )
+    val scanLineY = if (reducedMotion) 0.5f else scanLineAnim
     
     Canvas(modifier = Modifier.fillMaxSize()) {
         val canvasWidth = size.width
@@ -250,7 +272,7 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
         val frameRight = frameLeft + frameSize
         val frameBottom = frameTop + frameSize
         
-        // Vẽ overlay tối ngoài khung
+        // Vẽ lớp phủ tối ngoài khung
         val overlayPath = Path().apply {
             fillType = PathFillType.EvenOdd
             addRect(Rect(0f, 0f, canvasWidth, canvasHeight))
@@ -264,12 +286,12 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
 
         drawPath(
             path = overlayPath,
-            color = colorScheme.surface.copy(alpha = 0.6f)
+            color = Color(0xFF09090B).copy(alpha = 0.7f)
         )
         
         // Vẽ viền khung
         drawRoundRect(
-            color = colorScheme.onBackground,
+            color = Color.White.copy(alpha = 0.6f),
             topLeft = Offset(frameLeft, frameTop),
             size = androidx.compose.ui.geometry.Size(frameSize, frameSize),
             cornerRadius = CornerRadius(24.dp.toPx()),
@@ -279,7 +301,7 @@ private fun ScannerOverlay(colorScheme: androidx.compose.material3.ColorScheme) 
         // Vẽ góc highlight
         val cornerLength = 40.dp.toPx()
         val cornerStroke = 6.dp.toPx()
-        val highlightColor = colorScheme.primary
+        val highlightColor = Calm.LavenderSoft
         
         // Top-left corner
         drawLine(

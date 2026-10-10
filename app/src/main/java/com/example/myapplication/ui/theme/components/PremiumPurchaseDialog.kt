@@ -1,5 +1,9 @@
 package com.cong.smartalarm.ui.theme.components
 
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -7,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.cong.smartalarm.utils.PremiumManager
+import com.cong.smartalarm.ui.theme.theme.Calm
 import kotlinx.coroutines.delay
 
 /**
@@ -78,11 +84,11 @@ fun PremiumPurchaseDialog(
             dismissOnClickOutside = purchaseState != PurchaseState.PROCESSING
         )
     ) {
-        Card(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
@@ -109,9 +115,9 @@ private fun InitialPurchaseContent(
     onDismiss: () -> Unit,
     onPurchaseClick: () -> Unit
 ) {
-    val goldColor = Color(0xFFFFD700)
-    val goldGradient = Brush.linearGradient(
-        colors = listOf(Color(0xFFFFE066), goldColor, Color(0xFFCC9900))
+    // Bỏ vàng chói: dùng đen/xám trung tính
+    val accentGradient = Brush.linearGradient(
+        colors = listOf(Calm.Primary, Calm.Lavender)
     )
     
     Column(
@@ -125,14 +131,14 @@ private fun InitialPurchaseContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Đóng",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable { onDismiss() }
-            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Đóng",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -142,13 +148,13 @@ private fun InitialPurchaseContent(
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .background(goldGradient),
+                .background(accentGradient),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.White,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -167,7 +173,7 @@ private fun InitialPurchaseContent(
         Text(
             text = "Mở khóa tất cả tính năng nâng cao",
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.tertiary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         
@@ -178,7 +184,7 @@ private fun InitialPurchaseContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(Calm.LavenderMist)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -200,14 +206,14 @@ private fun InitialPurchaseContent(
                 text = "29.000",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = goldColor
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "VNĐ",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = goldColor,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
@@ -215,20 +221,20 @@ private fun InitialPurchaseContent(
         Text(
             text = "Thanh toán một lần",
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.tertiary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         
         Spacer(modifier = Modifier.height(24.dp))
         
         // Purchase button
-        Button(
+        GlassButton(
             onClick = onPurchaseClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = goldColor
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text(
@@ -245,7 +251,7 @@ private fun InitialPurchaseContent(
         Text(
             text = "⚠️ Đây là thanh toán GIẢ dành cho testing",
             fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+            color = Calm.Warm,
             textAlign = TextAlign.Center
         )
     }
@@ -261,13 +267,13 @@ private fun PremiumFeatureItem(text: String) {
             modifier = Modifier
                 .size(20.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondary),
+                .background(Calm.Wellness),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondary,
+                tint = Color.White,
                 modifier = Modifier.size(12.dp)
             )
         }
@@ -292,7 +298,7 @@ private fun ProcessingContent() {
     ) {
         CircularProgressIndicator(
             modifier = Modifier.size(64.dp),
-            color = Color(0xFFFFD700),
+            color = MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
         )
         
@@ -310,7 +316,7 @@ private fun ProcessingContent() {
         Text(
             text = "Vui lòng đợi trong giây lát",
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.tertiary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -334,13 +340,13 @@ private fun SuccessContent() {
                 .size(80.dp)
                 .scale(scale)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondary),
+                .background(Calm.Wellness),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondary,
+                tint = Color.White,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -351,7 +357,7 @@ private fun SuccessContent() {
             text = "Thành công!",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.secondary
+            color = Calm.WellnessText
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -359,7 +365,7 @@ private fun SuccessContent() {
         Text(
             text = "Bạn đã mở khóa tất cả tính năng Premium",
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.tertiary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }
@@ -380,13 +386,13 @@ private fun FailedContent(
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.error),
+                .background(Calm.Destructive),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onError,
+                tint = Color.White,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -397,7 +403,7 @@ private fun FailedContent(
             text = "Thanh toán thất bại",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.error
+            color = Calm.Destructive
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -405,7 +411,7 @@ private fun FailedContent(
         Text(
             text = "Đã có lỗi xảy ra. Vui lòng thử lại.",
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.tertiary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         
@@ -417,15 +423,16 @@ private fun FailedContent(
         ) {
             OutlinedButton(
                 onClick = onDismiss,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Hủy")
             }
             
-            Button(
+            GlassButton(
                 onClick = onRetry,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary

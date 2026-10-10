@@ -1,4 +1,7 @@
 package com.cong.smartalarm.ui.theme.alarm
+import com.cong.smartalarm.ui.theme.components.CalmSlider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cong.smartalarm.R
 import com.cong.smartalarm.data.AlarmData
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 @Composable
 fun AlarmCard(
@@ -47,22 +52,22 @@ fun AlarmCard(
     onToggle: (Boolean) -> Unit,
     onCardClick: () -> Unit,
     onDelete:() -> Unit){
-    Card(
+    GlassCard(
+        onClick = onCardClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clickable { onCardClick() },
-        shape = RoundedCornerShape(28.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 12.dp, // Tối đa hóa độ nổi
             pressedElevation = 4.dp
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.1f) // Viền hắt sáng rõ hơn
+            color = Calm.Border
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = Calm.Surface
         )
     ) {
         Column(
@@ -77,14 +82,15 @@ fun AlarmCard(
             ) {
                 Text(
                     text = alarmData.days,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
-                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                // Vùng chạm 48dp
+                IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "Xóa báo thức",
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -106,9 +112,10 @@ fun AlarmCard(
                     onCheckedChange = { onToggle(it) },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                        checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary,
                         uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        uncheckedTrackColor = Calm.Muted,
+                        uncheckedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
             }
@@ -141,17 +148,17 @@ fun AlarmSoundSection(
     onVolumeChange: (Float) -> Unit,
     onSoundClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.1f)
+            color = Calm.Border
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = Calm.Surface)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
@@ -165,9 +172,9 @@ fun AlarmSoundSection(
             // Dòng tên bài hát
             Surface(
                 onClick = onSoundClick,
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(12.dp),
+                color = Calm.LavenderMist,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -199,18 +206,13 @@ fun AlarmSoundSection(
 
             // Dòng Slider Volume
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Default.VolumeUp, contentDescription = "Âm lượng", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(12.dp))
-                Slider(
+                CalmSlider(
                     value = currentVolume,
                     onValueChange = onVolumeChange,
                     valueRange = 0f..1f,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        thumbColor = MaterialTheme.colorScheme.onBackground,
-                    )
+                    modifier = Modifier.weight(1f)
                 )
             }
         }

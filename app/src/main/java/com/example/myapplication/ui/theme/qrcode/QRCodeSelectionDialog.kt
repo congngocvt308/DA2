@@ -1,5 +1,9 @@
 package com.cong.smartalarm.ui.theme.qrcode
 
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,12 +53,12 @@ fun QRCodeSelectionDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Card(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.7f)
                 .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -94,7 +97,7 @@ fun QRCodeSelectionDialog(
                     color = if (selectedIds.size >= QRCodeViewModel.MAX_QR_PER_ALARM) 
                         MaterialTheme.colorScheme.primary 
                     else 
-                        MaterialTheme.colorScheme.tertiary
+                        MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -112,7 +115,7 @@ fun QRCodeSelectionDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.tertiary
+                                tint = Calm.LavenderSoft
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
@@ -124,14 +127,18 @@ fun QRCodeSelectionDialog(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Thêm mã QR/Barcode để sử dụng\nkhi tắt báo thức",
-                                color = MaterialTheme.colorScheme.tertiary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(24.dp))
-                            Button(
+                            GlassButton(
                                 onClick = onManageQRCodes,
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -175,7 +182,9 @@ fun QRCodeSelectionDialog(
                             OutlinedButton(
                                 onClick = onManageQRCodes,
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Icon(Icons.Default.Settings, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -189,11 +198,11 @@ fun QRCodeSelectionDialog(
                 
                 // Info card
                 if (selectedIds.isNotEmpty()) {
-                    Card(
+                    GlassCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            containerColor = Calm.LavenderMist
                         )
                     ) {
                         Row(
@@ -226,17 +235,20 @@ fun QRCodeSelectionDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Hủy")
                     }
                     
-                    Button(
+                    GlassButton(
                         onClick = { onConfirm(selectedIds.toList()) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         Text("Xác nhận")
@@ -254,7 +266,7 @@ private fun SelectableQRCodeItem(
     canSelect: Boolean,
     onToggle: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -269,9 +281,9 @@ private fun SelectableQRCodeItem(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                Calm.LavenderMist
             else
-                MaterialTheme.colorScheme.surfaceVariant
+                Calm.Surface
         ),
         onClick = onToggle
     ) {
@@ -290,9 +302,9 @@ private fun SelectableQRCodeItem(
                         if (isSelected)
                             MaterialTheme.colorScheme.primary
                         else if (canSelect)
-                            Color.Transparent
+                            Calm.Surface
                         else
-                            MaterialTheme.colorScheme.surfaceVariant
+                            Calm.Muted
                     )
                     .border(
                         2.dp,
@@ -301,7 +313,7 @@ private fun SelectableQRCodeItem(
                         else if (canSelect)
                             MaterialTheme.colorScheme.outline
                         else
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            MaterialTheme.colorScheme.outlineVariant,
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -309,7 +321,7 @@ private fun SelectableQRCodeItem(
                 if (isSelected) {
                     Icon(
                         Icons.Default.Check,
-                        contentDescription = null,
+                        contentDescription = "Đã chọn",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
                     )
@@ -325,16 +337,16 @@ private fun SelectableQRCodeItem(
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (qrCode.codeType == "QR")
-                            Color(0xFF6750A4).copy(alpha = 0.2f)
+                            Calm.LavenderMist
                         else
-                            Color(0xFF7D5260).copy(alpha = 0.2f)
+                            Calm.WellnessMist
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (qrCode.codeType == "QR") Icons.Default.QrCode2 else Icons.Default.ViewWeek,
                     contentDescription = null,
-                    tint = if (qrCode.codeType == "QR") Color(0xFF6750A4) else Color(0xFF7D5260),
+                    tint = if (qrCode.codeType == "QR") Calm.Primary else Calm.WellnessText,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -349,14 +361,14 @@ private fun SelectableQRCodeItem(
                     color = if (canSelect || isSelected)
                         MaterialTheme.colorScheme.onSurface
                     else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = if (qrCode.codeType == "QR") "QR Code" else "Barcode",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

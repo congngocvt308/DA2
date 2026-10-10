@@ -1,4 +1,10 @@
 package com.cong.smartalarm.ui.theme.facedetection
+import com.cong.smartalarm.ui.theme.components.LocalGlassBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassAlertDialog
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 import android.os.Build
 import android.view.WindowManager
@@ -50,6 +56,19 @@ fun ImageDetailDialog(
     onDeletePhoto: (PictureEntity) -> Unit,
     onUpdateDescription: (PictureEntity, String) -> Unit // 🚀 Callback để lưu mô tả mới
 ) {
+    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
+        ImageDetailDialogContent(picture, onDismiss, onDeletePhoto, onUpdateDescription)
+    }
+}
+
+@Composable
+private fun ImageDetailDialogContent(
+    picture: PictureEntity,
+    onDismiss: () -> Unit,
+    onDeletePhoto: (PictureEntity) -> Unit,
+    onUpdateDescription: (PictureEntity, String) -> Unit
+) {
     val context = LocalContext.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -82,7 +101,7 @@ fun ImageDetailDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f)),
+                .background(PhotoScrim),
             contentAlignment = Alignment.Center
         ) {
             // Nút Đóng
@@ -91,12 +110,12 @@ fun ImageDetailDialog(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 24.dp, end = 16.dp)
-                    .background(Color.White.copy(alpha = 0.2f), shape = CircleShape)
+                    .background(Calm.Surface, shape = CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Đóng",
-                    tint = Color.White
+                    tint = Calm.Foreground
                 )
             }
 
@@ -107,9 +126,9 @@ fun ImageDetailDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. HIỂN THỊ ẢNH CHÍNH
-                Card(
+                GlassCard(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+                    colors = CardDefaults.cardColors(containerColor = Calm.LavenderMist),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -128,7 +147,7 @@ fun ImageDetailDialog(
                 // 2. KHUNG THÔNG TIN KÝ ỨC (Bấm vào để SỬA TEXT)
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.Black.copy(alpha = 0.65f),
+                    color = Calm.Surface,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isEditingText = true } // 🚀 Bấm vào khung này để bật chế độ sửa text
@@ -144,12 +163,12 @@ fun ImageDetailDialog(
                                 value = descriptionText,
                                 onValueChange = { descriptionText = it },
                                 textStyle = TextStyle(
-                                    color = Color.White,
+                                    color = Calm.Foreground,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
                                 ),
-                                cursorBrush = SolidColor(Color(0xFFFF4081)),
+                                cursorBrush = SolidColor(Calm.Primary),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(
@@ -170,7 +189,7 @@ fun ImageDetailDialog(
                             ) {
                                 Text(
                                     text = descriptionText,
-                                    color = Color.White,
+                                    color = Calm.Foreground,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -179,7 +198,7 @@ fun ImageDetailDialog(
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Sửa",
-                                    tint = Color(0xFFFF4081),
+                                    tint = Calm.Primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
@@ -189,7 +208,7 @@ fun ImageDetailDialog(
 
                         Text(
                             text = "Thời gian lưu: $formattedSaveTime",
-                            color = Color(0xFFE0E0E0),
+                            color = Calm.MutedForeground,
                             fontSize = 13.sp,
                             textAlign = TextAlign.Center
                         )
@@ -209,8 +228,8 @@ fun ImageDetailDialog(
                     ActionButton(
                         icon = Icons.Default.Share,
                         label = "Chia sẻ",
-                        backgroundColor = Color(0xFF333333),
-                        tint = Color(0xFF80D8FF)
+                        backgroundColor = Calm.Surface,
+                        tint = Calm.Primary
                     ) {
                         Toast.makeText(context, "Tính năng chia sẻ đang phát triển!", Toast.LENGTH_SHORT).show()
                     }
@@ -218,8 +237,8 @@ fun ImageDetailDialog(
                     ActionButton(
                         icon = Icons.Default.Download,
                         label = "Tải về",
-                        backgroundColor = Color(0xFF333333),
-                        tint = Color(0xFFB2FF59)
+                        backgroundColor = Calm.Surface,
+                        tint = Calm.WellnessText
                     ) {
                         Toast.makeText(context, "Tính năng tải về đang phát triển!", Toast.LENGTH_SHORT).show()
                     }
@@ -227,8 +246,8 @@ fun ImageDetailDialog(
                     ActionButton(
                         icon = Icons.Default.Delete,
                         label = "Xóa",
-                        backgroundColor = Color(0xFF333333),
-                        tint = Color(0xFFFF5252)
+                        backgroundColor = Calm.Surface,
+                        tint = Calm.Destructive
                     ) {
                         showDeleteConfirm = true
                     }
@@ -239,7 +258,7 @@ fun ImageDetailDialog(
 
     // Dialog xác nhận xóa
     if (showDeleteConfirm) {
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Xác nhận xóa", fontWeight = FontWeight.Bold) },
             text = { Text("Bạn có chắc chắn muốn xóa nụ cười này khỏi Bảo Tàng?") },
@@ -252,7 +271,7 @@ fun ImageDetailDialog(
                         onDismiss()
                     }
                 ) {
-                    Text("Xóa", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("Xóa", color = Calm.Destructive, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -291,6 +310,7 @@ private fun ActionButton(
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
+        // Nhãn nằm trực tiếp trên lớp phủ tối -> giữ chữ trắng
         Text(
             text = label,
             color = Color.White,
@@ -299,3 +319,6 @@ private fun ActionButton(
         )
     }
 }
+
+/** Lớp phủ tối phía sau ảnh (thay cho đen thuần). */
+private val PhotoScrim = Color(0xFF09090B).copy(alpha = 0.88f)

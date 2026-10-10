@@ -1,5 +1,8 @@
 package com.cong.smartalarm.ui.theme.qrcode
 
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cong.smartalarm.data.AppDatabase
+import com.cong.smartalarm.ui.theme.theme.Calm
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -103,7 +107,7 @@ private fun ScanResultScreen(
                 .padding(top = 48.dp, start = 16.dp)
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                .background(Calm.LavenderMist)
         ) {
             Icon(
                 Icons.Default.ArrowBack,
@@ -140,32 +144,32 @@ private fun SuccessContent() {
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
+                .background(Calm.Wellness),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Color.White,
                 modifier = Modifier.size(60.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
             text = "Mã hợp lệ!",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = Calm.WellnessText
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Text(
             text = "Đang tắt báo thức...",
             fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -184,43 +188,43 @@ private fun InvalidContent(
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary),
+                .background(Calm.DestructiveMist),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
+                tint = Calm.Destructive,
                 modifier = Modifier.size(60.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
             text = "Mã không hợp lệ!",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = Calm.Destructive
         )
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Text(
             text = "Mã bạn quét không nằm trong\ndanh sách mã đã cài đặt",
             fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         
         if (requiredCodes.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
             
-            Card(
+            GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                    containerColor = Calm.Surface
                 )
             ) {
                 Column(
@@ -239,7 +243,7 @@ private fun InvalidContent(
                         Text(
                             text = "• $codeName",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                     }
@@ -249,7 +253,7 @@ private fun InvalidContent(
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        Button(
+        GlassButton(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,

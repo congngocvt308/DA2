@@ -3,13 +3,16 @@ package com.cong.smartalarm.ui.theme.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.cong.smartalarm.data.DailyStat
 import com.cong.smartalarm.data.QuestionEntity
 import com.cong.smartalarm.data.StatisticsDao
 import com.cong.smartalarm.data.UserStatsEntity
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -18,6 +21,16 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import kotlin.collections.emptyList
+
+/** Một cột của biểu đồ 7 ngày. [accuracy] = null khi hôm đó chưa trả lời câu nào. */
+data class DayAccuracy(
+    val label: String,
+    val dayOfMonth: Int,
+    val accuracy: Float?,
+    val correct: Int,
+    val answered: Int,
+    val isToday: Boolean
+)
 
 class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
 
@@ -29,29 +42,39 @@ class StatsViewModel(private val statsDao: StatisticsDao) : ViewModel() {
     }
 
     // 1. Dữ liệu thô từ DAO (Tự động cập nhật nhờ Flow)
-    // Trong StatsViewModel.kt
-    val weeklyAccuracy = statsDao.getWeeklyAccuracy(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000)
-        .map { list ->
-            val last7Days = mutableListOf<Pair<String, Float>>()
-            val calendar = Calendar.getInstance()
-
-            // Tạo danh sách 7 ngày gần nhất
-            for (i in 6 downTo 0) {
-                val date = Calendar.getInstance().apply {
-                    add(Calendar.DAY_OF_YEAR, -i)
-                }
-                val dateStr = SimpleDateFormat("MM-dd", Locale.getDefault()).format(date.time)
-
-                // Tìm dữ liệu trong list từ DAO, nếu không thấy thì để 0f
-                val foundData = list.find { it.day.endsWith(dateStr) }
-                val accuracy = if (foundData != null) foundData.correct.toFloat() / foundData.total else 0f
-
-                // Format nhãn: Nếu là hôm nay thì ghi "Nay", còn lại ghi Thứ hoặc Ngày
-                val label = if (i == 0) "Nay" else dateStr.takeLast(2) // Chỉ lấy phần Ngày cho gọn
-                last7Days.add(label to accuracy)
-            }
-            last7Days
+    // Mốc "7 ngày" tính từ 0h của 6 ngày trước và được tính lại mỗi lần màn hình bắt đầu thu thập
+    // (trước đây cố định lúc tạo ViewModel nên cột ngày cũ nhất bị mất buổi sáng và không sang ngày mới).
+    val weeklyAccuracy: Flow<List<DayAccuracy>> = flow { emit(startOfDay(daysAgo = 6)) }
+        .flatMapLatest { since ->
+            statsDao.getWeeklyAccuracy(since - 1).map { list -> buildLast7Days(list) }
         }
+
+    private fun buildLast7Days(list: List<DailyStat>): List<DayAccuracy> {
+        val keyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US) // trùng định dạng date() của SQLite
+        val weekday = listOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
+        return (6 downTo 0).map { i ->
+            val date = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -i) }
+            val found = list.find { it.day == keyFormat.format(date.time) }
+            DayAccuracy(
+                label = if (i == 0) "Nay" else weekday[date.get(Calendar.DAY_OF_WEEK) - 1],
+                dayOfMonth = date.get(Calendar.DAY_OF_MONTH),
+                // null = hôm đó chưa trả lời câu nào (khác với 0% = trả lời sai hết)
+                accuracy = found?.takeIf { it.total > 0 }?.let { it.correct.toFloat() / it.total },
+                correct = found?.correct ?: 0,
+                answered = found?.total ?: 0,
+                isToday = i == 0
+            )
+        }
+    }
+
+    private fun startOfDay(daysAgo: Int): Long = Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_YEAR, -daysAgo)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
     val srsDistribution = statsDao.getSrsDistribution()
 
     // 2. Logic tính Wake-up Score

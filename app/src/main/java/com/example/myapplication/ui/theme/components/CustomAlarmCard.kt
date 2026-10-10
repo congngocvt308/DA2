@@ -25,41 +25,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cong.smartalarm.ui.theme.theme.Calm
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import java.io.File
 
-// Danh sách 20 cặp màu (Border, Neon Glow) phối sẵn
+// Các cặp màu pastel dịu (Viền, Quầng sáng nhẹ) — thay cho bảng neon cũ
 private val neonColorPalettes = listOf(
-    // --- Phase 1: Classic & Cyberpunk ---
-    Color(0xFFC084FC) to Color(0xFF80D8FF),
-    Color(0xFF00897B) to Color(0xFFB2FF59),
-    Color(0xFFE53935) to Color(0xFFFF8A80),
-    Color(0xFF3F51B5) to Color(0xFF00E5FF),
-    Color(0xFFFFB300) to Color(0xFFFFE082),
-    Color(0xFFD81B60) to Color(0xFFFF4081),
-
-    // --- Phase 2: Sunset & Warm Vibe ---
-    Color(0xFFE65100) to Color(0xFFFF9100),
-    Color(0xFF880E4F) to Color(0xFFFF1744),
-    Color(0xFF4A148C) to Color(0xFFF50057),
-    Color(0xFFBF360C) to Color(0xFFFFAB40),
-
-    // --- Phase 3: Ocean & Cool Vibe ---
-    Color(0xFF0D47A1) to Color(0xFF00B0FF),
-    Color(0xFF004D40) to Color(0xFF1DE9B6),
-    Color(0xFF1A237E) to Color(0xFF7C4DFF),
-    Color(0xFF006064) to Color(0xFF18FFFF),
-
-    // --- Phase 4: Candy & Pastel Neon ---
-    Color(0xFF7B1FA2) to Color(0xFFEA80FC),
-    Color(0xFFC2185B) to Color(0xFFFF80AB),
-    Color(0xFF2E7D32) to Color(0xFF69F0AE),
-    Color(0xFFF57C00) to Color(0xFFFFD700),
-
-    // --- Phase 5: Deep Space & Mystery ---
-    Color(0xFF311B92) to Color(0xFF651FFF),
-    Color(0xFF263238) to Color(0xFF00E676)
+    Color(0xFFE4E4E7) to Color(0xFF52525B), // xám
+    Color(0xFFD4D4D8) to Color(0xFF18181B), // đen
+    Color(0xFFD1FAE5) to Color(0xFF059669), // xanh wellness
+    Color(0xFFA7F3D0) to Color(0xFF10B981), // bạc hà
+    Color(0xFFDBEAFE) to Color(0xFF60A5FA), // xanh trời
+    Color(0xFFFCE7F3) to Color(0xFFF472B6), // hồng phấn
+    Color(0xFFFEF3C7) to Color(0xFFD97706), // vàng kem
+    Color(0xFFF4F4F5) to Color(0xFF71717A)  // xám nhạt
 )
 
 fun Modifier.neonGlow(
@@ -114,10 +94,11 @@ fun CustomAlarmCard(
             .fillMaxWidth()
             .wrapContentHeight()
             .neonGlow(
-                color = actualNeonColor,
+                // Quầng sáng rất nhẹ thay cho neon chói
+                color = actualNeonColor.copy(alpha = 0.22f),
                 borderRadius = cornerRadius,
-                blurRadius = 14.dp,
-                spread = 3.dp
+                blurRadius = 16.dp,
+                spread = 1.dp
             )
             .clip(RoundedCornerShape(cornerRadius))
             .background(actualBorderColor)
@@ -144,8 +125,8 @@ fun CustomAlarmCard(
                         .height(imageHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .border(
-                            width = 1.5.dp,
-                            color = Color.Black,
+                            width = 1.dp,
+                            color = Calm.LavenderSoft,
                             shape = RoundedCornerShape(16.dp)
                         )
                 )
@@ -170,7 +151,7 @@ fun CustomAlarmCard(
             ) {
                 Text(
                     text = title.ifBlank { "Kỷ niệm" },
-                    color = Color.Black,
+                    color = Calm.Foreground,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     lineHeight = 18.sp,

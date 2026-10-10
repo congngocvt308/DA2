@@ -1,5 +1,8 @@
 package com.cong.smartalarm.ui.theme.components
 
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,10 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 @Composable
 fun PermissionItem(
@@ -30,22 +33,22 @@ fun PermissionItem(
     isGranted: Boolean,
     onClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isGranted) {
-                MaterialTheme.colorScheme.surfaceVariant
+                Calm.WellnessMist
             } else {
                 MaterialTheme.colorScheme.surface
             }
         ),
-        // Thêm viền để phân biệt rõ hơn trên nền đen
+        // Viền nhẹ để tách thẻ khỏi nền
         border = BorderStroke(
             width = 1.dp,
             color = if (isGranted) {
-                MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+                Calm.Wellness.copy(alpha = 0.5f)
             } else {
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.outlineVariant
             }
         ),
         onClick = onClick
@@ -55,13 +58,13 @@ fun PermissionItem(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = if (isGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (isGranted) Calm.Wellness else MaterialTheme.colorScheme.primary
             )
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    color = if (isGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface
+                    color = if (isGranted) Calm.WellnessText else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
@@ -70,10 +73,10 @@ fun PermissionItem(
                 )
             }
             if (isGranted) {
-                Icon(Icons.Default.CheckCircle, "Done", tint = MaterialTheme.colorScheme.secondary)
+                Icon(Icons.Default.CheckCircle, "Đã cấp quyền", tint = Calm.Wellness)
             } else {
                 // Thêm icon mũi tên hoặc cảnh báo nhỏ nếu chưa cấp quyền
-                Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Default.ChevronRight, "Chưa cấp quyền, bấm để cấp", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

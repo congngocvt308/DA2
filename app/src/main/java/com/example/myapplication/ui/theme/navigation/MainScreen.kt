@@ -1,5 +1,8 @@
 package com.cong.smartalarm.ui.theme.navigation
 
+
+import com.cong.smartalarm.ui.theme.components.GlassAlertDialog
+
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
@@ -12,6 +15,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import com.cong.smartalarm.ui.theme.components.LiquidGlass
+import com.cong.smartalarm.ui.theme.components.rememberReducedMotion
+import com.cong.smartalarm.ui.theme.theme.Calm
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -54,8 +61,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -155,7 +165,7 @@ fun MainScreen(initialExternalRoute: String? = null) {
 
     // --- DIALOG CUSTOM VỚI PERMISSION ITEMS ---
     if (showPermissionDialog) {
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = {showPermissionDialog = false},
             title = { Text("Yêu cầu hệ thống 🚨", fontWeight = FontWeight.Bold) },
             text = {
@@ -355,9 +365,10 @@ fun BottomNavBar(navController: NavHostController) {
     val navWidth = 320.dp
     val itemWidth = navWidth / items.size
 
+    val reducedMotion = rememberReducedMotion()
     val indicatorOffset by animateDpAsState(
         targetValue = itemWidth * selectedIndex,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = if (reducedMotion) 0 else 250),
         label = "indicatorOffset"
     )
 
@@ -367,14 +378,10 @@ fun BottomNavBar(navController: NavHostController) {
             .navigationBarsPadding(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        Surface(
-            color = Color(0xFF1C1E23), // Màu đặc, không trong suốt
+        // 🧊 Thanh điều hướng kính nổi (Liquid Glass)
+        LiquidGlass(
             shape = RoundedCornerShape(40.dp),
-            shadowElevation = 20.dp,
-            border = androidx.compose.foundation.BorderStroke(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.08f)
-            ),
+            elevation = 12.dp,
             modifier = Modifier
                 .width(navWidth)
                 .height(64.dp)
@@ -388,7 +395,8 @@ fun BottomNavBar(navController: NavHostController) {
                         .width(itemWidth - 12.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(32.dp))
-                        .background(Color.White.copy(alpha = 0.12f)) // Vùng xám chỉ báo
+                        .background(Calm.LavenderMist) // Viên chỉ báo tab đang chọn
+                        .border(1.dp, Calm.LavenderSoft, RoundedCornerShape(32.dp))
                 )
 
                 Row(
@@ -401,6 +409,7 @@ fun BottomNavBar(navController: NavHostController) {
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
+                                .semantics { selected = isSelected; role = Role.Tab }
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
@@ -423,15 +432,15 @@ fun BottomNavBar(navController: NavHostController) {
                             ) {
                                 Icon(
                                     imageVector = icons[index],
-                                    contentDescription = item,
+                                    contentDescription = null, // nhãn chữ bên dưới đã đọc tên tab
                                     modifier = Modifier.size(22.dp),
-                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f)
+                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else Calm.MutedForeground
                                 )
                                 Text(
                                     text = item,
-                                    fontSize = 10.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.4f)
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Calm.MutedForeground
                                 )
                             }
                         }

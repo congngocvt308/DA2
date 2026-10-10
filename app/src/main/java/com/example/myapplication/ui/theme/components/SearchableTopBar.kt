@@ -66,16 +66,16 @@ fun SearchableTopBar(
                             .padding(end = 16.dp)
                             .height(50.dp)
                             .focusRequester(focusRequester),
-                        placeholder = { Text("Tìm kiếm...", color = MaterialTheme.colorScheme.tertiary) },
+                        placeholder = { Text("Tìm kiếm...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         shape = CircleShape,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                             disabledContainerColor = Color.Transparent,
-                            focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                            cursorColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            cursorColor = MaterialTheme.colorScheme.primary,
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
                             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                         ),
@@ -84,7 +84,7 @@ fun SearchableTopBar(
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { onQueryChange("") }) {
-                                    Icon(Icons.Filled.Close, "Xóa", tint = MaterialTheme.colorScheme.onSurface)
+                                    Icon(Icons.Filled.Close, "Xóa", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -97,7 +97,7 @@ fun SearchableTopBar(
                 ) {
                     if (onBackClick != null) {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onSurface)
                         }
                     }
 

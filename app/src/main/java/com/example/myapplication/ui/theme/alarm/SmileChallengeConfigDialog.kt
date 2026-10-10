@@ -1,4 +1,13 @@
 package com.cong.smartalarm.ui.theme.alarm
+import com.cong.smartalarm.ui.theme.components.CalmSlider
+import com.cong.smartalarm.ui.theme.components.LocalGlassBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.components.rememberReducedMotion
+import com.cong.smartalarm.ui.theme.theme.Calm
+import androidx.compose.animation.core.FastOutSlowInEasing
 
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -241,7 +250,8 @@ fun SmileChallengeConfigDialog(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Calm.Background,
+        contentColor = Calm.Foreground,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         dragHandle = {
             // 2. Đây là cái thanh gạch, hệ thống sẽ tự vẽ và cho phép KÉO
@@ -269,23 +279,23 @@ fun SmileChallengeConfigDialog(
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, "Close")
+                    Icon(Icons.Default.Close, "Đóng", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
             ){
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Thời gian cười: ${smileDuration.toInt()} giây")
                     }
-                    Slider(
+                    CalmSlider(
                         value = smileDuration,
                         onValueChange = { smileDuration = it },
                         valueRange = 1f..9f,
@@ -302,11 +312,11 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -329,10 +339,11 @@ fun SmileChallengeConfigDialog(
                                 modifier = Modifier
                                     .menuAnchor()
                                     .width(140.dp)
-                                    .height(36.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.surface,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Calm.LavenderMist,
+                                contentColor = Calm.Foreground,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.LavenderSoft)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -433,11 +444,11 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Calm.Border),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showBackgroundSourcePicker = true }
@@ -464,7 +475,7 @@ fun SmileChallengeConfigDialog(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
+            GlassButton(
                 onClick = {
                     val config = AlarmFaceMissionConfigEntity(
                         alarmId = initialConfig?.alarmId ?: 0,
@@ -543,19 +554,21 @@ fun SmileChallengeConfigDialog(
                 dismissOnClickOutside = !isActuallyRecording
             )
         ) {
+            // Nhịp "thở" chậm báo đang thu âm (tắt khi giảm chuyển động)
+            val reducedMotion = rememberReducedMotion()
             val infiniteTransition = rememberInfiniteTransition(label = "recording")
             val scale by infiniteTransition.animateFloat(
                 initialValue = 1f,
-                targetValue = 1.2f,
+                targetValue = 1.08f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(800),
+                    animation = tween(2000, easing = FastOutSlowInEasing),
                     repeatMode = RepeatMode.Reverse
                 ),
                 label = "scale"
             )
 
-            Card(
-                shape = RoundedCornerShape(24.dp),
+            GlassCard(
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.width(280.dp)
             ) {
@@ -582,21 +595,21 @@ fun SmileChallengeConfigDialog(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background((if (isActuallyRecording) Color.Red else Color.Gray).copy(alpha = 0.1f))
-                            .border(2.dp, if (isActuallyRecording) Color.Red else Color.Gray, CircleShape)
+                            .background(if (isActuallyRecording) Calm.DestructiveMist else Calm.LavenderMist)
+                            .border(2.dp, if (isActuallyRecording) Calm.Destructive else Calm.Lavender, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = null,
-                            tint = if (isActuallyRecording) Color.Red else Color.Gray,
-                            modifier = Modifier.size(40.dp).scale(if (isActuallyRecording) scale else 1f)
+                            contentDescription = if (isActuallyRecording) "Đang thu âm" else "Micro",
+                            tint = if (isActuallyRecording) Calm.Destructive else Calm.Primary,
+                            modifier = Modifier.size(40.dp).scale(if (isActuallyRecording && !reducedMotion) scale else 1f)
                         )
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     if (isActuallyRecording) {
-                        Button(
+                        GlassButton(
                             onClick = {
                                 val path = recorder.stopRecording()
                                 isActuallyRecording = false
@@ -617,7 +630,7 @@ fun SmileChallengeConfigDialog(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                            colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Color.White),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -637,7 +650,7 @@ fun SmileChallengeConfigDialog(
                             ) {
                                 Text("Hủy")
                             }
-                            Button(
+                            GlassButton(
                                 onClick = {
                                     recorder.startRecording("rec_${currentRecordingLabel.replace(" ", "_")}_${System.currentTimeMillis()}")
                                     isActuallyRecording = true
@@ -685,20 +698,20 @@ private fun SoundConfigRow(
         Spacer(modifier = Modifier.width(12.dp))
         Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconButton(onClick = onPlayClick, modifier = Modifier.size(32.dp)) {
+        Row {
+            IconButton(onClick = onPlayClick, modifier = Modifier.size(48.dp)) {
                 Icon(
-                    imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(18.dp), 
-                    tint = if (hasFile) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                    imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
+                    contentDescription = (if (isPlaying) "Dừng" else "Nghe thử") + if (hasFile) " (âm thanh riêng)" else " (giọng AI)",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (hasFile) Calm.Wellness else MaterialTheme.colorScheme.primary
                 )
             }
-            IconButton(onClick = onBrowseClick, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.FolderOpen, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
+            IconButton(onClick = onBrowseClick, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.Default.FolderOpen, "Chọn âm thanh", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.secondary)
             }
-            IconButton(onClick = onResetClick, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
+            IconButton(onClick = onResetClick, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.Default.Refresh, "Đặt lại", modifier = Modifier.size(20.dp), tint = Calm.Destructive)
             }
         }
     }
@@ -721,8 +734,8 @@ fun SoundPickerDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
+        GlassCard(
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
@@ -734,7 +747,7 @@ fun SoundPickerDialog(
                 ) {
                     Text("Thư viện âm thanh", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, null)
+                        Icon(Icons.Default.Close, "Đóng", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 
@@ -748,17 +761,17 @@ fun SoundPickerDialog(
                 )
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(
+                    GlassButton(
                         onClick = onRecordNew, 
                         modifier = Modifier.weight(0.9f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Calm.Destructive, contentColor = Color.White),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(Icons.Default.Mic, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Thu âm", fontSize = 12.sp)
                     }
-                    Button(
+                    GlassButton(
                         onClick = onPickFromFile, 
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
@@ -777,19 +790,20 @@ fun SoundPickerDialog(
                     if (filesList.isEmpty()) {
                         item { 
                             Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                                Text("Chưa có bản thu nào", color = Color.Gray, fontSize = 14.sp) 
+                                Text("Chưa có bản thu nào", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp) 
                             }
                         }
                     }
                     items(filesList) { file ->
                         Surface(
                             onClick = { onSoundSelected(file.absolutePath) },
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Calm.LavenderMist,
+                            contentColor = Calm.Foreground,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                modifier = Modifier.padding(start = 12.dp, end = 0.dp, top = 0.dp, bottom = 0.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.Audiotrack, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
@@ -808,13 +822,13 @@ fun SoundPickerDialog(
                                             filesList = filesList.filter { it.absolutePath != file.absolutePath }
                                         }
                                     },
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(48.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Close, 
-                                        contentDescription = "Xóa file", 
-                                        modifier = Modifier.size(16.dp), 
-                                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Xóa file",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = Calm.Destructive
                                     )
                                 }
                             }
@@ -904,8 +918,8 @@ fun BackgroundSourcePickerDialog(
     onGallerySelected: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
+        GlassCard(
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
@@ -916,12 +930,13 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onDefaultSelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    color = Calm.LavenderMist,
+                    contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(Calm.Surface),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.Landscape, null, tint = MaterialTheme.colorScheme.primary)
@@ -939,12 +954,13 @@ fun BackgroundSourcePickerDialog(
                 Surface(
                     onClick = onGallerySelected,
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    color = Calm.LavenderMist,
+                    contentColor = Calm.Foreground,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)),
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(Calm.Surface),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.PhotoLibrary, null, tint = MaterialTheme.colorScheme.secondary)
@@ -966,6 +982,18 @@ fun BackgroundSourcePickerDialog(
 
 @Composable
 fun BackgroundEditorDialog(
+    imageUri: Uri,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    // Trình chỉnh ảnh có nền đen + ảnh: dùng kính "khói" thay vì khúc xạ nền aurora
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
+        BackgroundEditorContent(imageUri, onDismiss, onConfirm)
+    }
+}
+
+@Composable
+private fun BackgroundEditorContent(
     imageUri: Uri,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
@@ -1043,11 +1071,11 @@ fun BackgroundEditorDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(0.9f)
-                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(40.dp))
+                        .background(Color.Black.copy(alpha = 0.25f), RoundedCornerShape(40.dp))
                         .border(2.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(40.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("XEM TRƯỚC VỊ TRÍ MẶT", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
+                    Text("XEM TRƯỚC VỊ TRÍ MẶT", color = Color.White, fontSize = 14.sp)
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -1069,7 +1097,7 @@ fun BackgroundEditorDialog(
             }
 
             // 4. NÚT LƯU (Dưới cùng)
-            Button(
+            GlassButton(
                 onClick = {
                     if (originalBitmap != null && containerSize != IntSize.Zero) {
                         val resultPath = saveTransformedBitmap(context, originalBitmap, scale, offset, containerSize)

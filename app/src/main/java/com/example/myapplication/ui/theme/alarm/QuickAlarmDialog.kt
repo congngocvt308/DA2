@@ -1,4 +1,8 @@
-package com.cong.smartalarm.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -83,8 +87,8 @@ fun QuickAlarmContent(
             .format(DateTimeFormatter.ofPattern("HH:mm"))
     }
 
-    Card(
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+    GlassCard(
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -101,10 +105,11 @@ fun QuickAlarmContent(
                 Text(
                     "Báo thức nhanh",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = onDismissRequest) {
-                    Icon(Icons.Default.Close, contentDescription = "Đóng")
+                    Icon(Icons.Default.Close, contentDescription = "Đóng", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -132,12 +137,12 @@ fun QuickAlarmContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- NÚT LƯU ---
-            Button(
+            GlassButton(
                 onClick = { onSave(totalAddedMinutes) },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(28.dp)
             ) {
-                Text("BẮT ĐẦU", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("BẮT ĐẦU", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
@@ -163,10 +168,10 @@ fun QuickTimePickerSection(
             Text("m", color = MaterialTheme.colorScheme.onSurface, fontSize = 32.sp, modifier = Modifier.padding(top = 20.dp))
             Spacer(modifier = Modifier.width(16.dp))
             IconButton(onClick = onReset) {
-                Icon(Icons.Default.Refresh, contentDescription = null,tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(30.dp))
+                Icon(Icons.Default.Refresh, contentDescription = "Đặt lại", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
             }
         }
-        Text("Đổ chuông lúc $targetTime", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+        Text("Đổ chuông lúc $targetTime", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -175,10 +180,10 @@ fun QuickTimePickerSection(
             options.chunked(3).forEach { row ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     row.forEach { min ->
-                        Button(
+                        GlassButton(
                             onClick = { onAddMinutes(min) },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground),
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f).height(50.dp),
                             contentPadding = PaddingValues(0.dp)
                         ) {

@@ -1,4 +1,9 @@
 package com.cong.smartalarm.ui.theme.topic
+import com.cong.smartalarm.ui.theme.components.CalmSlider
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 import android.content.Context
 import android.net.Uri
@@ -63,9 +68,9 @@ fun AiCreateQuestionBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
@@ -78,7 +83,7 @@ fun AiCreateQuestionBottomSheet(
                 modifier = Modifier
                     .width(40.dp)
                     .height(4.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(2.dp))
+                    .background(Calm.LavenderSoft, RoundedCornerShape(2.dp))
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -133,7 +138,7 @@ fun AiCreateQuestionBottomSheet(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Nút hành động chính để thực thi lưu trữ/nén tạm thời
-                        Button(
+                        GlassButton(
                             onClick = onProcessAndCompress,
                             enabled = selectedDocuments.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -170,12 +175,12 @@ fun AiCreateQuestionBottomSheet(
 
 @Composable
 private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
-    Card(
+    GlassCard(
         onClick = onUploadClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(if (isCompact) 64.dp else 130.dp), // Tự động co giãn diện tích dựa theo trạng thái hàng chờ
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground),
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
@@ -187,7 +192,7 @@ private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
                 imageVector = Icons.Filled.CloudUpload,
                 contentDescription = "Upload",
                 modifier = Modifier.size(if (isCompact) 24.dp else 34.dp),
-                tint = MaterialTheme.colorScheme.secondary
+                tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(
@@ -198,8 +203,8 @@ private fun UploadZoneLayout(isCompact: Boolean, onUploadClick: () -> Unit) {
                 if (!isCompact) {
                     Text(
                         text = "Có thể tải nhiều file Ảnh và PDF cùng lúc",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 2.dp)
                     )
@@ -231,12 +236,12 @@ private fun DocumentItemRow(
         label = "ArrowRotation"
     )
 
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            containerColor = Calm.Surface
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -253,7 +258,7 @@ private fun DocumentItemRow(
                 Icon(
                     imageVector = Icons.Filled.PictureAsPdf,
                     contentDescription = null,
-                    tint = Color(0xFFEF5350),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(26.dp)
                 )
 
@@ -272,7 +277,7 @@ private fun DocumentItemRow(
                     Text(
                         text = "Tổng số: ${document.totalPages} trang",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -280,7 +285,7 @@ private fun DocumentItemRow(
                     Icon(
                         imageVector = Icons.Filled.Delete,
                         contentDescription = "Xóa",
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -308,11 +313,11 @@ private fun DocumentItemRow(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
+                        .background(Calm.Background)
                         .padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
                     Divider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        color = MaterialTheme.colorScheme.outlineVariant,
                         thickness = 1.dp,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -340,10 +345,11 @@ private fun DocumentItemRow(
                                 modifier = Modifier
                                     .menuAnchor() // Liên kết vị trí thả menu
                                     .width(160.dp)
-                                    .height(40.dp),
-                                shape = RoundedCornerShape(10.dp),
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                                    containerColor = Calm.Surface,
+                                    contentColor = Calm.Foreground
                                 ),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                             ) {
@@ -399,7 +405,7 @@ private fun DocumentItemRow(
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Divider(
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                                color = MaterialTheme.colorScheme.outlineVariant,
                                 thickness = 1.dp,
                                 modifier = Modifier.padding(vertical = 12.dp)
                             )
@@ -438,7 +444,7 @@ private fun DocumentItemRow(
                                             }
                                         },
                                         placeholder = { Text("Từ", fontSize = 11.sp, textAlign = TextAlign.Center) },
-                                        modifier = Modifier.width(55.dp).height(46.dp),
+                                        modifier = Modifier.width(55.dp).height(48.dp),
                                         singleLine = true,
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -448,7 +454,7 @@ private fun DocumentItemRow(
                                         textStyle = MaterialTheme.typography.bodySmall.copy(textAlign = TextAlign.Center)
                                     )
 
-                                    Text(text = "đến", fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary)
+                                    Text(text = "đến", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                                     // Ô nhập trang KẾT THÚC
                                     OutlinedTextField(
@@ -466,7 +472,7 @@ private fun DocumentItemRow(
                                         placeholder = { Text("Đến", fontSize = 11.sp, textAlign = TextAlign.Center) },
                                         modifier = Modifier
                                             .width(60.dp) // Tăng nhẹ độ rộng để gõ số có 2-3 chữ số không bị che
-                                            .height(46.dp),
+                                            .height(48.dp),
                                         singleLine = true,
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -494,7 +500,7 @@ private fun ProcessingOcrLayout() {
     ) {
         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(12.dp))
-        Text(text = "Hệ thống đang chạy tiến trình nén phân nhánh ngầm...", fontSize = 13.sp, color = MaterialTheme.colorScheme.tertiary)
+        Text(text = "Hệ thống đang chạy tiến trình nén phân nhánh ngầm...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -507,7 +513,7 @@ private fun ConfigureMatrixLayout(
     onGenerateClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Chủ đề nhận diện được:", fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary)
+        Text(text = "Chủ đề nhận diện được:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(4.dp))
 
         OutlinedTextField(
@@ -516,27 +522,49 @@ private fun ConfigureMatrixLayout(
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = { Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp)) },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             ),
             shape = RoundedCornerShape(12.dp),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Cấu hình số lượng câu hỏi:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Cấu hình số lượng câu hỏi:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Chip đang chọn có dấu tích, không chỉ đổi màu
+        val easyPreset = config.easyCount == 3f && config.midCount == 1f && config.hardCount == 0f
+        val hardPreset = config.easyCount == 1f && config.midCount == 3f && config.hardCount == 2f
+        val chipColors = FilterChipDefaults.filterChipColors(
+            containerColor = Calm.Surface,
+            labelColor = Calm.MutedForeground,
+            selectedContainerColor = Calm.LavenderMist,
+            selectedLabelColor = Calm.Foreground,
+            selectedLeadingIconColor = Calm.Primary
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
-                selected = config.easyCount == 3f && config.midCount == 1f && config.hardCount == 0f,
+                selected = easyPreset,
                 onClick = { onPresetSelect(false) },
-                label = { Text("Chế độ 'Dễ thở' (3-1-0)") }
+                label = { Text("Chế độ 'Dễ thở' (3-1-0)") },
+                leadingIcon = if (easyPreset) {
+                    { Icon(Icons.Filled.Check, contentDescription = "Đang chọn", modifier = Modifier.size(18.dp)) }
+                } else null,
+                colors = chipColors,
+                shape = RoundedCornerShape(12.dp)
             )
             FilterChip(
-                selected = config.easyCount == 1f && config.midCount == 3f && config.hardCount == 2f,
+                selected = hardPreset,
                 onClick = { onPresetSelect(true) },
-                label = { Text("Chế độ 'Try-hard' (1-3-2)") }
+                label = { Text("Chế độ 'Try-hard' (1-3-2)") },
+                leadingIcon = if (hardPreset) {
+                    { Icon(Icons.Filled.Check, contentDescription = "Đang chọn", modifier = Modifier.size(18.dp)) }
+                } else null,
+                colors = chipColors,
+                shape = RoundedCornerShape(12.dp)
             )
         }
 
@@ -549,7 +577,7 @@ private fun ConfigureMatrixLayout(
         Spacer(modifier = Modifier.height(16.dp))
 
         val totalQuestions = (config.easyCount + config.midCount + config.hardCount).toInt()
-        Button(
+        GlassButton(
             onClick = onGenerateClick,
             enabled = totalQuestions > 0,
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -565,19 +593,14 @@ private fun ConfigureMatrixLayout(
 private fun DifficultySliderItem(label: String, value: Float, onValueChange: (Float) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = label, fontSize = 13.sp)
+            Text(text = label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
             Text(text = "${value.toInt()} câu", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
-        Slider(
+        CalmSlider(
             value = value,
             onValueChange = onValueChange,
             valueRange = 0f..10f,
-            steps = 9,
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            steps = 9
         )
     }
 }

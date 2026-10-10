@@ -1,5 +1,9 @@
 package com.cong.smartalarm.ui.theme.topic
 
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +40,7 @@ fun QuickTopicDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
                     .clickable(enabled = false) {}
             ) {
                 QuickTopicContent(
@@ -56,8 +61,8 @@ fun QuickTopicContent(
 ) {
     var topicName by remember { mutableStateOf(initialName) }
 
-    Card(
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 0.dp, bottomEnd = 0.dp),
+    GlassCard(
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -76,9 +81,11 @@ fun QuickTopicContent(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Đóng",
                     tint = MaterialTheme.colorScheme.onSurface,
+                    // Vùng chạm 48dp
                     modifier = Modifier
+                        .size(48.dp)
                         .clickable { onDismissRequest() }
-                        .size(35.dp)
+                        .padding(10.dp)
                 )
             }
 
@@ -87,11 +94,11 @@ fun QuickTopicContent(
             OutlinedTextField(
                 value = topicName,
                 onValueChange = { topicName = it},
-                label = { Text("Tên chủ đề", color = MaterialTheme.colorScheme.tertiary) },
+                label = { Text("Tên chủ đề", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
@@ -100,7 +107,7 @@ fun QuickTopicContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
+            GlassButton(
                 onClick = {
                     if (topicName.isNotBlank()) {
                         onSave(topicName.trim())
@@ -108,7 +115,7 @@ fun QuickTopicContent(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Text(if (topicName.isEmpty()) "Tạo chủ đề" else "Lưu thay đổi", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
             }

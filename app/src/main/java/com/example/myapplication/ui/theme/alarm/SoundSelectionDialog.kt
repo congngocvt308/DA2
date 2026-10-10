@@ -1,4 +1,9 @@
-package com.cong.smartalarm.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.components.GlassAlertDialog
+import com.cong.smartalarm.ui.theme.theme.Calm
 
 import android.content.Intent
 import android.net.Uri
@@ -6,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -15,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,21 +72,21 @@ fun SoundSelectionDialog(
         }
     )
 
-    AlertDialog(
+    GlassAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Chọn nhạc chuông") },
         text = {
             Column {
 
-                Button(
+                GlassButton(
                     onClick = {
                         // Chỉ lọc lấy file âm thanh (mp3, wav...)
                         filePickerLauncher.launch(arrayOf("audio/*"))
                     },
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    colors = ButtonDefaults.buttonColors(containerColor = Calm.LavenderMist, contentColor = Calm.Foreground)
                 ) {
-                    Icon(Icons.Default.FolderOpen, contentDescription = null)
+                    Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
                     Text("Chọn từ bộ nhớ máy")
                 }
@@ -90,7 +95,8 @@ fun SoundSelectionDialog(
 
                 // --- PHẦN HIỂN THỊ FILE TÙY CHỈNH (Nếu đang chọn file ngoài) ---
                 if (isCustomFile) {
-                    Card(
+                    GlassCard(
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     ) {
@@ -113,7 +119,7 @@ fun SoundSelectionDialog(
                     }
                 }
 
-                Divider(color = Color.Gray, thickness = 0.5.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
 
                 // Giới hạn chiều cao để không bị tràn màn hình nếu danh sách quá dài
                 LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
@@ -126,13 +132,17 @@ fun SoundSelectionDialog(
                                     // Nghe thử
                                     player.playOrUpdateVolume(item.uri, currentVolume)
                                 }
+                                .heightIn(min = 48.dp)
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = (item.uri == selectedUri),
                                 onClick = null, // Xử lý click ở Row
-                                colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary,
+                                    unselectedColor = MaterialTheme.colorScheme.outline
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(item.title, color = MaterialTheme.colorScheme.onSurface)

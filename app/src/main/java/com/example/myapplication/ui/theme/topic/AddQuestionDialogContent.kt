@@ -1,5 +1,10 @@
 package com.cong.smartalarm.ui.theme.topic
 
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,7 +47,7 @@ fun AddQuestionDialog(
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.4f)),
             contentAlignment = Alignment.Center
         ) {
-            Card(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
@@ -60,29 +65,36 @@ fun AddQuestionDialog(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Đóng",
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.clickable { onDismiss() }
+                            // Vùng chạm 48dp, biểu tượng vẫn 24dp
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clickable { onDismiss() }
+                                .padding(12.dp)
                         )
 
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Lưu",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.clickable {
-                                viewModel.saveQuestion()
-                                onSaveSuccess()
-                            }
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clickable {
+                                    viewModel.saveQuestion()
+                                    onSaveSuccess()
+                                }
+                                .padding(12.dp)
                         )
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
                     if (questionText.contains("$")) {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            Text("Câu hỏi (Công thức toán)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+                            Text("Câu hỏi (Công thức toán)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 4.dp)
-                                    .border(1.dp, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
                                     .padding(12.dp)
                             ) {
                                 MathText(
@@ -96,11 +108,11 @@ fun AddQuestionDialog(
                         OutlinedTextField(
                             value = questionText,
                             onValueChange = { viewModel.onQuestionTextChange(it) },
-                            label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.tertiary) },
+                            label = { Text("Câu hỏi", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                             ),
@@ -130,14 +142,15 @@ fun AddQuestionDialog(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 8.dp)
+                                        .heightIn(min = 48.dp)
                                         .clickable { viewModel.onAddAnswerLine() },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.tertiary)
+                                    Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    Text("Thêm câu trả lời", color = MaterialTheme.colorScheme.tertiary, fontSize = 16.sp)
+                                    Text("Thêm câu trả lời", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
                                 }
                             }
                         }
@@ -145,7 +158,7 @@ fun AddQuestionDialog(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
+                    GlassButton(
                         onClick = {
                             viewModel.saveQuestion()
                             onSaveSuccess()
@@ -170,7 +183,8 @@ private fun AnswerInputRow(
     onSelectCorrect: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val borderColor = if (isCorrect) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
+    // Đáp án đúng: viền xanh wellness (kèm nút chọn và chữ gợi ý, không chỉ dựa vào màu)
+    val borderColor = if (isCorrect) Calm.Wellness else MaterialTheme.colorScheme.outline
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -180,8 +194,8 @@ private fun AnswerInputRow(
             selected = isCorrect,
             onClick = onSelectCorrect,
             colors = RadioButtonDefaults.colors(
-                selectedColor = MaterialTheme.colorScheme.secondary,
-                unselectedColor = MaterialTheme.colorScheme.tertiary
+                selectedColor = Calm.Wellness,
+                unselectedColor = MaterialTheme.colorScheme.outline
             )
         )
 
@@ -190,7 +204,7 @@ private fun AnswerInputRow(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 MathText(
@@ -206,13 +220,13 @@ private fun AnswerInputRow(
                 placeholder = {
                     Text(
                         if (isCorrect) "Câu trả lời đúng" else "Điền câu trả lời",
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+                    .border(1.dp, borderColor, RoundedCornerShape(12.dp))
                     .background(Color.Transparent),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Transparent,
@@ -220,14 +234,14 @@ private fun AnswerInputRow(
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
 
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Xóa",
-                    tint = if (isCorrect) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

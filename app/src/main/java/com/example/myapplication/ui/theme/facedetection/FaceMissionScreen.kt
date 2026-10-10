@@ -1,4 +1,7 @@
 package com.cong.smartalarm.ui.theme.facedetection
+import com.cong.smartalarm.ui.theme.components.LocalGlassBackdrop
+import com.cong.smartalarm.ui.theme.theme.Calm
+import androidx.compose.runtime.CompositionLocalProvider
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -16,13 +19,6 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -100,36 +96,27 @@ fun CustomPaintProgressBar(
 
             val innerRadius = innerHeight / 2
 
-            // Dải màu gradient từ Hồng/Tím sang Cam -> Vàng -> Xanh lam (chuẩn màu Ảnh 2)
-            val rainbowColors = listOf(
-                Color(0xFFD81B60), // Hồng tím
-                Color(0xFFFF5722), // Cam
-                Color(0xFFFFC107), // Vàng
-                Color(0xFF00BCD4)  // Xanh lam
-            )
-
-            val rainbowBrush = Brush.linearGradient(
-                colors = rainbowColors,
+            // Dải màu dịu: xám -> đen -> xanh wellness
+            val calmBrush = Brush.linearGradient(
+                colors = listOf(Calm.Lavender, Calm.Primary, Calm.Wellness),
                 start = Offset(0f, 0f),
                 end = Offset(size.width, 0f)
             )
 
             if (innerWidth > 0f && innerHeight > 0f) {
-                // 1. NỀN BÊN TRONG: Vẽ chính dải màu Rainbow nhưng cho mờ (alpha = 0.35f)
-                // Giúp phần chưa fill có màu loang mờ rất sang chứ không bị xám xịt/tối nữa!
+                // 1. NỀN BÊN TRONG: rãnh xám nhạt
                 drawRoundRect(
-                    brush = rainbowBrush,
+                    color = Calm.LavenderMist,
                     topLeft = Offset(innerLeft, innerTop),
                     size = Size(innerWidth, innerHeight),
-                    cornerRadius = CornerRadius(innerRadius, innerRadius),
-                    alpha = 0.35f
+                    cornerRadius = CornerRadius(innerRadius, innerRadius)
                 )
 
-                // 2. TIẾN TRÌNH (FILL): Vẽ dải màu đậm (alpha = 1f)
+                // 2. TIẾN TRÌNH (FILL)
                 val currentProgressWidth = innerWidth * progress.coerceIn(0f, 1f)
                 if (currentProgressWidth > 0f) {
                     drawRoundRect(
-                        brush = rainbowBrush,
+                        brush = calmBrush,
                         topLeft = Offset(innerLeft, innerTop),
                         size = Size(currentProgressWidth, innerHeight),
                         cornerRadius = CornerRadius(innerRadius, innerRadius)
@@ -137,7 +124,7 @@ fun CustomPaintProgressBar(
                 }
             }
 
-            // 3. ĐƯỜNG VIỀN: Dùng luôn dải màu Rainbow để viền rực rỡ, không bị chìm!
+            // 3. ĐƯỜNG VIỀN: viền xám nhạt
             val borderLeft = strokePx / 2
             val borderTop = strokePx / 2
             val borderWidthSize = size.width - strokePx
@@ -145,12 +132,11 @@ fun CustomPaintProgressBar(
             val borderRadius = borderHeightSize / 2
 
             drawRoundRect(
-                brush = rainbowBrush, // Đổi từ Color đơn sắc sang Brush Gradient
+                color = Calm.LavenderSoft,
                 topLeft = Offset(borderLeft, borderTop),
                 size = Size(borderWidthSize, borderHeightSize),
                 cornerRadius = CornerRadius(borderRadius, borderRadius),
-                style = Stroke(width = strokePx),
-                alpha = 0.6f // Viền sáng vừa phải, đẹp mắt
+                style = Stroke(width = strokePx)
             )
         }
     }
@@ -274,6 +260,14 @@ fun FaceFilterOverlay(
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> Unit) {
+    // Màn có camera/ảnh phía sau: kính không khúc xạ nền aurora (sẽ lệch), dùng kính "khói".
+    CompositionLocalProvider(LocalGlassBackdrop provides null) {
+        FaceMissionContent(viewModel, onLuongAComplete)
+    }
+}
+
+@Composable
+private fun FaceMissionContent(viewModel: FaceMissionViewModel, onLuongAComplete: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsState()
@@ -297,7 +291,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
     }
 
     val warningOverlayColor by animateColorAsState(
-        targetValue = if (uiState.isWarning) Color(0x33FF0000) else Color.Transparent, label = ""
+        targetValue = if (uiState.isWarning) Calm.Destructive.copy(alpha = 0.2f) else Color.Transparent, label = ""
     )
 
     LaunchedEffect(uiState.isSuccess) {
@@ -336,7 +330,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
             ) {
                 Text(
                     text = timeString,
-                    color = Color(0xFF3A1240),
+                    color = Calm.Foreground,
                     fontSize = 76.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp,
@@ -346,7 +340,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = dateString,
-                    color = Color(0xFF3A1240).copy(alpha = 0.85f),
+                    color = Calm.Foreground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1
@@ -361,12 +355,12 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
                     .fillMaxWidth()
                     .aspectRatio(0.9f)
                     .background(
-                        color = Color.White.copy(alpha = 0.6f), // Màu viền mờ nhẹ
+                        color = Calm.LavenderSoft, // Viền xám nhạt
                         shape = RoundedCornerShape(40.dp)
                     )
                     .padding(2.5.dp)
                     .clip(RoundedCornerShape(40.dp))
-                    .background(Color.Black)
+                    .background(Color(0xFF09090B))
                     .onGloballyPositioned { coordinates ->
                         previewWidth = coordinates.size.width.toFloat()
                         previewHeight = coordinates.size.height.toFloat()
@@ -432,32 +426,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
                     previewHeight = previewHeight
                 )
 
-                // 🎯 1. ANIMATION NHẤP NHÁY MÀU & THU PHÓNG CHO ICON CAMERA
-                val cameraPulseTransition = rememberInfiniteTransition(label = "CameraIconPulse")
-
-// Đổ bóng/Mờ dần alpha từ 0.4f -> 1.0f
-                val iconAlpha by cameraPulseTransition.animateFloat(
-                    initialValue = 0.4f,
-                    targetValue = 1.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 600, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "IconAlpha"
-                )
-
-// Ph phóng nhẹ kích thước từ 0.9x -> 1.15x
-                val iconScale by cameraPulseTransition.animateFloat(
-                    initialValue = 0.9f,
-                    targetValue = 1.15f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "IconScale"
-                )
-
-// 🎯 2. ICON BUTTON CHỤP ẢNH CÓ HIỆU ỨNG NHẤP NHÁY
+                // Nút chụp ảnh: nền trắng mềm, không nhấp nháy
                 IconButton(
                     onClick = {
                         imageCapture?.let { capture ->
@@ -469,16 +438,13 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(top = 16.dp, end = 16.dp)
-                        .scale(iconScale) // 🚀 Hiệu ứng nhịp đập phình to/thu nhỏ
-                        .background(
-                            color = Color.Black.copy(alpha = 0.35f * iconAlpha),// 🚀 Viền/Nền hồng nhấp nháy mờ tỏ
-                            shape = CircleShape
-                        )
+                        .size(48.dp)
+                        .background(color = Calm.Surface, shape = CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
                         contentDescription = "Chụp ảnh",
-                        tint = Color.White,
+                        tint = Calm.Primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -489,13 +455,20 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Hướng dẫn đặt trên nền trắng mềm để luôn đọc được trên mọi ảnh nền
                 Text(
                     text = uiState.warningMessage.ifEmpty { "Mở to mắt và mỉm cười để tắt báo thức" },
-                    color = if (uiState.isWarning) Color(0xFFFFD54F) else Color.White,
+                    color = if (uiState.isWarning) Calm.Warm else Calm.Foreground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp, top = 20.dp)
+                    modifier = Modifier
+                        .padding(bottom = 16.dp, top = 20.dp)
+                        .background(
+                            color = if (uiState.isWarning) Calm.WarmMist else Calm.Surface.copy(alpha = 0.92f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                 )
 
                 // Tăng chiều cao lên 80.dp giúp nền cọ mở rộng hiển thị to rõ hơn

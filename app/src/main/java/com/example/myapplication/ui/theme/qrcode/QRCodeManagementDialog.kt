@@ -1,5 +1,10 @@
 package com.cong.smartalarm.ui.theme.qrcode
 
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.components.GlassAlertDialog
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -25,7 +30,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -97,12 +101,12 @@ fun QRCodeManagementDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Card(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
                 .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -138,7 +142,7 @@ fun QRCodeManagementDialog(
                 Text(
                     text = "Lưu tối đa ${QRCodeViewModel.MAX_QR_CODES} mã • Đã lưu: ${qrCodes.size}/${QRCodeViewModel.MAX_QR_CODES}",
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -210,18 +214,18 @@ fun QRCodeManagementDialog(
                                 Icons.Default.QrCode2,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.tertiary
+                                tint = Calm.LavenderSoft
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Chưa có mã nào được lưu",
-                                color = MaterialTheme.colorScheme.tertiary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Thêm mã QR hoặc Barcode để sử dụng\nkhi tắt báo thức",
-                                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.Center
                             )
@@ -279,7 +283,7 @@ fun QRCodeManagementDialog(
     
     // Dialog xác nhận xóa
     showDeleteConfirm?.let { qrCode ->
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = { showDeleteConfirm = null },
             title = { Text("Xóa mã?") },
             text = { Text("Bạn có chắc muốn xóa \"${qrCode.name}\"? Mã này sẽ bị hủy liên kết khỏi tất cả báo thức.") },
@@ -312,14 +316,14 @@ private fun AddMethodButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (enabled) 
                 MaterialTheme.colorScheme.primaryContainer 
             else 
-                MaterialTheme.colorScheme.surfaceVariant
+                Calm.Muted
         ),
         onClick = { if (enabled) onClick() }
     ) {
@@ -335,7 +339,7 @@ private fun AddMethodButton(
                 tint = if (enabled) 
                     MaterialTheme.colorScheme.primary 
                 else 
-                    MaterialTheme.colorScheme.tertiary,
+                    MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -345,7 +349,7 @@ private fun AddMethodButton(
                 color = if (enabled) 
                     MaterialTheme.colorScheme.onPrimaryContainer 
                 else 
-                    MaterialTheme.colorScheme.tertiary,
+                    MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -357,7 +361,7 @@ private fun QRCodeItem(
     qrCode: QRCodeEntity,
     onDelete: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -375,16 +379,16 @@ private fun QRCodeItem(
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (qrCode.codeType == "QR") 
-                            Color(0xFF6750A4).copy(alpha = 0.2f) 
+                            Calm.LavenderMist 
                         else 
-                            Color(0xFF7D5260).copy(alpha = 0.2f)
+                            Calm.WellnessMist
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (qrCode.codeType == "QR") Icons.Default.QrCode2 else Icons.Default.ViewWeek,
                     contentDescription = null,
-                    tint = if (qrCode.codeType == "QR") Color(0xFF6750A4) else Color(0xFF7D5260),
+                    tint = if (qrCode.codeType == "QR") Calm.Primary else Calm.WellnessText,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -404,12 +408,12 @@ private fun QRCodeItem(
                 Text(
                     text = if (qrCode.codeType == "QR") "Mã QR" else "Barcode",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = qrCode.codeValue.take(30) + if (qrCode.codeValue.length > 30) "..." else "",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -443,11 +447,11 @@ fun AddQRCodeDialog(
     val isFromScan = initialCode.isNotEmpty()
     
     Dialog(onDismissRequest = onDismiss) {
-        Card(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -488,7 +492,7 @@ fun AddQRCodeDialog(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
                         disabledTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
@@ -531,7 +535,7 @@ fun AddQRCodeDialog(
                         Text(
                             text = "Loại mã phát hiện: ",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.tertiary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Surface(
                             shape = RoundedCornerShape(8.dp),
@@ -558,18 +562,21 @@ fun AddQRCodeDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Hủy")
                     }
                     
-                    Button(
+                    GlassButton(
                         onClick = { onSave(name, code, selectedType) },
                         enabled = name.isNotBlank() && code.isNotBlank(),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         Text("Lưu")
@@ -596,7 +603,7 @@ private fun TypeSelectionChip(
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(12.dp)
             ),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Calm.Surface
     ) {
         Text(
             text = text,

@@ -1,4 +1,7 @@
-package com.cong.smartalarm.ui.theme.alarm
+package com.cong.smartalarm.ui.theme.alarm
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +20,8 @@ fun DiscardChangesDialog(
     onConfirmDiscard: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
+        GlassCard(
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth()
@@ -39,7 +42,7 @@ fun DiscardChangesDialog(
 
                 Text(
                     text = "Bạn có chắc muốn thoát không? Mọi thay đổi chưa lưu sẽ bị mất.",
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -50,24 +53,24 @@ fun DiscardChangesDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
+                    GlassButton(
                         onClick = onDismissRequest,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
                         Text("Quay lại", color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    Button(
+                    GlassButton(
                         onClick = onConfirmDiscard,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text("Thoát", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                        Text("Thoát", color = MaterialTheme.colorScheme.onError, fontWeight = FontWeight.Bold)
                     }
                 }
             }

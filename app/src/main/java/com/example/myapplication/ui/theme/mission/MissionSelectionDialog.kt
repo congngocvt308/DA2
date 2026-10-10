@@ -1,5 +1,10 @@
 package com.cong.smartalarm.ui.theme.mission
 
+import com.cong.smartalarm.ui.theme.components.CalmSlider
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.components.GlassButton
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -88,51 +93,51 @@ fun MissionSelectionContent(
         uiState.topics.flatMap { it.questions }.count { it.isSelected }
     }
 
-    Card(
+    GlassCard(
         modifier = Modifier.fillMaxWidth().heightIn(max = 700.dp),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // Header
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "Nhiệm vụ",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.clickable { onDismiss() }
-                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Đóng",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Section: Slider chọn số lượng
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
             ){
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${uiState.questionCount}", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Số câu hỏi (tối đa: $totalSelected)", color = MaterialTheme.colorScheme.tertiary)
+                    Text("${uiState.questionCount}", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("Số câu hỏi (tối đa: $totalSelected)", color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     if (totalSelected > 0) {
-                        Slider(
+                        CalmSlider(
                             value = uiState.questionCount.toFloat(),
                             onValueChange = { onCountChange(it.toInt()) },
                             valueRange = 0f..totalSelected.toFloat(),
-                            steps = if (totalSelected > 1) totalSelected - 1 else 0,
-                            colors = SliderDefaults.colors(
-                                thumbColor = MaterialTheme.colorScheme.onSurface,
-                                activeTrackColor = MaterialTheme.colorScheme.onSurface,
-                                inactiveTrackColor = MaterialTheme.colorScheme.tertiary
-                            )
+                            steps = if (totalSelected > 1) totalSelected - 1 else 0
                         )
                     } else {
                         Text(
@@ -147,9 +152,9 @@ fun MissionSelectionContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Card(
+            GlassCard(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
@@ -173,7 +178,7 @@ fun MissionSelectionContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
+            GlassButton(
                 onClick = onConfirm,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(28.dp)
@@ -194,32 +199,38 @@ fun TopicItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onExpandClick() } // Click vào hàng để đóng/mở
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             // Nút Checkbox (đã chuyển sang dùng val từ ViewModel)
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = if (topic.isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
+            Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .clickable { onSelectTopic(!topic.isSelected) } // Gọi sự kiện chọn tất cả
-                    .background(
-                        color = if (topic.isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .border(
-                        1.dp,
-                        if (topic.isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(4.dp)
-            )
+                    .size(48.dp)
+                    .clickable { onSelectTopic(!topic.isSelected) }, // Gọi sự kiện chọn tất cả
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = if (topic.isSelected) "Bỏ chọn cả chủ đề" else "Chọn cả chủ đề",
+                    tint = if (topic.isSelected) Color.White else Color.Transparent,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(
+                            color = if (topic.isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            1.5.dp,
+                            if (topic.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(4.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Text(
                 text = topic.name,
@@ -234,8 +245,8 @@ fun TopicItemRow(
         // Icon mũi tên lên/xuống
         Icon(
             imageVector = if (topic.isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface
+            contentDescription = if (topic.isExpanded) "Thu gọn" else "Mở rộng",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -249,20 +260,25 @@ fun QuestionItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onQuestionClick() }
+            .heightIn(min = 48.dp)
             .padding(start = 48.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Nút Check nhỏ cho từng câu hỏi
         Icon(
             imageVector = Icons.Default.Check,
-            contentDescription = null,
-            tint = if (question.isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
+            contentDescription = if (question.isSelected) "Đã chọn" else "Chưa chọn",
+            tint = if (question.isSelected) Color.White else Color.Transparent,
             modifier = Modifier
                 .size(20.dp)
+                .background(
+                    if (question.isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    RoundedCornerShape(6.dp)
+                )
                 .border(
-                    1.dp,
-                    if (question.isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
-                    RoundedCornerShape(10.dp)
+                    1.5.dp,
+                    if (question.isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    RoundedCornerShape(6.dp)
                 )
                 .padding(3.dp)
         )
@@ -271,7 +287,7 @@ fun QuestionItemRow(
 
         Text(
             text = question.text,
-            color = if (question.isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.tertiary,
+            color = if (question.isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             maxLines = 1, // Tăng lên 2 dòng để hiển thị câu hỏi dài tốt hơn
             overflow = TextOverflow.Ellipsis

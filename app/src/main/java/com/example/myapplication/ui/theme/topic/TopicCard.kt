@@ -1,5 +1,9 @@
 package com.cong.smartalarm.ui.theme.topic
 
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,14 +28,14 @@ fun TopicCard(
     topic: TopicData,
     onClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(28.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = Calm.Surface
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 8.dp,
@@ -39,7 +43,7 @@ fun TopicCard(
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = Color.White.copy(alpha = 0.1f)
+            color = Calm.Border
         )
     ) {
         Row(
@@ -59,13 +63,13 @@ fun TopicCard(
                 Text(
                     text = "${topic.questionCount} câu hỏi",
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = "Xem chi tiết",
-                tint = MaterialTheme.colorScheme.tertiary
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

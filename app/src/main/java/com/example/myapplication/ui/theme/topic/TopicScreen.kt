@@ -1,5 +1,12 @@
 package com.cong.smartalarm.ui.theme.topic
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import com.cong.smartalarm.ui.theme.components.LiquidGlass
+import com.cong.smartalarm.ui.theme.theme.Calm
+
+import com.cong.smartalarm.ui.theme.components.GlassFloatingActionButton
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
@@ -94,7 +101,7 @@ fun TopicScreen(
                     item {
                         Text(
                             text = "Không tìm thấy chủ đề nào phù hợp.",
-                            color = MaterialTheme.colorScheme.tertiary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth().padding(top = 64.dp),
                             textAlign = TextAlign.Center
                         )
@@ -111,7 +118,8 @@ fun TopicScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f))
+                    // Lớp phủ tím nhạt dịu thay cho nền đen
+                    .background(Calm.Foreground.copy(alpha = 0.18f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -222,10 +230,9 @@ private fun FabSpeedDial(
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 70.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shadowElevation = 6.dp
+            LiquidGlass(
+                cornerRadius = 16.dp,
+                tint = SolidColor(Color.Transparent)
             ) {
                 Column(modifier = Modifier.width(IntrinsicSize.Max)) {
                     FabMenuItem(
@@ -247,7 +254,7 @@ private fun FabSpeedDial(
             }
         }
 
-        FloatingActionButton(
+        GlassFloatingActionButton(
             onClick = onToggleMenu,
             containerColor = MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(28.dp),

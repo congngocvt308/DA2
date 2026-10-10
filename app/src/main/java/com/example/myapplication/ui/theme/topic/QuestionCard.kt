@@ -1,5 +1,10 @@
 package com.cong.smartalarm.ui.theme.topic
 
+import androidx.compose.ui.graphics.Color
+
+import com.cong.smartalarm.ui.theme.components.GlassCard
+import com.cong.smartalarm.ui.theme.theme.Calm
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,14 +38,14 @@ fun QuestionCard(
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+            containerColor = Calm.Surface
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp,
@@ -48,7 +53,7 @@ fun QuestionCard(
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f)
+            color = Calm.Border
         )
     ) {
         Row(
