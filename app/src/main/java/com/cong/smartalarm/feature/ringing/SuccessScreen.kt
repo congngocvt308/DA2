@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.ringing
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -33,9 +35,9 @@ fun SuccessScreen(
 
     // 🌬️ Biểu tượng "thở" nhẹ theo nhịp 8 giây; đứng yên nếu bật giảm chuyển động
     val reducedMotion = rememberReducedMotion()
-    val scale = if (reducedMotion) 1f else {
-        val infiniteTransition = rememberInfiniteTransition(label = "SuccessBreath")
-        val s by infiniteTransition.animateFloat(
+    // Giữ State (không đọc .value ở đây) để giá trị chỉ được đọc trong graphicsLayer -> không recompose mỗi khung
+    val scale: State<Float> = if (reducedMotion) remember { mutableFloatStateOf(1f) } else {
+        rememberInfiniteTransition(label = "SuccessBreath").animateFloat(
             initialValue = 0.96f,
             targetValue = 1.04f,
             animationSpec = infiniteRepeatable(
@@ -44,7 +46,6 @@ fun SuccessScreen(
             ),
             label = "IconScale"
         )
-        s
     }
 
     // Nền pastel của app hiện qua (không còn gradient vàng cam)
@@ -56,7 +57,7 @@ fun SuccessScreen(
             Box(
                 modifier = Modifier
                     .size(140.dp)
-                    .scale(scale)
+                    .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
                     .clip(CircleShape)
                     .background(Calm.WellnessMist),
                 contentAlignment = Alignment.Center

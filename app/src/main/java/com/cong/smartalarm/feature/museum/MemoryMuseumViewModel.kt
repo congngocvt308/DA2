@@ -34,22 +34,13 @@ class MemoryMuseumViewModel(
                     }
                 }
                 .collect { list ->
-                    val featured = list.firstOrNull()
-                    val remaining = if (list.size > 1) list.drop(1) else emptyList()
-
-                    // Phân chia danh sách thành 3 cột cho Masonry Layout
-                    val col1 = remaining.filterIndexed { index, _ -> index % 3 == 0 }
-                    val col2 = remaining.filterIndexed { index, _ -> index % 3 == 1 }
-                    val col3 = remaining.filterIndexed { index, _ -> index % 3 == 2 }
-
+                    // Lưới so le tự xếp cột; ViewModel chỉ cần tách ảnh nổi bật
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             pictures = list,
-                            featuredPicture = featured,
-                            column1Pictures = col1,
-                            column2Pictures = col2,
-                            column3Pictures = col3
+                            featuredPicture = list.firstOrNull(),
+                            otherPictures = list.drop(1)
                         )
                     }
                 }

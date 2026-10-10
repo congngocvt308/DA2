@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.topic
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 
 import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.component.CalmButton
@@ -34,8 +36,8 @@ fun AddQuestionDialog(
     onDismiss: () -> Unit,
     onSaveSuccess: () -> Unit
 ) {
-    val questionText by viewModel.draftQuestionText.collectAsState()
-    val answers by viewModel.draftAnswers.collectAsState()
+    val questionText by viewModel.draftQuestionText.collectAsStateWithLifecycle()
+    val answers by viewModel.draftAnswers.collectAsStateWithLifecycle()
 
     Dialog(
         onDismissRequest = onDismiss,

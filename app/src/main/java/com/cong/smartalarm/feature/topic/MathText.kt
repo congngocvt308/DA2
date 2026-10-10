@@ -119,7 +119,11 @@ fun MathText(
                 </html>
             """.trimIndent()
 
-            webView.loadDataWithBaseURL("file:///android_asset/", htmlData, "text/html", "UTF-8", null)
+            // update chạy lại mỗi lần recompose: chỉ nạp lại HTML (khởi động KaTeX) khi nội dung thật sự đổi
+            if (webView.tag != htmlData) {
+                webView.tag = htmlData
+                webView.loadDataWithBaseURL("file:///android_asset/", htmlData, "text/html", "UTF-8", null)
+            }
         }
     )
 }

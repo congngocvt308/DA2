@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.qr
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.theme.Calm
@@ -45,7 +47,7 @@ fun QRCodeSelectionDialog(
     viewModel: QRCodeViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val allQRCodes by viewModel.allQRCodes.collectAsState()
+    val allQRCodes by viewModel.allQRCodes.collectAsStateWithLifecycle()
     
     var selectedIds by remember { mutableStateOf(initialSelectedIds.toSet()) }
     
@@ -152,7 +154,7 @@ fun QRCodeSelectionDialog(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(allQRCodes) { qrCode ->
+                        items(allQRCodes, key = { it.qrId }) { qrCode ->
                             val isSelected = selectedIds.contains(qrCode.qrId)
                             val canSelect = selectedIds.size < QRCodeViewModel.MAX_QR_PER_ALARM || isSelected
                             

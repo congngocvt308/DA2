@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.museum
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.cong.smartalarm.data.repository.PictureRepository
 import androidx.compose.runtime.CompositionLocalProvider
 
@@ -30,8 +32,11 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -80,8 +85,8 @@ private fun MemoryMuseumContent(
     onBackClick: () -> Unit,
     viewModel: MemoryMuseumViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val listState = rememberLazyListState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val gridState = rememberLazyStaggeredGridState()
 
     var showGuidanceOverlay by remember { mutableStateOf(false) }
 
@@ -93,8 +98,8 @@ private fun MemoryMuseumContent(
         }
     }
 
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (listState.isScrollInProgress) {
+    LaunchedEffect(gridState.isScrollInProgress) {
+        if (gridState.isScrollInProgress) {
             showGuidanceOverlay = false
         }
     }
@@ -131,101 +136,60 @@ private fun MemoryMuseumContent(
             if (uiState.pictures.isEmpty()) {
                 EmptyMuseumCard()
             } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(top = 70.dp, bottom = 24.dp)
+                // Lưới so le 3 cột thật sự "lazy": chỉ ảnh đang hiện trên màn hình mới được dựng.
+                // (Trước đây cả 3 cột nằm trong một item nên mọi ảnh đều bị dựng cùng lúc.)
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(3),
+                    state = gridState,
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalItemSpacing = 12.dp,
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 70.dp, bottom = 24.dp)
                 ) {
-                    // Title Image
-                    item {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_museum_title),
-                            contentDescription = "Bảo tàng nụ cười",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .height(90.dp)
-                        )
+                    item(key = "title", span = StaggeredGridItemSpan.FullLine) {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_museum_title),
+                                contentDescription = "Bảo tàng nụ cười",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .height(90.dp)
+                            )
+                        }
                     }
 
-                    // Featured Card (Ảnh đầu tiên)
+                    // Ảnh nổi bật (ảnh mới nhất)
                     uiState.featuredPicture?.let { featuredPic ->
-                        item {
-                            Box(contentAlignment = Alignment.Center) {
-                                FeaturedPolaroidCard(
-                                    picture = featuredPic,
-                                    onCardClick = {
-                                        showGuidanceOverlay = false
-                                        viewModel.onPictureClick(featuredPic)
-                                    } // 🚀 Bấm đâu trên Card cũng mở Dialog
-                                )
+                        item(key = "featured", span = StaggeredGridItemSpan.FullLine) {
+                            Box(Modifier.fillMaxWidth().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    FeaturedPolaroidCard(
+                                        picture = featuredPic,
+                                        onCardClick = {
+                                            showGuidanceOverlay = false
+                                            viewModel.onPictureClick(featuredPic)
+                                        } // 🚀 Bấm đâu trên Card cũng mở Dialog
+                                    )
 
-                                AnimatedVisibility(
-                                    visible = showGuidanceOverlay,
-                                    modifier = Modifier.matchParentSize(),
-                                    enter = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.92f),
-                                    exit = fadeOut(tween(400))
-                                ) {
-                                    TapGuideOverlay(reducedMotion = reducedMotion)
+                                    AnimatedVisibility(
+                                        visible = showGuidanceOverlay,
+                                        modifier = Modifier.matchParentSize(),
+                                        enter = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.92f),
+                                        exit = fadeOut(tween(400))
+                                    ) {
+                                        TapGuideOverlay(reducedMotion = reducedMotion)
+                                    }
                                 }
-                                Spacer(modifier = Modifier.height(12.dp))
                             }
                         }
                     }
 
-                    // Masonry Grid 3 Cột cho ảnh còn lại
-                    if (uiState.column1Pictures.isNotEmpty() ||
-                        uiState.column2Pictures.isNotEmpty() ||
-                        uiState.column3Pictures.isNotEmpty()) {
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                // Column 1
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    uiState.column1Pictures.forEach { item ->
-                                        SmallCardPhotoItem(
-                                            picture = item,
-                                            onCardClick = { viewModel.onPictureClick(item) }
-                                        )
-                                    }
-                                }
-
-                                // Column 2
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    uiState.column2Pictures.forEach { item ->
-                                        SmallCardPhotoItem(
-                                            picture = item,
-                                            onCardClick = { viewModel.onPictureClick(item) }
-                                        )
-                                    }
-                                }
-
-                                // Column 3
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    uiState.column3Pictures.forEach { item ->
-                                        SmallCardPhotoItem(
-                                            picture = item,
-                                            onCardClick = { viewModel.onPictureClick(item) }
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                    items(uiState.otherPictures, key = { it.pictureId }, contentType = { "photo" }) { picture ->
+                        SmallCardPhotoItem(
+                            picture = picture,
+                            onCardClick = { viewModel.onPictureClick(picture) }
+                        )
                     }
                 }
             }

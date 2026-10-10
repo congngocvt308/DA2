@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.mission
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
 import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.component.CalmButton
@@ -44,7 +46,7 @@ fun MissionSelectionDialog(
     onConfirm: (Int, List<MissionQuestion>, List<MissionTopic>) -> Unit,
     viewModel: MissionViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Khởi tạo data đúng 1 lần khi mở Dialog
     LaunchedEffect(Unit) {
@@ -160,7 +162,7 @@ fun MissionSelectionContent(
                     .weight(1f, fill = false)
             ){
                 LazyColumn(modifier = Modifier.padding(vertical = 8.dp)){
-                    items(uiState.topics) { topic ->
+                    items(uiState.topics, key = { it.id }) { topic ->
                         TopicItemRow(
                             topic = topic,
                             onExpandClick = { onExpandClick(topic.id) },

@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.premium
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 
 import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.component.CalmButton
@@ -338,7 +340,7 @@ private fun SuccessContent() {
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .scale(scale)
+                .graphicsLayer { scaleX = scale; scaleY = scale }
                 .clip(CircleShape)
                 .background(Calm.Wellness),
             contentAlignment = Alignment.Center

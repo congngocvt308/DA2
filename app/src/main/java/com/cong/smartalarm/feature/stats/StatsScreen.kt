@@ -112,7 +112,7 @@ fun StatsScreen(onNavigateToMuseum: () -> Unit) {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 LazyColumn {
-                    items(questions) { question ->
+                    items(questions, key = { it.questionId }) { question ->
                         ListItem(
                             headlineContent = { Text(question.prompt) },
                             supportingContent = { Text("ID: ${question.questionId}", color = MaterialTheme.colorScheme.onSurfaceVariant) }

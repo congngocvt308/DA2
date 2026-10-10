@@ -601,7 +601,7 @@ fun SmileChallengeConfigDialog(
                             imageVector = Icons.Default.Mic,
                             contentDescription = if (isActuallyRecording) "Đang thu âm" else "Micro",
                             tint = if (isActuallyRecording) Calm.Destructive else Calm.Primary,
-                            modifier = Modifier.size(40.dp).scale(if (isActuallyRecording && !reducedMotion) scale else 1f)
+                            modifier = Modifier.size(40.dp).graphicsLayer { val s = if (isActuallyRecording && !reducedMotion) scale else 1f; scaleX = s; scaleY = s }
                         )
                     }
                     
@@ -793,7 +793,7 @@ fun SoundPickerDialog(
                             }
                         }
                     }
-                    items(filesList) { file ->
+                    items(filesList, key = { it.absolutePath }) { file ->
                         Surface(
                             onClick = { onSoundSelected(file.absolutePath) },
                             shape = RoundedCornerShape(12.dp),

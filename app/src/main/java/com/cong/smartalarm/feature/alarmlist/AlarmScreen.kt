@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.alarmlist
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 import com.cong.smartalarm.feature.alarmedit.AlarmSettingsViewModel
 import com.cong.smartalarm.feature.alarmedit.SoundSelectionDialog
 
@@ -349,7 +351,7 @@ fun FabSpeedDial(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .size(32.dp)
-                    .rotate(rotation)
+                    .graphicsLayer { rotationZ = rotation }
             )
         }
     }

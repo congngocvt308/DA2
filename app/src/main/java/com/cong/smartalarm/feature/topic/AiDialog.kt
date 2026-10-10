@@ -1,4 +1,6 @@
 package com.cong.smartalarm.feature.topic
+
+import androidx.compose.ui.graphics.graphicsLayer
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
 
 import com.cong.smartalarm.core.designsystem.component.CalmCard
@@ -298,7 +300,7 @@ private fun DocumentItemRow(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(24.dp)
-                                .rotate(arrowRotationDegree)
+                                .graphicsLayer { rotationZ = arrowRotationDegree }
                         )
                     }
                 }

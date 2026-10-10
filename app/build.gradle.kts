@@ -53,9 +53,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
 }
 dependencies {
     implementation(libs.androidx.core.ktx)

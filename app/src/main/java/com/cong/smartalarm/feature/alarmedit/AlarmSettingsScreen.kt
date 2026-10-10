@@ -1,4 +1,6 @@
 package com.cong.smartalarm.feature.alarmedit
+
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cong.smartalarm.core.designsystem.component.CalmSlider
 import com.cong.smartalarm.core.designsystem.component.CalmSwitch
 
@@ -84,7 +86,7 @@ fun AlarmSettingsScreen(
     onMissionSettingClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -1,4 +1,6 @@
 package com.cong.smartalarm.feature.smile
+
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cong.smartalarm.core.designsystem.theme.Calm
 import androidx.compose.runtime.CompositionLocalProvider
 
@@ -266,7 +268,7 @@ fun FaceMissionScreen(viewModel: FaceMissionViewModel, onLuongAComplete: () -> U
 private fun FaceMissionContent(viewModel: FaceMissionViewModel, onLuongAComplete: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var previewWidth by remember { mutableStateOf(0f) }
     var previewHeight by remember { mutableStateOf(0f) }

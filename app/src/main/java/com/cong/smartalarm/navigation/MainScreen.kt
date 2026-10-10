@@ -1,5 +1,7 @@
 package com.cong.smartalarm.navigation
 
+import androidx.compose.ui.unit.IntOffset
+
 
 import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
 
@@ -391,7 +393,7 @@ fun BottomNavBar(navController: NavHostController) {
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 6.dp, vertical = 6.dp)
-                        .offset(x = indicatorOffset)
+                        .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
                         .width(itemWidth - 12.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(32.dp))

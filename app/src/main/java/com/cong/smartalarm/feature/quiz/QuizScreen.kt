@@ -1,4 +1,6 @@
 package com.cong.smartalarm.feature.quiz
+
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cong.smartalarm.core.designsystem.component.SoftSurface
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material3.LocalContentColor
@@ -41,7 +43,7 @@ fun QuizScreen(
         viewModel.setAlarmId(alarmId)
     }
     
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) {

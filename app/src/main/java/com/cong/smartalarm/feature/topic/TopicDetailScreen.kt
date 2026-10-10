@@ -39,18 +39,18 @@ fun TopicDetailScreen(
     viewModel: TopicDetailViewModel = viewModel(),
     onBackClick: () -> Unit,
 ) {
-    val allQuestions by viewModel.questions.collectAsState()
-    val currentTopicName by viewModel.topicName.collectAsState()
+    val allQuestions by viewModel.questions.collectAsStateWithLifecycle()
+    val currentTopicName by viewModel.topicName.collectAsStateWithLifecycle()
     val filteredQuestionsList by viewModel.filteredQuestions.collectAsStateWithLifecycle()
-    val currentSearchQuery = viewModel.searchQuery.collectAsState().value
+    val currentSearchQuery = viewModel.searchQuery.collectAsStateWithLifecycle().value
     var showAddDialog by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     var showEditTopicDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    val isStreaming by viewModel.isStreamingActive.collectAsState()
-    val notificationMessage by viewModel.streamNotificationMessage.collectAsState()
+    val isStreaming by viewModel.isStreamingActive.collectAsStateWithLifecycle()
+    val notificationMessage by viewModel.streamNotificationMessage.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()

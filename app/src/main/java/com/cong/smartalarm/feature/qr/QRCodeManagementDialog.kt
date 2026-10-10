@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.qr
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.cong.smartalarm.core.designsystem.component.CalmCard
 import com.cong.smartalarm.core.designsystem.component.CalmButton
 import com.cong.smartalarm.core.designsystem.component.CalmAlertDialog
@@ -55,8 +57,8 @@ fun QRCodeManagementDialog(
     viewModel: QRCodeViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val qrCodes by viewModel.allQRCodes.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    val qrCodes by viewModel.allQRCodes.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf<QRCodeEntity?>(null) }
@@ -236,7 +238,7 @@ fun QRCodeManagementDialog(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(qrCodes) { qrCode ->
+                        items(qrCodes, key = { it.qrId }) { qrCode ->
                             QRCodeItem(
                                 qrCode = qrCode,
                                 onDelete = { showDeleteConfirm = qrCode }

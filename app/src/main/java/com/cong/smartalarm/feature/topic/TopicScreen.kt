@@ -1,5 +1,7 @@
 package com.cong.smartalarm.feature.topic
 
+import androidx.compose.ui.graphics.graphicsLayer
+
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import com.cong.smartalarm.core.designsystem.component.SoftSurface
@@ -264,7 +266,7 @@ private fun FabSpeedDial(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "Tạo mới",
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(32.dp).rotate(rotation)
+                modifier = Modifier.size(32.dp).graphicsLayer { rotationZ = rotation }
             )
         }
     }
