@@ -1,6 +1,9 @@
 package com.cong.smartalarm.feature.alarmedit
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -22,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cong.smartalarm.core.designsystem.theme.Calm
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -118,7 +121,7 @@ fun TimePickerSection(
             ) {
                 Text(
                     text = ":",
-                    style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "lnum, tnum, case"),
+                    style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "case"),
                     color = Calm.Foreground,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
@@ -144,6 +147,8 @@ private fun InfiniteWheelColumn(
 ) {
     LazyColumn(
         state = state,
+        // Hút về giữa nằm ngay trong cú vuốt (kể cả thả tay không có đà) -> không cần cuộn bù sau đó
+        flingBehavior = rememberSnapFlingBehavior(state, SnapPosition.Center),
         modifier = Modifier
             .wrapContentWidth()
             .height(WheelViewportHeight),
@@ -164,7 +169,11 @@ private fun InfiniteWheelColumn(
 }
 
 /**
- * Khi bánh xe dừng: hút mục gần tâm nhất về giữa rồi báo index tuyệt đối của nó.
+ * Khi bánh xe dừng: báo index tuyệt đối của mục ở tâm. Việc hút về giữa do [rememberSnapFlingBehavior] làm;
+ * ở đây chỉ chỉnh nốt nếu một lần cuộn bằng code bị ngắt giữa chừng.
+ *
+ * Trước đây effect này dùng LaunchedEffect(isScrollInProgress) rồi tự animateScrollToItem: chính cú cuộn đó làm
+ * khoá đổi -> effect bị huỷ giữa chừng, số dừng lệch khỏi dải chọn. Thu theo snapshotFlow thì không bị huỷ.
  * Toạ độ item tính từ sau contentPadding, nên tâm thật = (viewportStartOffset + viewportEndOffset) / 2.
  */
 @Composable
@@ -172,18 +181,20 @@ private fun RememberInfiniteSnap(
     lazyListState: LazyListState,
     onItemSettled: (index: Int) -> Unit
 ) {
-    LaunchedEffect(lazyListState.isScrollInProgress) {
-        if (!lazyListState.isScrollInProgress) {
-            delay(50)
-            val layoutInfo = lazyListState.layoutInfo
-            if (layoutInfo.visibleItemsInfo.isEmpty()) return@LaunchedEffect
-            val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
-            val closestItem = layoutInfo.visibleItemsInfo.minByOrNull {
-                abs((it.offset + it.size / 2) - center)
-            } ?: return@LaunchedEffect
-            onItemSettled(closestItem.index)
-            lazyListState.animateScrollToItem(closestItem.index)
-        }
+    val currentOnItemSettled by rememberUpdatedState(onItemSettled)
+    LaunchedEffect(lazyListState) {
+        snapshotFlow { lazyListState.isScrollInProgress }
+            .filter { inProgress -> !inProgress }
+            .collect {
+                val layoutInfo = lazyListState.layoutInfo
+                val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                val closestItem = layoutInfo.visibleItemsInfo.minByOrNull {
+                    abs((it.offset + it.size / 2) - center)
+                } ?: return@collect
+                val drift = closestItem.offset + closestItem.size / 2 - center
+                if (drift != 0) lazyListState.animateScrollBy(drift.toFloat())
+                currentOnItemSettled(closestItem.index)
+            }
     }
 }
 

@@ -63,24 +63,31 @@ class AlarmRingingActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
 
+                // Nhiệm vụ của báo thức: tên hiện trên màn reo, câu chúc trên màn hoàn thành
+                var mission by remember { mutableStateOf(WakeMission.None) }
+                var isSnoozeEnabled by remember { mutableStateOf(true) }
+                LaunchedEffect(alarmId) {
+                    if (alarmId != -1) {
+                        val alarm = alarmRepository.getAlarmById(alarmId)
+                        isSnoozeEnabled = alarm?.snoozeEnabled ?: true
+                        mission = when {
+                            alarmRepository.getFaceMissionConfigByAlarmId(alarmId) != null -> WakeMission.Smile
+                            alarm != null && alarm.questionCount > 0 -> WakeMission.Quiz
+                            hasQRCodes -> WakeMission.Qr
+                            else -> WakeMission.None
+                        }
+                    }
+                }
+
                 NavHost(
                     navController = navController,
                     startDestination = "ringing_screen"
                 ) {
                     // 1. Màn hình báo thức đang reo
                     composable("ringing_screen") {
-                        var isSnoozeEnabled by remember { mutableStateOf(true) }
-                        
-                        LaunchedEffect(alarmId) {
-                            if (alarmId != -1) {
-                                val alarm = alarmRepository.getAlarmById(alarmId)
-                                isSnoozeEnabled = alarm?.snoozeEnabled ?: true
-                            }
-                        }
-
                         AlarmRingingScreen(
                             alarmLabel = label,
-                            hasQRCodes = hasQRCodes,
+                            mission = mission,
                             isSnoozeEnabled = isSnoozeEnabled,
                             onSnooze = {
                                 lifecycleScope.launch {
@@ -97,7 +104,7 @@ class AlarmRingingActivity : ComponentActivity() {
                                     stopRingingAndClose()
                                 }
                             },
-                            onNavigateToQuiz = {
+                            onDismiss = {
                                 lifecycleScope.launch {
                                     val faceConfig = alarmRepository.getFaceMissionConfigByAlarmId(alarmId)
                                     val alarm = alarmRepository.getAlarmById(alarmId)
@@ -121,9 +128,6 @@ class AlarmRingingActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                            },
-                            onNavigateToQRScan = {
-                                navController.navigate("qr_dismiss_screen")
                             }
                         )
                     }
@@ -178,9 +182,10 @@ class AlarmRingingActivity : ComponentActivity() {
                         )
                     }
 
-                    // Mới: Màn hình thành công rực rỡ
+                    // Màn hoàn thành: tắt chuông ngay khi vào, tự đóng sau vài giây (hoặc giữ sáng nếu người dùng chạm)
                     composable("success_screen") {
-                        SuccessScreen(onFinished = { completeAlarmDismiss() })
+                        LaunchedEffect(Unit) { completeAlarmDismiss() }
+                        SuccessScreen(mission = mission, onFinished = { finishAndRemoveTask() })
                     }
                 }
             }
@@ -224,9 +229,9 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun completeAlarmDismiss() {
+        AlarmDismissHelper.stopAlarmService(this)
         lifecycleScope.launch {
             AlarmDismissHelper.onAlarmDismissed(this@AlarmRingingActivity, alarmId)
-            stopRingingAndClose()
         }
     }
 

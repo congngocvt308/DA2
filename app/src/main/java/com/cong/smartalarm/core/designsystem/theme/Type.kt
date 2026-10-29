@@ -30,12 +30,22 @@ val Raleway = FontFamily(
     variableFont(R.font.raleway, 800)
 )
 
-// Raleway mặc định dùng số kiểu cổ (old-style) — ép số thẳng hàng, đều cột để giờ báo thức dễ đọc
-private const val Numerals = "lnum, tnum"
+/** Chữ tròn, dày cho các màn "đánh thức" (chuông reo, hoàn thành) theo thiết kế. */
+val Nunito = FontFamily(
+    variableFont(R.font.nunito, 600),
+    variableFont(R.font.nunito, 700),
+    variableFont(R.font.nunito, 800),
+    variableFont(R.font.nunito, 900)
+)
+
+// Raleway mặc định dùng số kiểu cổ (old-style) -> ép số thẳng hàng (lnum) để giờ báo thức dễ đọc.
+// Lora vốn đã có số thẳng hàng; KHÔNG bật tnum cho Lora: tnum của Lora đổi cả dấu cách sang bản rộng
+// (325 so với 263 đơn vị) làm tiêu đề bị giãn chữ.
+private fun numeralsFor(family: FontFamily): String? = if (family == Raleway) "lnum" else null
 
 private fun TextStyle.calm(family: FontFamily, minWeight: FontWeight = FontWeight.Normal) = copy(
     fontFamily = family,
-    fontFeatureSettings = Numerals,
+    fontFeatureSettings = numeralsFor(family),
     fontWeight = maxOf(fontWeight ?: FontWeight.Normal, minWeight)
 )
 

@@ -80,6 +80,37 @@ object Dawn {
     val Surface = Color(0xE6FFF7ED)
 }
 
+/**
+ * Màn chuông reo + màn hoàn thành (thiết kế "Màn hình chuông reo" / "Màn hình hoàn thành v2"):
+ * trời sáng màu kem đào, mặt trời tròn có mặt, chữ nâu đậm.
+ */
+object Wake {
+    val SkyTop = Color(0xFFFFE3C2)
+    val SkyMid = Color(0xFFFFF3E4)
+    val SkyBottom = Color(0xFFFFF8F0)
+    /** Chữ chính, nút "Tắt báo thức", nét mặt của mặt trời. */
+    val Ink = Color(0xFF3A2414)
+    /** Chữ đặt trên nền [Ink]. */
+    val OnInk = Color(0xFFFFF3E4)
+    /** Ngày trên màn reo. */
+    val DateText = Color(0xFFA07A5C)
+    /** Câu chúc trên màn hoàn thành. */
+    val BodyText = Color(0xFF8A6A52)
+    /** Dòng gợi ý nhỏ dưới nút. */
+    val HintText = Color(0xFFA88A72)
+    val Sun = Color(0xFFFFB938)
+    val SunHalo = Color(0xFFFFC56A)
+    val SunGlow = Color(0xFFFFD27A)
+    val Cheek = Color(0xFFFF8F7A)
+    val Snore = Color(0xFFC99A6E)
+    /** Chấm trước tên nhiệm vụ, thanh đếm ngược trong nút. */
+    val Amber = Color(0xFFF5A623)
+    val Pill = Color(0xFFFFFFFF)
+    val PillShadow = Color(0xFFA06428)
+    /** Viền nút "Báo lại". */
+    val Outline = Color(0xFFE8CDB0)
+}
+
 internal val CalmColorScheme = darkColorScheme(
     primary = Calm.Primary,
     onPrimary = Calm.OnPrimary,

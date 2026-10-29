@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- cubic-bezier(.2, .7, .3, 1): kim quay nhanh rồi chậm dần -->
+<pathInterpolator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:controlX1="0.2" android:controlY1="0.7" android:controlX2="0.3" android:controlY2="1" />

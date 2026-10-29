@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Android 11 trở xuống: icon đồng hồ tĩnh. Android 12+: đồng hồ chuyển động (values-v31). -->
     <style name="Theme.MySplashScreen" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/calm_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_padded</item>
-        <item name="windowSplashScreenAnimationDuration">200</item>
         <item name="postSplashScreenTheme">@style/Theme.Alarm</item>
     </style>
 

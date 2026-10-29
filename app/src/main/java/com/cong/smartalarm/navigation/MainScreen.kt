@@ -192,7 +192,7 @@ fun MainScreen(initialExternalRoute: String? = null) {
                     AlarmRingingScreen(
                         alarmLabel = "Thức dậy đi học",
                         onSnooze = { /* Logic Snooze */ },
-                        onNavigateToQuiz = {
+                        onDismiss = {
                             navController.navigate(Screen.QUIZ_SCREEN)
                         }
                     )
